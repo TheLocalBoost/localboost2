@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
       `https://serpapi.com/search.json?engine=google_maps&q=${encodeURIComponent(query)}&api_key=${process.env.SERPAPI_KEY}`
     )
     const data = await response.json()
+    console.log('SerpAPI response:', JSON.stringify(data).slice(0, 500))
 
     const results = data.local_results || []
     const position = results.findIndex((r: any) =>

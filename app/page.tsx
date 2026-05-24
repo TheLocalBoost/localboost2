@@ -9,6 +9,7 @@ export default function LandingPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success'>('idle')
+  const [inscribed, setInscribed] = useState(0)
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,6 +23,7 @@ export default function LandingPage() {
       })
       const data = await res.json()
       setResult(data)
+      document.getElementById('score-result')?.scrollIntoView({ behavior: 'smooth' })
     } catch {
       setResult({ error: true })
     } finally {
@@ -39,6 +41,7 @@ export default function LandingPage() {
         body: JSON.stringify({ email, commerce_name: commerceName, city }),
       })
       setWaitlistStatus('success')
+      setInscribed(prev => prev + 1)
     } catch {
       setWaitlistStatus('success')
     }
@@ -50,10 +53,22 @@ export default function LandingPage() {
     return 'text-red-500'
   }
 
-  const getScoreLabel = (s: number) => {
-    if (s >= 70) return '✅ Bonne visibilité'
-    if (s >= 40) return '⚠️ Visibilité moyenne — vous pouvez faire mieux'
-    return '🚨 Faible visibilité — vos concurrents vous dépassent'
+  const getScoreMessage = (s: number) => {
+    if (s >= 70) return {
+      label: '✅ Bonne visibilité',
+      message: 'Votre fiche Google est active. Maintenez ce rythme pour rester visible.',
+      color: 'border-green-200 bg-green-50',
+    }
+    if (s >= 40) return {
+      label: '⚠️ Visibilité insuffisante',
+      message: 'Votre fiche Google manque d\'activité. Vous perdez probablement des clients sans le savoir.',
+      color: 'border-amber-200 bg-amber-50',
+    }
+    return {
+      label: '🚨 Fiche Google inactive',
+      message: 'Votre fiche Google n\'est pas optimisée. Des clients potentiels ne vous trouvent pas.',
+      color: 'border-red-200 bg-red-50',
+    }
   }
 
   return (
@@ -65,128 +80,159 @@ export default function LandingPage() {
           <span className="font-bold text-gray-900">LocalBoost</span>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-4 py-1.5 text-sm font-medium text-amber-700">
-          🎯 Lancement bientôt — Places limitées
+          🔥 Lancement bientôt
         </div>
       </nav>
 
       {/* Hero */}
-      <div className="max-w-4xl mx-auto px-6 py-20 text-center">
+      <div className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5 text-sm font-medium text-green-700 mb-6">
-          🇫🇷 Spécialisé commerçants locaux français
+          🇫🇷 Conçu pour les commerçants locaux français
         </div>
         <h1 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-          Quel est votre score de<br />
-          <span className="text-green-600">visibilité Google ?</span>
+          86% de vos nouveaux clients<br />
+          <span className="text-green-600">vous cherchent sur Google.</span><br />
+          Est-ce qu'ils vous trouvent ?
         </h1>
         <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-          Analysez gratuitement votre fiche Google Business et découvrez pourquoi vos concurrents apparaissent avant vous.
+          Une fiche Google inactive vous fait perdre des clients chaque jour — sans que vous le sachiez.
         </p>
-
-        {/* Formulaire analyse */}
-        <form onSubmit={handleAnalyze} className="max-w-xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <input
-              type="text"
-              value={commerceName}
-              onChange={(e) => setCommerceName(e.target.value)}
-              placeholder="Nom de votre commerce"
-              required
-              className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-            />
-            <input
-              type="text"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="Ville"
-              required
-              className="w-32 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={analyzing}
-            className="w-full rounded-xl bg-green-600 py-4 text-base font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
-          >
-            {analyzing ? '🔍 Analyse en cours...' : '🔍 Analyser ma visibilité gratuitement'}
-          </button>
-        </form>
-
-        {/* Résultat */}
-        {result && !result.error && (
-          <div className="mt-8 max-w-xl mx-auto rounded-2xl border-2 border-green-200 bg-green-50 p-6 text-left">
-            <div className="flex items-end gap-3 mb-3">
-              <span className={`text-6xl font-extrabold ${getScoreColor(result.score)}`}>{result.score}</span>
-              <span className="text-gray-400 text-xl mb-2">/100</span>
-            </div>
-            <p className={`font-semibold mb-4 ${getScoreColor(result.score)}`}>{getScoreLabel(result.score)}</p>
-            <div className="w-full bg-white rounded-full h-3 mb-4">
-              <div
-                className={`h-3 rounded-full transition-all ${result.score >= 70 ? 'bg-green-500' : result.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
-                style={{ width: `${result.score}%` }}
-              />
-            </div>
-
-            {result.competitors?.length > 0 && (
-              <div className="mb-6">
-                <p className="text-sm font-medium text-gray-700 mb-2">Vos concurrents sur Google Maps :</p>
-                {result.competitors.slice(0, 3).map((c: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-green-100 last:border-0">
-                    <span className="text-gray-700">#{c.position} {c.name}</span>
-                    <span className="text-gray-500">⭐ {c.rating} ({c.reviews} avis)</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {waitlistStatus === 'success' ? (
-              <div className="rounded-xl bg-green-600 p-4 text-center">
-                <p className="text-white font-semibold">🎉 Vous êtes sur la liste !</p>
-                <p className="text-green-100 text-sm mt-1">Vous serez parmi les premiers à accéder à LocalBoost.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleWaitlist} className="space-y-3">
-                <p className="text-sm font-semibold text-gray-800">
-                  {result.score < 70 ? '👇 Rejoignez la liste d\'attente pour améliorer votre score :' : '👇 Maintenez votre avance avec LocalBoost :'}
-                </p>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="votre@email.com"
-                  required
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-green-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={waitlistStatus === 'loading'}
-                  className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition disabled:opacity-60"
-                >
-                  {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Rejoindre la liste d\'attente — Gratuit'}
-                </button>
-                <p className="text-xs text-gray-400 text-center">Lancement dans moins de 15 jours. Places limitées.</p>
-              </form>
-            )}
-          </div>
-        )}
-
-        {result?.error && (
-          <div className="mt-6 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-600 max-w-xl mx-auto">
-            Commerce non trouvé sur Google Maps. Vérifiez le nom et la ville.
-          </div>
-        )}
+        <button
+          onClick={() => document.getElementById('score-form')?.scrollIntoView({ behavior: 'smooth' })}
+          className="rounded-xl bg-green-600 px-8 py-4 text-base font-semibold text-white hover:bg-green-700 transition"
+        >
+          Calculer mon score gratuit →
+        </button>
       </div>
 
-      {/* Problème */}
+      {/* Statistiques */}
+      <div className="bg-gray-50 py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid sm:grid-cols-3 gap-6">
+            {[
+              { stat: '86%', desc: 'des consommateurs cherchent un commerce local sur Google avant de se déplacer', source: 'Google' },
+              { stat: '7×', desc: 'plus de visites pour une fiche Google active vs une fiche inactive', source: 'Google My Business' },
+              { stat: '+35%', desc: 'de clients potentiels supplémentaires avec une fiche optimisée et régulièrement mise à jour', source: 'BrightLocal 2024' },
+            ].map((item) => (
+              <div key={item.stat} className="bg-white rounded-2xl p-6 border border-gray-100 text-center shadow-sm">
+                <div className="text-4xl font-extrabold text-green-600 mb-3">{item.stat}</div>
+                <p className="text-sm text-gray-600 mb-2">{item.desc}</p>
+                <p className="text-xs text-gray-400">Source : {item.source}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Score analyseur */}
+      <div id="score-form" className="py-20 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Votre fiche Google vous fait-elle perdre des clients ?
+          </h2>
+          <p className="text-gray-500 mb-10">Entrez le nom de votre commerce — votre score apparaît en 30 secondes.</p>
+
+          <form onSubmit={handleAnalyze} className="mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <input
+                type="text"
+                value={commerceName}
+                onChange={(e) => setCommerceName(e.target.value)}
+                placeholder="Nom de votre commerce"
+                required
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              />
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Ville"
+                required
+                className="w-36 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={analyzing}
+              className="w-full rounded-xl bg-green-600 py-4 text-base font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
+            >
+              {analyzing ? '🔍 Analyse en cours...' : '🔍 Calculer mon score gratuitement'}
+            </button>
+          </form>
+
+          {/* Résultat */}
+          <div id="score-result">
+            {result && !result.error && (() => {
+              const { label, message, color } = getScoreMessage(result.score)
+              return (
+                <div className={`rounded-2xl border-2 p-6 text-left ${color}`}>
+                  <div className="flex items-end gap-3 mb-2">
+                    <span className={`text-7xl font-extrabold ${getScoreColor(result.score)}`}>{result.score}</span>
+                    <span className="text-gray-400 text-2xl mb-3">/100</span>
+                  </div>
+                  <p className={`font-semibold text-lg mb-2 ${getScoreColor(result.score)}`}>{label}</p>
+                  <p className="text-sm text-gray-600 mb-6">{message}</p>
+
+                  <div className="w-full bg-white rounded-full h-3 mb-6">
+                    <div
+                      className={`h-3 rounded-full transition-all ${result.score >= 70 ? 'bg-green-500' : result.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${result.score}%` }}
+                    />
+                  </div>
+
+                  {waitlistStatus === 'success' ? (
+                    <div className="rounded-xl bg-green-600 p-4 text-center">
+                      <p className="text-white font-semibold text-lg">🎉 Vous êtes inscrit !</p>
+                      <p className="text-green-100 text-sm mt-1">On vous contacte dès le lancement.</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleWaitlist} className="space-y-3">
+                      <p className="text-sm font-semibold text-gray-800">
+                        Recevez votre plan d'amélioration complet au lancement — gratuit :
+                      </p>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="votre@email.com"
+                        required
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-green-500 focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={waitlistStatus === 'loading'}
+                        className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition"
+                      >
+                        {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Recevoir mon plan d\'amélioration au lancement →'}
+                      </button>
+                      <p className="text-xs text-gray-400 text-center">Gratuit. Aucun spam. Désinscription en un clic.</p>
+                    </form>
+                  )}
+                </div>
+              )
+            })()}
+
+            {result?.error && (
+              <div className="rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-600">
+                Commerce non trouvé sur Google Maps. Vérifiez le nom et la ville.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Pourquoi les fiches perdent des clients */}
       <div className="bg-gray-50 py-20 px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Vos concurrents apparaissent avant vous sur Google Maps
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
+            Pourquoi la plupart des commerçants perdent des clients sur Google
           </h2>
+          <p className="text-gray-500 text-center mb-12">Pas par manque de qualité. Par manque de temps.</p>
           <div className="grid sm:grid-cols-3 gap-8">
             {[
-              { emoji: '😓', title: 'Vous manquez de temps', desc: 'Entre le four, les clients et la gestion — le marketing passe toujours après.' },
-              { emoji: '😕', title: 'Vous ne savez pas quoi écrire', desc: 'Une page blanche chaque semaine. Résultat : votre fiche n\'est jamais à jour.' },
-              { emoji: '📉', title: 'Vous perdez des clients', desc: 'Google favorise les fiches actives. Vos concurrents qui publient vous dépassent.' },
+              { emoji: '⏰', title: 'Pas le temps', desc: 'Entre le service, la gestion et les fournisseurs — Google Business passe toujours après. Et c\'est normal.' },
+              { emoji: '💡', title: 'Plus d\'idées', desc: 'Quoi publier cette semaine ? La page blanche décourage. Résultat : la fiche reste silencieuse des mois.' },
+              { emoji: '📉', title: 'Fiche qui s\'endort', desc: 'Google pénalise les fiches inactives. Moins vous publiez, moins vous apparaissez. Un cercle vicieux.' },
             ].map((item) => (
               <div key={item.title} className="bg-white rounded-2xl p-6 border border-gray-100">
                 <div className="text-3xl mb-3">{item.emoji}</div>
@@ -200,48 +246,103 @@ export default function LandingPage() {
 
       {/* Solution */}
       <div className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">LocalBoost fait le travail à votre place</h2>
-          <p className="text-gray-500 mb-12">Chaque semaine, automatiquement, sans que vous ayez à y penser.</p>
-          <div className="grid sm:grid-cols-2 gap-6 text-left">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
+            LocalBoost s'occupe de votre Google Business à votre place
+          </h2>
+          <p className="text-gray-500 text-center mb-12">Chaque semaine, automatiquement. Vous n'avez rien à faire.</p>
+          <div className="grid sm:grid-cols-2 gap-6">
             {[
-              { emoji: '📍', title: 'Post Google Business hebdomadaire', desc: 'L\'IA génère chaque semaine un post calibré pour votre commerce, votre ville et la saison.' },
-              { emoji: '⭐', title: 'Réponses aux avis en 60 secondes', desc: 'Collez un avis, recevez 3 réponses personnalisées prêtes à publier.' },
-              { emoji: '📊', title: 'Score de visibilité hebdomadaire', desc: 'Suivez votre progression sur Google Maps et battez vos concurrents semaine après semaine.' },
-              { emoji: '📧', title: 'Email hebdomadaire automatique', desc: 'Chaque lundi matin, votre contenu de la semaine directement dans votre boîte mail.' },
+              { emoji: '📍', title: 'Publication hebdomadaire automatique', desc: 'Un post Google Business généré chaque semaine — adapté à votre commerce, votre ville et la saison. Vous copiez-collez en 30 secondes.' },
+              { emoji: '⭐', title: 'Réponses aux avis prêtes à publier', desc: 'Collez un avis reçu. Recevez 3 réponses personnalisées. Choisissez celle qui vous convient. Publiez en un clic.' },
+              { emoji: '📊', title: 'Score de visibilité hebdomadaire', desc: 'Suivez l\'évolution de votre fiche Google chaque semaine. Voyez votre progression en temps réel.' },
+              { emoji: '📧', title: 'Tout dans votre boîte mail', desc: 'Chaque lundi matin, votre contenu de la semaine arrive directement dans votre email. Pas besoin d\'ouvrir une application.' },
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-gray-100 p-6">
-                <div className="text-2xl mb-3">{item.emoji}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.desc}</p>
+              <div key={item.title} className="rounded-2xl border border-gray-100 p-6 flex gap-4">
+                <div className="text-2xl shrink-0">{item.emoji}</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
+                  <p className="text-sm text-gray-500">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Pricing */}
+      {/* Avant / Après */}
       <div className="bg-gray-50 py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Ce que ça change en 30 jours</h2>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="rounded-2xl border-2 border-red-200 bg-white p-6">
+              <p className="text-sm font-semibold text-red-500 mb-4">❌ Sans LocalBoost</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Dernière publication</span>
+                  <span className="font-medium text-red-500">il y a 4 mois</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Avis sans réponse</span>
+                  <span className="font-medium text-red-500">12 avis ignorés</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Score de visibilité</span>
+                  <span className="font-medium text-red-500">34/100</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Clients perdus/mois</span>
+                  <span className="font-medium text-red-500">estimé ~20</span>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl border-2 border-green-400 bg-white p-6">
+              <p className="text-sm font-semibold text-green-600 mb-4">✅ Avec LocalBoost — 30 jours</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Publications publiées</span>
+                  <span className="font-medium text-green-600">4 posts publiés</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Avis avec réponse</span>
+                  <span className="font-medium text-green-600">100% répondus</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Score de visibilité</span>
+                  <span className="font-medium text-green-600">78/100</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Temps passé/semaine</span>
+                  <span className="font-medium text-green-600">moins de 2 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div className="py-20 px-6">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Un seul plan. Simple.</h2>
-          <p className="text-gray-500 mb-8">Lancement dans moins de 15 jours.</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Simple et transparent</h2>
+          <p className="text-gray-500 mb-8">Moins de 2€ par jour pour garder votre fiche Google active et visible.</p>
           <div className="bg-white rounded-2xl border-2 border-green-500 p-8 shadow-sm">
             <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-medium text-amber-700 mb-4">
-              🔥 Prix de lancement — Places limitées
+              🔥 Prix de lancement bêta
             </div>
-            <div className="flex items-baseline justify-center gap-1 mb-2">
+            <div className="flex items-baseline justify-center gap-1 mb-1">
               <span className="text-5xl font-extrabold text-gray-900">59€</span>
               <span className="text-gray-500">/mois</span>
             </div>
-            <p className="text-sm text-gray-400 mb-6">après 7 jours gratuits</p>
+            <p className="text-sm text-gray-400 mb-2">après 7 jours gratuits</p>
+            <p className="text-xs text-green-600 font-medium mb-6">Un seul nouveau client couvre l'abonnement.</p>
             <ul className="space-y-3 mb-8 text-left">
               {[
-                'Posts Google Business illimités',
+                'Posts Google Business hebdomadaires',
                 'Réponses aux avis illimitées',
                 'Score de visibilité hebdomadaire',
-                'Analyse de vos concurrents',
                 'Email hebdo automatique',
-                'Sans engagement',
+                'Sans engagement — résiliable en 1 clic',
               ].map((f) => (
                 <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="text-green-500">✓</span>{f}
@@ -249,25 +350,53 @@ export default function LandingPage() {
               ))}
             </ul>
             <button
-              onClick={() => document.getElementById('waitlist-bottom')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => document.getElementById('waitlist-final')?.scrollIntoView({ behavior: 'smooth' })}
               className="w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition"
             >
-              Rejoindre la liste d'attente
+              Rejoindre la liste d'attente →
             </button>
           </div>
         </div>
       </div>
 
+      {/* FAQ */}
+      <div className="bg-gray-50 py-20 px-6">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Questions fréquentes</h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: 'Est-ce que LocalBoost publie automatiquement sur Google ?',
+                a: 'Non — Google Business ne permet pas la publication automatique. LocalBoost génère le contenu et vous l\'envoie chaque semaine. Vous publiez en 30 secondes avec un simple copier-coller.'
+              },
+              {
+                q: 'Est-ce adapté à mon type de commerce ?',
+                a: 'Oui. LocalBoost est conçu pour tous les commerçants locaux indépendants : boulangers, coiffeurs, restaurateurs, garagistes, fleuristes... Le contenu est personnalisé selon votre activité.'
+              },
+              {
+                q: 'Comment annuler ?',
+                a: 'En un clic depuis votre espace client. Aucun engagement, aucun frais d\'annulation. Vous restez abonné jusqu\'à la fin de la période en cours.'
+              },
+            ].map((item) => (
+              <div key={item.q} className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h3 className="font-semibold text-gray-900 mb-2">{item.q}</h3>
+                <p className="text-sm text-gray-500">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Waitlist finale */}
-      <div id="waitlist-bottom" className="py-20 px-6 text-center">
+      <div id="waitlist-final" className="py-20 px-6 text-center">
         <div className="max-w-md mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Soyez parmi les premiers</h2>
-          <p className="text-gray-500 mb-8">Lancement dans moins de 15 jours. Les premiers inscrits bénéficieront d'un accompagnement personnalisé.</p>
+          <p className="text-gray-500 mb-8">Lancement dans moins de 15 jours. Recevez votre accès en priorité.</p>
           {waitlistStatus === 'success' ? (
             <div className="rounded-2xl bg-green-50 border border-green-200 p-8">
-              <p className="text-2xl mb-2">🎉</p>
-              <p className="font-semibold text-green-800">Vous êtes sur la liste !</p>
-              <p className="text-sm text-green-600 mt-1">On vous contacte dès le lancement.</p>
+              <p className="text-3xl mb-3">🎉</p>
+              <p className="font-semibold text-green-800 text-lg">Vous êtes inscrit !</p>
+              <p className="text-sm text-green-600 mt-2">On vous contacte dès le lancement.</p>
             </div>
           ) : (
             <form onSubmit={handleWaitlist} className="space-y-3">
@@ -284,9 +413,9 @@ export default function LandingPage() {
                 disabled={waitlistStatus === 'loading'}
                 className="w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
               >
-                {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Rejoindre la liste d\'attente — Gratuit'}
+                {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Recevoir mon accès en priorité →'}
               </button>
-              <p className="text-xs text-gray-400">Pas de spam. Juste un email au lancement.</p>
+              <p className="text-xs text-gray-400">Gratuit. Aucun spam. Désinscription en un clic.</p>
             </form>
           )}
         </div>
@@ -299,7 +428,7 @@ export default function LandingPage() {
             <span>🚀</span>
             <span className="font-bold text-gray-900">LocalBoost</span>
           </div>
-          <p className="text-sm text-gray-400">© 2025 LocalBoost</p>
+          <p className="text-sm text-gray-400">© 2025 LocalBoost — Tous droits réservés</p>
         </div>
       </footer>
     </div>
