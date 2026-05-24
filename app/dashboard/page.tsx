@@ -1,28 +1,79 @@
-import { createClient } from '@/lib/supabase-server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export default function DashboardPage() {
+  const [merchant, setMerchant] = useState<any>(null)
+  const [score, setScore] = useState<number | null>(null)
+  const [competitors, setCompetitors] = useState<any[]>([])
+  const [position, setPosition] = useState<number | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [lastReport, setLastReport] = useState<any>(null)
+  const supabase = createClient()
 
-  const { data: merchant } = await supabase
-    .from('merchant_profiles')
-    .select('*')
-    .eq('id', user!.id)
-    .single()
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-  const { data: generations } = await supabase
-    .from('generations')
-    .select('*')
-    .eq('user_id', user!.id)
-    .order('created_at', { ascending: false })
-    .limit(5)
+      const { data: m } = await supabase
+        .from('merchant_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      setMerchant(m)
+
+      const { data: reports } = await supabase
+        .from('weekly_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+
+      if (reports && reports.length > 0) {
+        setScore(reports[0].visibility_score)
+        setLastReport(reports[0])
+        setCompetitors(reports[0].competitor_data?.competitors || [])
+        setPosition(reports[0].competitor_data?.position || null)
+      }
+    }
+    load()
+  }, [])
+
+  const handleAnalyze = async () => {
+    setAnalyzing(true)
+    try {
+      const res = await fetch('/api/analyze', { method: 'POST' })
+      const data = await res.json()
+      setScore(data.score)
+      setCompetitors(data.competitors || [])
+      setPosition(data.position)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  const getScoreColor = (s: number) => {
+    if (s >= 70) return 'text-green-600'
+    if (s >= 40) return 'text-amber-600'
+    return 'text-red-500'
+  }
+
+  const getScoreLabel = (s: number) => {
+    if (s >= 70) return 'Bonne visibilité'
+    if (s >= 40) return 'Visibilité moyenne'
+    return 'Faible visibilité'
+  }
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Bonjour {merchant?.commerce_name || 'là'} 👋
+          Bonjour {merchant?.commerce_name || ''} 👋
         </h1>
         <p className="text-gray-500 mt-1">Votre assistant Google Business est prêt.</p>
       </div>
@@ -37,7 +88,75 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+      {/* Score de visibilité */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">📊 Score de visibilité Google</h2>
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzing || !merchant}
+            className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-50"
+          >
+            {analyzing ? 'Analyse...' : 'Analyser'}
+          </button>
+        </div>
+
+        {score !== null ? (
+          <div>
+            <div className="flex items-end gap-3 mb-3">
+              <span className={`text-6xl font-extrabold ${getScoreColor(score)}`}>{score}</span>
+              <span className="text-gray-400 text-xl mb-2">/100</span>
+              <span className={`text-sm font-medium mb-2 ${getScoreColor(score)}`}>{getScoreLabel(score)}</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 mb-4">
+              <div
+                className={`h-3 rounded-full transition-all ${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
+                style={{ width: `${score}%` }}
+              />
+            </div>
+            {position && (
+              <p className="text-sm text-gray-500">
+                Position sur Google Maps : <strong>#{position}</strong> pour "{merchant?.commerce_name} {merchant?.city}"
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-400 text-sm mb-4">Cliquez sur Analyser pour voir votre score de visibilité Google</p>
+            <button
+              onClick={handleAnalyze}
+              disabled={analyzing || !merchant}
+              className="rounded-xl bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {analyzing ? 'Analyse en cours...' : '🔍 Analyser ma visibilité'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Concurrents */}
+      {competitors.length > 0 && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">🏆 Vos concurrents</h2>
+          <div className="space-y-3">
+            {competitors.map((c, i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-gray-400">#{c.position}</span>
+                  <span className="text-sm font-medium text-gray-800">{c.name}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span>⭐ {c.rating || '—'}</span>
+                  <span>{c.reviews || 0} avis</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="grid sm:grid-cols-2 gap-4">
         <Link href="/dashboard/generate?type=google" className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm hover:border-green-300 transition">
           <div className="text-2xl mb-2">📍</div>
           <h3 className="font-semibold text-gray-900 mb-1">Post Google Business</h3>
@@ -49,27 +168,6 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-500">Collez un avis, recevez 3 réponses</p>
         </Link>
       </div>
-
-      {generations && generations.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Dernières générations</h2>
-          <div className="space-y-3">
-            {generations.map((gen) => (
-              <div key={gen.id} className="rounded-xl border border-gray-100 bg-white p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-green-600">
-                    {gen.type === 'google' ? '📍 Google Business' : '⭐ Réponse avis'}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(gen.created_at).toLocaleDateString('fr-FR')}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 line-clamp-2">{gen.content}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
