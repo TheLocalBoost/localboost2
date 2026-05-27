@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [position, setPosition] = useState<number | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [lastReport, setLastReport] = useState<any>(null)
+  const [scoreHistory, setScoreHistory] = useState<{ week_start: string; visibility_score: number }[]>([])
   const supabase = createClient()
 
   useEffect(() => {
@@ -30,13 +31,14 @@ export default function DashboardPage() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(1)
+        .limit(8)
 
       if (reports && reports.length > 0) {
         setScore(reports[0].visibility_score)
         setLastReport(reports[0])
         setCompetitors(reports[0].competitor_data?.competitors || [])
         setPosition(reports[0].competitor_data?.position || null)
+        setScoreHistory([...reports].reverse())
       }
     }
     load()
@@ -151,6 +153,34 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Historique des scores */}
+      {scoreHistory.length > 1 && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">📈 Évolution sur 8 semaines</h2>
+          <div className="flex items-end gap-2 h-24">
+            {scoreHistory.map((r, i) => {
+              const pct = r.visibility_score
+              const color = pct >= 70 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-500' : 'bg-red-400'
+              const isLast = i === scoreHistory.length - 1
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                  <span className={`text-xs font-bold ${isLast ? 'text-gray-900' : 'text-gray-400'}`}>{pct}</span>
+                  <div className="w-full flex items-end" style={{ height: '64px' }}>
+                    <div
+                      className={`w-full rounded-t ${color} ${isLast ? 'opacity-100' : 'opacity-50'}`}
+                      style={{ height: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    {new Date(r.week_start).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
