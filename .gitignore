@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# outreach data files
+scripts/outreach/ALL_LEADS_*.csv
+scripts/outreach/ig_leads_*.csv
+scripts/outreach/fb_leads_*.csv
+scripts/outreach/leads_*.csv
+scripts/outreach/sent.csv
+scripts/outreach/serper_state.json

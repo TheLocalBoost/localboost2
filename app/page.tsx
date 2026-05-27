@@ -76,8 +76,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🚀</span>
-          <span className="font-bold text-gray-900">LocalBoost</span>
+          <img src="/logo.png.png" alt="LocalBoost" className="h-8 w-auto" />
         </div>
         <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-4 py-1.5 text-sm font-medium text-amber-700">
           🔥 Lancement bientôt

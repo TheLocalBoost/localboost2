@@ -3,15 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "outreach:collect": "node scripts/outreach/instagram.js",
+    "outreach:merge": "node scripts/outreach/merge.js",
+    "outreach:send": "node scripts/outreach/send.js",
+    "outreach:scheduler": "node scripts/outreach/scheduler.js",
+    "outreach:import": "node scripts/outreach/import_to_supabase.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "axios": "^1.16.1",
+    "dotenv": "^17.4.2",
     "next": "16.2.6",
     "node-fetch": "^3.3.2",
     "react": "19.2.4",
@@ -23,6 +30,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

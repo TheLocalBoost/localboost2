@@ -34,6 +34,15 @@ export async function POST(req: NextRequest) {
       position: results.indexOf(r) + 1,
     }))
 
+    // Sauvegarder le place_id pour la surveillance des avis
+    const ownResult = results[position] || results[0]
+    if (ownResult?.place_id) {
+      await supabase
+        .from('merchant_profiles')
+        .update({ place_id: ownResult.place_id })
+        .eq('id', user.id)
+    }
+
     // Score sur 100
     let score = 50
     if (position === 0) score = 95
