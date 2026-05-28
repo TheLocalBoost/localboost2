@@ -10,6 +10,8 @@ export default function LandingPage() {
   const [result, setResult] = useState<any>(null)
   const [captureEmail, setCaptureEmail] = useState('')
   const [captureStatus, setCaptureStatus] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [detectedCity, setDetectedCity] = useState('')
+  const [animScore, setAnimScore] = useState(34)
 
   const LOADING_STEPS = [
     'Analyse de votre fiche Google...',
@@ -23,6 +25,34 @@ export default function LandingPage() {
     const interval = setInterval(() => setLoadingStep(s => (s + 1) % LOADING_STEPS.length), 2000)
     return () => clearInterval(interval)
   }, [analyzing])
+
+  // Géolocalisation IP pour personnaliser le titre
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(d => { if (d.city) setDetectedCity(d.city) })
+      .catch(() => {})
+  }, [])
+
+  // Animation score 34→78 déclenchée par IntersectionObserver
+  useEffect(() => {
+    const el = document.getElementById('avant-apres')
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      observer.disconnect()
+      let current = 34
+      const target = 78
+      const step = () => {
+        current = Math.min(current + 2, target)
+        setAnimScore(current)
+        if (current < target) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    }, { threshold: 0.4 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   // Pre-fill from email link (?nom=...&ville=...) and auto-run
   useEffect(() => {
@@ -103,7 +133,10 @@ export default function LandingPage() {
           🇫🇷 Conçu pour les commerçants locaux français
         </div>
         <h1 className="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-          86% de vos nouveaux clients<br />
+          {detectedCity
+            ? <span>86% des nouveaux clients à <span className="text-green-600">{detectedCity}</span></span>
+            : <span>86% de vos nouveaux clients</span>
+          }<br />
           <span className="text-green-600">vous cherchent sur Google.</span><br />
           Est-ce qu'ils vous trouvent ?
         </h1>
@@ -116,6 +149,13 @@ export default function LandingPage() {
         >
           Calculer mon score gratuit →
         </button>
+        {/* Scroll indicator */}
+        <div className="mt-12 flex flex-col items-center gap-1 animate-bounce">
+          <span className="text-xs text-gray-400">Découvrir</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-gray-400">
+            <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -171,6 +211,9 @@ export default function LandingPage() {
             >
               {analyzing ? `🔍 ${LOADING_STEPS[loadingStep]}` : '🔍 Calculer mon score gratuitement'}
             </button>
+            <p className="text-xs text-gray-400 mt-3">
+              Votre commerce n'apparaît pas ? Vérifiez l'orthographe exacte de votre fiche Google Maps.
+            </p>
           </form>
 
           {/* Résultat */}
@@ -237,6 +280,7 @@ export default function LandingPage() {
                     ) : captureStatus === 'loading' ? (
                       <p className="text-xs text-gray-400 text-center">Envoi...</p>
                     ) : (
+                      <div>
                       <form
                         onSubmit={async (e) => {
                           e.preventDefault()
@@ -265,6 +309,8 @@ export default function LandingPage() {
                           Envoyer
                         </button>
                       </form>
+                      <p className="text-xs text-gray-400 mt-1.5 text-center">Pas de spam. Votre email ne sera jamais partagé. Désinscription en 1 clic.</p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -337,9 +383,29 @@ export default function LandingPage() {
       </div>
 
       {/* Avant / Après */}
-      <div className="bg-gray-50 py-20 px-6">
+      <div id="avant-apres" className="bg-gray-50 py-20 px-6">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Ce que ça change en 30 jours</h2>
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">Ce que ça change en 30 jours</h2>
+          {/* Score animé */}
+          <div className="flex items-center justify-center gap-6 mb-10">
+            <div className="text-center">
+              <span className="text-5xl font-extrabold text-red-500">34</span>
+              <p className="text-xs text-gray-400 mt-1">Avant</p>
+            </div>
+            <div className="flex-1 max-w-[180px]">
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full transition-none bg-gradient-to-r from-red-400 to-green-500"
+                  style={{ width: `${animScore}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-1.5">Score de visibilité</p>
+            </div>
+            <div className="text-center">
+              <span className="text-5xl font-extrabold text-green-600">{animScore}</span>
+              <p className="text-xs text-gray-400 mt-1">Après 30j</p>
+            </div>
+          </div>
           <div className="grid sm:grid-cols-2 gap-6">
             <div className="rounded-2xl border-2 border-red-200 bg-white p-6">
               <p className="text-sm font-semibold text-red-500 mb-4">❌ Sans LocalBoost</p>
