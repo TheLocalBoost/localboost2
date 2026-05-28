@@ -245,7 +245,7 @@ export default function LandingPage() {
                             await fetch('/api/waitlist', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ email: captureEmail, commerce_name: commerceName, city }),
+                              body: JSON.stringify({ email: captureEmail, commerce_name: commerceName, city, score: result.score, gaps: result.gaps || [], sector: result.sector }),
                             })
                           } finally {
                             setCaptureStatus('done')

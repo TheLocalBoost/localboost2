@@ -6,11 +6,69 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const APP_URL = 'https://www.thelocalboost.fr'
+
+function buildReportEmail(commerce_name: string, city: string, score: number, gaps: string[], sector: { label: string; average: number } | null) {
+  const scoreColor = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
+  const scoreLabel = score >= 70 ? '✅ Bonne visibilité' : score >= 40 ? '⚠️ Visibilité insuffisante' : '🚨 Fiche Google inactive'
+  const sectorData = sector || { label: 'Commerce local', average: 60 }
+  const diff = score - sectorData.average
+  const diffText = diff >= 0
+    ? `+${diff} pts au-dessus de la moyenne ${sectorData.label}`
+    : `${diff} pts en dessous de la moyenne ${sectorData.label}`
+
+  const gapsHtml = gaps.length > 0 ? `
+    <div style="background:#fff7f7;border:1px solid #fecaca;border-radius:10px;padding:16px;margin:20px 0;">
+      <p style="font-weight:700;color:#b91c1c;margin:0 0 10px;font-size:14px;">CE QUI PÉNALISE VOTRE FICHE</p>
+      <ul style="margin:0;padding-left:18px;color:#374151;font-size:14px;line-height:1.9;">
+        ${gaps.map(g => `<li>${g}</li>`).join('')}
+      </ul>
+    </div>` : ''
+
+  return `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:36px 24px;color:#1a1a1a;">
+
+  <div style="text-align:center;margin-bottom:28px;">
+    <img src="${APP_URL}/logo.png.png" alt="LocalBoost" style="height:48px;width:auto;" />
+  </div>
+
+  <p style="font-size:13px;color:#888;margin:0 0 20px;">
+    Rapport de visibilité Google — ${commerce_name}${city ? ', ' + city : ''}
+  </p>
+
+  <!-- Score -->
+  <div style="background:#f9fafb;border-radius:14px;padding:24px;margin-bottom:24px;text-align:center;">
+    <p style="font-size:13px;color:#888;margin:0 0 8px;">Score de visibilité Google</p>
+    <div style="display:inline-flex;align-items:baseline;gap:6px;">
+      <span style="font-size:64px;font-weight:800;color:${scoreColor};line-height:1;">${score}</span>
+      <span style="font-size:20px;color:#9ca3af;">/100</span>
+    </div>
+    <p style="font-weight:700;color:${scoreColor};margin:8px 0 4px;">${scoreLabel}</p>
+    <p style="font-size:13px;color:${diff >= 0 ? '#16a34a' : '#dc2626'};margin:0;">${diffText}</p>
+  </div>
+
+  ${gapsHtml}
+
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${APP_URL}/signup" style="background:#16a34a;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">
+      Corriger ces problèmes automatiquement →
+    </a>
+    <p style="font-size:12px;color:#9ca3af;margin:8px 0 0;">7 jours gratuits · Sans engagement · Annulation en 1 clic</p>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;">
+  <p style="color:#bbb;font-size:12px;margin:0;text-align:center;">
+    LocalBoost · contact@thelocalboost.fr ·
+    <a href="mailto:contact@thelocalboost.fr?subject=désabonnement" style="color:#bbb;">Se désabonner</a>
+  </p>
+
+</div>`
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { email, commerce_name, city } = await req.json()
+    const { email, commerce_name, city, score, gaps, sector } = await req.json()
 
-    // Sauvegarde en base
     await supabaseAdmin.from('waitlist').insert({
       email,
       commerce_name,
@@ -18,7 +76,11 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     })
 
-    // Email de confirmation via Brevo
+    const hasScore = typeof score === 'number'
+    const html = hasScore
+      ? buildReportEmail(commerce_name, city, score, gaps || [], sector || null)
+      : buildReportEmail(commerce_name, city, 0, [], null)
+
     await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -26,56 +88,10 @@ export async function POST(req: NextRequest) {
         'api-key': process.env.BREVO_API_KEY!,
       },
       body: JSON.stringify({
-        sender: {
-          name: 'LocalBoost',
-          email: process.env.BREVO_SENDER_EMAIL,
-        },
-        to: [{ email }],
-        subject: '🚀 Vous êtes sur la liste — LocalBoost',
-        htmlContent: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <div style="text-align: center; margin-bottom: 32px;">
-              <img src="https://localboost2.vercel.app/logo.png.png" alt="LocalBoost" style="height: 60px; width: auto;" />
-            </div>
-            
-            <h2 style="font-size: 20px; color: #111; margin-bottom: 16px;">
-              Vous êtes bien inscrit !
-            </h2>
-            
-            <p style="color: #555; line-height: 1.6; margin-bottom: 16px;">
-              Bonjour${commerce_name ? ` et bienvenue à <strong>${commerce_name}</strong>` : ''} 👋
-            </p>
-            
-            <p style="color: #555; line-height: 1.6; margin-bottom: 16px;">
-              Vous faites partie des premiers commerçants à rejoindre LocalBoost. 
-              Dès le lancement, vous recevrez votre <strong>plan d'amélioration Google Business personnalisé</strong>.
-            </p>
-
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 24px 0;">
-              <p style="color: #166534; font-weight: 600; margin: 0 0 8px;">Ce que vous allez recevoir au lancement :</p>
-              <ul style="color: #15803d; margin: 0; padding-left: 20px; line-height: 1.8;">
-                <li>Votre score de visibilité Google détaillé</li>
-                <li>Un post Google Business prêt à publier</li>
-                <li>7 jours d'essai gratuit complet</li>
-              </ul>
-            </div>
-
-            <p style="color: #555; line-height: 1.6; margin-bottom: 24px;">
-              Lancement prévu dans <strong>moins de 15 jours</strong>. On vous contacte en priorité.
-            </p>
-
-            <p style="color: #555; line-height: 1.6;">
-              À très bientôt,<br>
-              <strong>L'équipe LocalBoost</strong>
-            </p>
-
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 32px 0;">
-            <p style="color: #9ca3af; font-size: 12px; text-align: center;">
-              LocalBoost — Votre fiche Google Business gérée par l'IA<br>
-              Vous recevez cet email car vous vous êtes inscrit sur localboost2.vercel.app
-            </p>
-          </div>
-        `,
+        sender: { name: 'LocalBoost', email: 'contact@thelocalboost.fr' },
+        to: [{ email, name: commerce_name || '' }],
+        subject: `📊 Votre score de visibilité Google — ${commerce_name || 'votre commerce'}`,
+        htmlContent: html,
       }),
     })
 
