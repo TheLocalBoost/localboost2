@@ -7,10 +7,10 @@ const supabase = createClient(
 )
 
 const SUBJECT_VARIANTS = [
-  (secteur: string, ville: string) => `Votre fiche Google — ${secteur} à ${ville}`,
-  (_s: string, _v: string) => `Une remarque sur votre présence Google`,
-  (secteur: string, ville: string) => `${secteur} à ${ville} : votre visibilité locale`,
-  (_s: string, _v: string) => `Audit gratuit de votre fiche Google Business`,
+  (nom: string, _s: string, _v: string) => `${nom} — votre fiche Google`,
+  (nom: string, _s: string, _v: string) => `${nom} sur Google Maps`,
+  (_n: string, _s: string, _v: string) => `Votre visibilité locale`,
+  (_n: string, _s: string, _v: string) => `Une remarque sur votre fiche Google`,
 ]
 
 function getVariantIndex(nom: string): number {
@@ -22,42 +22,39 @@ function getVariantIndex(nom: string): number {
 }
 
 const HOOKS: Record<string, string> = {
-  boulangerie: `La plupart des boulangeries perdent des ventes le week-end faute d'être bien positionnées sur Google Maps le matin.`,
-  restaurant:  `73 % des gens consultent Google avant de choisir un restaurant. Une fiche incomplète redirige ces clients vers la concurrence.`,
-  coiffeur:    `De nombreux salons de coiffure voient leurs concurrents directs apparaître avant eux sur Google Maps — même lorsqu'ils sont moins bien notés.`,
-  pharmacie:   `Des horaires incorrects ou un numéro manquant sur Google peuvent décourager des patients en urgence de vous contacter.`,
-  plombier:    `En cas d'urgence, les clients appellent le premier plombier visible sur Google. La vitesse de chargement de votre fiche compte autant que votre réputation.`,
-  electricien: `Les interventions urgentes se décident en quelques secondes sur Google. Une fiche bien optimisée peut faire toute la différence.`,
-  garage:      `8 automobilistes sur 10 recherchent un garage sur Google avant d'appeler. Une fiche incomplète, c'est autant d'appels manqués.`,
-  medecin:     `Les patients comparent les praticiens en ligne avant de prendre rendez-vous. Votre fiche Google est souvent leur premier contact avec vous.`,
-  dentiste:    `Un cabinet dentaire avec des avis récents et des photos à jour reçoit significativement plus de nouveaux patients en ligne.`,
-  hotel:       `Sur Google, une différence d'une fraction de point dans les avis peut représenter des dizaines de réservations en moins chaque mois.`,
-  fleuriste:   `Pour les occasions importantes — mariage, anniversaire, deuil — les clients cherchent un fleuriste en urgence sur Google. Votre disponibilité en ligne est déterminante.`,
-  opticien:    `Une fiche Google complète et régulièrement mise à jour peut représenter une part significative des nouveaux clients d'un opticien.`,
+  boulangerie: `J'ai regardé votre fiche Google et j'ai remarqué plusieurs leviers simples pour améliorer sa visibilité locale — notamment sur les horaires du week-end et la régularité des publications.`,
+  restaurant:  `J'ai regardé votre fiche Google et j'ai remarqué quelques points qui mériteraient d'être optimisés pour mieux apparaître quand les gens cherchent un restaurant dans votre secteur.`,
+  coiffeur:    `J'ai regardé votre fiche Google et j'ai noté des leviers concrets pour améliorer votre positionnement local — en particulier sur la fréquence des publications et la gestion des avis.`,
+  pharmacie:   `J'ai regardé votre fiche Google et j'ai identifié quelques points d'amélioration simples, notamment sur les horaires et les informations de contact affichées.`,
+  plombier:    `J'ai regardé votre fiche Google et j'ai repéré plusieurs éléments qui pourraient être optimisés pour apparaître plus facilement dans les recherches locales urgentes.`,
+  electricien: `J'ai regardé votre fiche Google et j'ai remarqué des marges d'amélioration concrètes sur votre visibilité dans les recherches locales.`,
+  garage:      `J'ai regardé votre fiche Google et j'ai identifié quelques leviers simples pour améliorer votre présence quand les automobilistes recherchent un garage dans votre zone.`,
+  medecin:     `J'ai regardé votre fiche Google et j'ai noté des points d'amélioration sur votre visibilité auprès des patients qui cherchent un praticien en ligne.`,
+  dentiste:    `J'ai regardé votre fiche Google et j'ai remarqué des leviers concrets pour améliorer votre présence auprès des patients qui comparent les cabinets en ligne.`,
+  hotel:       `J'ai regardé votre fiche Google et j'ai identifié quelques optimisations simples qui pourraient améliorer votre positionnement dans les recherches locales.`,
+  fleuriste:   `J'ai regardé votre fiche Google et j'ai repéré plusieurs améliorations possibles pour mieux apparaître lors des recherches de dernière minute.`,
+  opticien:    `J'ai regardé votre fiche Google et j'ai noté des pistes concrètes pour renforcer votre visibilité locale auprès de nouveaux clients.`,
 }
 
 function buildEmail(nom: string, ville: string, secteur: string): string {
-  const hook = HOOKS[secteur] ?? `La plupart des commerces locaux laissent échapper des clients faute de visibilité sur Google.`
-  const url = `https://localboost2.vercel.app?utm_source=outreach&utm_medium=email&utm_campaign=cold&secteur=${secteur}&ville=${encodeURIComponent(ville)}`
-  const villeLabel = ville && ville !== 'France' ? ` à ${ville}` : ''
+  const hook = HOOKS[secteur] ?? `J'ai regardé votre fiche Google et j'ai remarqué plusieurs leviers simples pour améliorer sa visibilité locale.`
+  const villeLabel = ville && ville !== 'France' ? ville : 'votre ville'
+  const ctaUrl = `https://thelocalboost.fr?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(villeLabel)}&utm_source=outreach&utm_medium=email&utm_campaign=cold`
+  const ctaText = `Voir ce que voit un client quand il cherche ${secteur} à ${villeLabel} →`
 
   return `<div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px; color: #1a1a1a; font-size: 15px; line-height: 1.75;">
   <p style="margin: 0 0 16px;">Bonjour,</p>
 
   <p style="margin: 0 0 16px;">
-    Je regardais les fiches Google Maps pour les ${secteur}s${villeLabel} et je suis tombé sur votre établissement : <strong>${nom}</strong>.
+    Je suis tombé sur votre établissement <strong>${nom}</strong> en cherchant ${secteur} à ${villeLabel} sur Google Maps.
   </p>
 
-  <p style="margin: 0 0 16px; padding: 14px 18px; background: #f9fafb; border-left: 3px solid #16a34a;">
+  <p style="margin: 0 0 24px; padding: 14px 18px; background: #f9fafb; border-left: 3px solid #16a34a; color: #374151;">
     ${hook}
   </p>
 
-  <p style="margin: 0 0 16px;">
-    J'ai développé <strong>LocalBoost</strong>, un outil qui analyse votre fiche Google en 30 secondes et identifie les points à améliorer : avis, photos, horaires, positionnement local. Gratuit, sans inscription.
-  </p>
-
   <p style="margin: 0 0 24px;">
-    Voir votre diagnostic : <a href="${url}" style="color: #16a34a;">${url}</a>
+    <a href="${ctaUrl}" style="color: #16a34a; font-weight: 600;">${ctaText}</a>
   </p>
 
   <p style="margin: 0 0 4px;">Brian<br>
@@ -82,6 +79,7 @@ export async function POST(req: NextRequest) {
     .from('leads')
     .select('id, nom, email, secteur, ville')
     .eq('sent', false)
+    .neq('email_status', 'invalid')
     .limit(limit)
 
   if (error || !leads?.length) {
@@ -97,7 +95,7 @@ export async function POST(req: NextRequest) {
     const ville = lead.ville || ''
 
     const variantIndex = getVariantIndex(nom)
-    const subject = SUBJECT_VARIANTS[variantIndex](lead.secteur || 'commerce', ville || 'votre ville')
+    const subject = SUBJECT_VARIANTS[variantIndex](nom, lead.secteur || 'commerce', ville || 'votre ville')
 
     try {
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {

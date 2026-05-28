@@ -84,7 +84,7 @@ function buildEmail(profile: any, post: string, score: number, previousScore: nu
     scoreDiff < 0 ? `<span style="color:#dc2626;font-size:13px;">▼ ${scoreDiff} pts cette semaine</span>` :
     `<span style="color:#888;font-size:13px;">= stable cette semaine</span>`
 
-  const dashboardUrl = 'https://localboost2.vercel.app/dashboard'
+  const dashboardUrl = 'https://thelocalboost.fr/dashboard'
   const publishUrl = 'https://business.google.com/posts'
 
   return `

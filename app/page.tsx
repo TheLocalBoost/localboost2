@@ -1,29 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function LandingPage() {
   const [commerceName, setCommerceName] = useState('')
   const [city, setCity] = useState('')
-  const [email, setEmail] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
   const [result, setResult] = useState<any>(null)
-  const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success'>('idle')
-  const [inscribed, setInscribed] = useState(0)
+  const [captureEmail, setCaptureEmail] = useState('')
+  const [captureStatus, setCaptureStatus] = useState<'idle' | 'loading' | 'done'>('idle')
 
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const LOADING_STEPS = [
+    'Analyse de votre fiche Google...',
+    'Comparaison avec les fiches similaires...',
+    'Calcul du score de visibilité...',
+  ]
+
+  // Cycle through loading steps while analyzing
+  useEffect(() => {
+    if (!analyzing) { setLoadingStep(0); return }
+    const interval = setInterval(() => setLoadingStep(s => (s + 1) % LOADING_STEPS.length), 2000)
+    return () => clearInterval(interval)
+  }, [analyzing])
+
+  // Pre-fill from email link (?nom=...&ville=...) and auto-run
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const nom   = params.get('nom')
+    const ville = params.get('ville')
+    if (nom)   setCommerceName(nom)
+    if (ville) setCity(ville)
+    if (nom && ville) {
+      runAnalysis(nom, ville)
+    }
+  }, [])
+
+  const runAnalysis = async (name: string, ville: string) => {
     setAnalyzing(true)
     setResult(null)
     try {
       const res = await fetch('/api/analyze-public', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ commerce_name: commerceName, city }),
+        body: JSON.stringify({ commerce_name: name, city: ville }),
       })
       const data = await res.json()
       setResult(data)
-      document.getElementById('score-result')?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => document.getElementById('score-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch {
       setResult({ error: true })
     } finally {
@@ -31,20 +55,9 @@ export default function LandingPage() {
     }
   }
 
-  const handleWaitlist = async (e: React.FormEvent) => {
+  const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault()
-    setWaitlistStatus('loading')
-    try {
-      await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, commerce_name: commerceName, city }),
-      })
-      setWaitlistStatus('success')
-      setInscribed(prev => prev + 1)
-    } catch {
-      setWaitlistStatus('success')
-    }
+    runAnalysis(commerceName, city)
   }
 
   const getScoreColor = (s: number) => {
@@ -78,8 +91,9 @@ export default function LandingPage() {
         <div className="flex items-center gap-2">
           <img src="/logo.png.png" alt="LocalBoost" className="h-8 w-auto" />
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-4 py-1.5 text-sm font-medium text-amber-700">
-          🔥 Lancement bientôt
+        <div className="flex items-center gap-3">
+          <a href="/login" className="text-sm text-gray-600 hover:text-gray-900">Se connecter</a>
+          <a href="/signup" className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 transition">Essai gratuit →</a>
         </div>
       </nav>
 
@@ -155,7 +169,7 @@ export default function LandingPage() {
               disabled={analyzing}
               className="w-full rounded-xl bg-green-600 py-4 text-base font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
             >
-              {analyzing ? '🔍 Analyse en cours...' : '🔍 Calculer mon score gratuitement'}
+              {analyzing ? `🔍 ${LOADING_STEPS[loadingStep]}` : '🔍 Calculer mon score gratuitement'}
             </button>
           </form>
 
@@ -163,57 +177,110 @@ export default function LandingPage() {
           <div id="score-result">
             {result && !result.error && (() => {
               const { label, message, color } = getScoreMessage(result.score)
+              const sector  = result.sector  || { label: 'Commerce local', average: 60 }
+              const gaps    = result.gaps    || []
+              const diff    = result.score - sector.average
               return (
                 <div className={`rounded-2xl border-2 p-6 text-left ${color}`}>
-                  <div className="flex items-end gap-3 mb-2">
-                    <span className={`text-7xl font-extrabold ${getScoreColor(result.score)}`}>{result.score}</span>
-                    <span className="text-gray-400 text-2xl mb-3">/100</span>
+                  {/* Score + benchmark */}
+                  <div className="flex items-end justify-between mb-2">
+                    <div className="flex items-end gap-3">
+                      <span className={`text-7xl font-extrabold ${getScoreColor(result.score)}`}>{result.score}</span>
+                      <span className="text-gray-400 text-2xl mb-3">/100</span>
+                    </div>
+                    <div className="text-right mb-3">
+                      <p className="text-xs text-gray-400">Moyenne {sector.label}</p>
+                      <p className="text-lg font-bold text-gray-500">{sector.average}/100</p>
+                      <p className={`text-xs font-semibold ${diff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {diff >= 0 ? `+${diff} pts au-dessus` : `${diff} pts en dessous`}
+                      </p>
+                    </div>
                   </div>
-                  <p className={`font-semibold text-lg mb-2 ${getScoreColor(result.score)}`}>{label}</p>
-                  <p className="text-sm text-gray-600 mb-6">{message}</p>
 
-                  <div className="w-full bg-white rounded-full h-3 mb-6">
+                  <p className={`font-semibold text-lg mb-2 ${getScoreColor(result.score)}`}>{label}</p>
+                  <p className="text-sm text-gray-600 mb-4">{message}</p>
+
+                  <div className="w-full bg-white rounded-full h-3 mb-5">
                     <div
                       className={`h-3 rounded-full transition-all ${result.score >= 70 ? 'bg-green-500' : result.score >= 40 ? 'bg-amber-500' : 'bg-red-500'}`}
                       style={{ width: `${result.score}%` }}
                     />
                   </div>
 
-                  {waitlistStatus === 'success' ? (
-                    <div className="rounded-xl bg-green-600 p-4 text-center">
-                      <p className="text-white font-semibold text-lg">🎉 Vous êtes inscrit !</p>
-                      <p className="text-green-100 text-sm mt-1">On vous contacte dès le lancement.</p>
+                  {/* Ce qui manque */}
+                  {gaps.length > 0 && (
+                    <div className="bg-white rounded-xl p-4 mb-5">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ce qui pénalise votre fiche</p>
+                      <ul className="space-y-2">
+                        {gaps.map((gap: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-red-400 mt-0.5 shrink-0">✗</span>
+                            {gap}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  ) : (
-                    <form onSubmit={handleWaitlist} className="space-y-3">
-                      <p className="text-sm font-semibold text-gray-800">
-                        Recevez votre plan d'amélioration complet au lancement — gratuit :
-                      </p>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="votre@email.com"
-                        required
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-green-500 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        disabled={waitlistStatus === 'loading'}
-                        className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 transition"
-                      >
-                        {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Recevoir mon plan d\'amélioration au lancement →'}
-                      </button>
-                      <p className="text-xs text-gray-400 text-center">Gratuit. Aucun spam. Désinscription en un clic.</p>
-                    </form>
                   )}
+
+                  <a
+                    href="/signup"
+                    className="block w-full rounded-xl bg-green-600 py-4 text-center text-sm font-semibold text-white hover:bg-green-700 transition"
+                  >
+                    Corriger ces problèmes automatiquement →
+                  </a>
+                  <p className="text-xs text-gray-400 text-center mt-2">7 jours gratuits · Sans engagement · Annulation en 1 clic</p>
+
+                  {/* Capture email discrète */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    {captureStatus === 'done' ? (
+                      <p className="text-xs text-green-600 text-center">✓ Rapport envoyé par email.</p>
+                    ) : captureStatus === 'loading' ? (
+                      <p className="text-xs text-gray-400 text-center">Envoi...</p>
+                    ) : (
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault()
+                          setCaptureStatus('loading')
+                          try {
+                            await fetch('/api/waitlist', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ email: captureEmail, commerce_name: commerceName, city }),
+                            })
+                          } finally {
+                            setCaptureStatus('done')
+                          }
+                        }}
+                        className="flex gap-2"
+                      >
+                        <input
+                          type="email"
+                          value={captureEmail}
+                          onChange={e => setCaptureEmail(e.target.value)}
+                          placeholder="Recevoir une copie du rapport par email"
+                          required
+                          className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs focus:border-green-500 focus:outline-none"
+                        />
+                        <button type="submit" className="rounded-xl bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 transition">
+                          Envoyer
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               )
             })()}
 
             {result?.error && (
-              <div className="rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-600">
-                Commerce non trouvé sur Google Maps. Vérifiez le nom et la ville.
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-5 text-left">
+                <p className="font-semibold text-amber-800 mb-1">Impossible d'identifier votre établissement automatiquement.</p>
+                <p className="text-sm text-amber-700 mb-3">Vérifiez que le nom correspond exactement à celui sur Google Maps, puis relancez l'analyse.</p>
+                <button
+                  onClick={() => { setResult(null); document.getElementById('score-form')?.scrollIntoView({ behavior: 'smooth' }) }}
+                  className="text-sm font-semibold text-amber-800 underline"
+                >
+                  Modifier la recherche →
+                </button>
               </div>
             )}
           </div>
@@ -348,12 +415,12 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <button
-              onClick={() => document.getElementById('waitlist-final')?.scrollIntoView({ behavior: 'smooth' })}
-              className="w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition"
+            <a
+              href="/signup"
+              className="block w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition text-center"
             >
-              Rejoindre la liste d'attente →
-            </button>
+              Commencer 7 jours gratuits →
+            </a>
           </div>
         </div>
       </div>
@@ -386,37 +453,18 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Waitlist finale */}
-      <div id="waitlist-final" className="py-20 px-6 text-center">
+      {/* CTA finale */}
+      <div className="py-20 px-6 text-center">
         <div className="max-w-md mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Soyez parmi les premiers</h2>
-          <p className="text-gray-500 mb-8">Lancement dans moins de 15 jours. Recevez votre accès en priorité.</p>
-          {waitlistStatus === 'success' ? (
-            <div className="rounded-2xl bg-green-50 border border-green-200 p-8">
-              <p className="text-3xl mb-3">🎉</p>
-              <p className="font-semibold text-green-800 text-lg">Vous êtes inscrit !</p>
-              <p className="text-sm text-green-600 mt-2">On vous contacte dès le lancement.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleWaitlist} className="space-y-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              />
-              <button
-                type="submit"
-                disabled={waitlistStatus === 'loading'}
-                className="w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
-              >
-                {waitlistStatus === 'loading' ? 'Inscription...' : '🚀 Recevoir mon accès en priorité →'}
-              </button>
-              <p className="text-xs text-gray-400">Gratuit. Aucun spam. Désinscription en un clic.</p>
-            </form>
-          )}
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Prêt à être plus visible sur Google ?</h2>
+          <p className="text-gray-500 mb-8">7 jours gratuits, sans engagement. Résiliable en un clic.</p>
+          <a
+            href="/signup"
+            className="block w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition"
+          >
+            Commencer gratuitement →
+          </a>
+          <p className="text-xs text-gray-400 mt-3">Carte requise. Aucun débit pendant l'essai.</p>
         </div>
       </div>
 
@@ -427,7 +475,12 @@ export default function LandingPage() {
             <span>🚀</span>
             <span className="font-bold text-gray-900">LocalBoost</span>
           </div>
-          <p className="text-sm text-gray-400">© 2025 LocalBoost — Tous droits réservés</p>
+          <div className="flex items-center gap-6">
+            <a href="/mentions-legales" className="text-sm text-gray-400 hover:text-gray-600">Mentions légales</a>
+            <a href="/cgv" className="text-sm text-gray-400 hover:text-gray-600">CGV</a>
+            <a href="mailto:contact@thelocalboost.fr" className="text-sm text-gray-400 hover:text-gray-600">Contact</a>
+          </div>
+          <p className="text-sm text-gray-400">© 2026 TheLocalBoost — SIREN 105 578 884</p>
         </div>
       </footer>
     </div>

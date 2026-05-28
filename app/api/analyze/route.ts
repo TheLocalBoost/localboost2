@@ -1,5 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
+
+const supabaseAdmin = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!
+const DAILY_LIMIT = 350
+
+function today(): string {
+  return new Date().toISOString().split('T')[0]
+}
+
+async function getDailyCount(): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from('api_quota')
+    .select('count')
+    .eq('date', today())
+    .eq('key_index', 0)
+    .single()
+  return data?.count || 0
+}
+
+async function incrementQuota() {
+  await supabaseAdmin.rpc('increment_api_quota', { p_date: today(), p_key_index: 0 })
+}
+
+function matchesName(resultName: string, searchName: string): boolean {
+  const words = searchName.toLowerCase().split(/\s+/).filter(w => w.length > 2)
+  const target = resultName.toLowerCase()
+  return words.every(w => target.includes(w))
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,27 +48,34 @@ export async function POST(req: NextRequest) {
 
     if (!profile) return NextResponse.json({ error: 'Profil manquant' }, { status: 400 })
 
+    // Quota journalier partagé avec la landing page
+    const dailyCount = await getDailyCount()
+    if (dailyCount >= DAILY_LIMIT) {
+      return NextResponse.json({ error: 'Quota journalier atteint. Revenez demain.' }, { status: 429 })
+    }
+
     const query = `${profile.commerce_name} ${profile.city}`
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&language=fr&region=fr&key=${GOOGLE_API_KEY}`
+    const res = await fetch(url)
+    const data = await res.json()
+    await incrementQuota()
 
-    const response = await fetch(
-      `https://serpapi.com/search.json?engine=google_maps&q=${encodeURIComponent(query)}&api_key=${process.env.SERPAPI_KEY}`
-    )
-    const data = await response.json()
+    if (data.status === 'REQUEST_DENIED') {
+      return NextResponse.json({ error: 'Google API refusée' }, { status: 500 })
+    }
 
-    const results = data.local_results || []
-    const position = results.findIndex((r: any) =>
-      r.title?.toLowerCase().includes(profile.commerce_name?.toLowerCase())
-    )
+    const results = data.results || []
+    const position = results.findIndex((r: any) => matchesName(r.name || '', profile.commerce_name))
 
-    const topCompetitors = results.slice(0, 3).map((r: any) => ({
-      name: r.title,
+    const topCompetitors = results.slice(0, 3).map((r: any, i: number) => ({
+      name: r.name,
       rating: r.rating,
-      reviews: r.reviews,
-      position: results.indexOf(r) + 1,
+      reviews: r.user_ratings_total || 0,
+      position: i + 1,
     }))
 
-    // Sauvegarder le place_id pour la surveillance des avis
-    const ownResult = results[position] || results[0]
+    // Sauvegarde du place_id pour la surveillance des avis
+    const ownResult = position >= 0 ? results[position] : results[0]
     if (ownResult?.place_id) {
       await supabase
         .from('merchant_profiles')
@@ -43,16 +83,15 @@ export async function POST(req: NextRequest) {
         .eq('id', user.id)
     }
 
-    // Score sur 100
     let score = 50
-    if (position === 0) score = 95
-    else if (position === 1) score = 80
-    else if (position === 2) score = 65
-    else if (position === -1) score = 30 // pas trouvé
+    if (position === 0)       score = 95
+    else if (position === 1)  score = 80
+    else if (position === 2)  score = 65
+    else if (position === -1) score = 30
 
-    const ownListing = results[position] || {}
-    if (ownListing.rating >= 4.5) score += 5
-    if (ownListing.reviews >= 50) score += 5
+    const own = results[position] || {}
+    if ((own.rating || 0) >= 4.5)               score += 5
+    if ((own.user_ratings_total || 0) >= 50)    score += 5
     if (score > 100) score = 100
 
     await supabase.from('weekly_reports').insert({
@@ -67,10 +106,10 @@ export async function POST(req: NextRequest) {
       position: position + 1,
       competitors: topCompetitors,
       ownListing: {
-        name: ownListing.title,
-        rating: ownListing.rating,
-        reviews: ownListing.reviews,
-      }
+        name: own.name,
+        rating: own.rating,
+        reviews: own.user_ratings_total || 0,
+      },
     })
   } catch (err) {
     console.error('Analyze error:', err)
