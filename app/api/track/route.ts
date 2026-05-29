@@ -16,12 +16,12 @@ export async function GET(req: NextRequest) {
 
   // Enregistrer le clic sans bloquer la redirection
   if (leadId && variantId !== null) {
-    supabase.from('email_clicks').insert({
+    void supabase.from('email_clicks').insert({
       lead_id:    Number(leadId),
       variant_id: Number(variantId),
       clicked_at: new Date().toISOString(),
-    }).then(() => {}).catch(() => {})
+    })
   }
 
-  return NextResponse.redirect(decodeURIComponent(dest), { status: 302 })
+  return NextResponse.redirect(decodeURIComponent(dest))
 }
