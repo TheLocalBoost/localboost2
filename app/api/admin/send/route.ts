@@ -164,17 +164,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { limit = 50 } = await req.json()
+  const { limit = 50, secteur, testEmail } = await req.json()
 
-  const [{ data: leads, error }, stats] = await Promise.all([
-    supabase
-      .from('leads')
-      .select('id, nom, email, secteur, ville')
-      .eq('sent', false)
-      .neq('email_status', 'invalid')
-      .limit(limit),
-    loadStats(),
-  ])
+  let query = supabase
+    .from('leads')
+    .select('id, nom, email, secteur, ville')
+    .eq('sent', false)
+    .neq('email_status', 'invalid')
+    .limit(limit)
+
+  if (secteur) query = query.eq('secteur', secteur)
+
+  const [{ data: leads, error }, stats] = await Promise.all([query, loadStats()])
+
+  // Mode test : envoie un seul email de démo à l'adresse fournie
+  if (testEmail && leads?.[0]) {
+    const lead = leads[0]
+    const variantId = await pickVariant(stats)
+    const { subject, hook } = getVariant(variantId)
+    const nom = lead.nom || 'votre établissement'
+    const ville = lead.ville || ''
+    const secteurLead = lead.secteur || 'commerce'
+    const html = buildEmail(nom, ville, secteurLead, lead.id, variantId, hook(nom, secteurLead, ville || 'votre ville'))
+    await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY! },
+      body: JSON.stringify({
+        sender: { name: 'Brian de LocalBoost', email: 'contact@thelocalboost.fr' },
+        to: [{ email: testEmail }],
+        subject: `[TEST] ${subject(nom, secteurLead, ville || 'votre ville')}`,
+        htmlContent: html,
+      }),
+    })
+    return NextResponse.json({ sent: 0, test: true, preview: { nom, secteur: secteurLead, variantId } })
+  }
 
   if (error || !leads?.length) {
     return NextResponse.json({ sent: 0, message: 'Aucun lead à envoyer' })
