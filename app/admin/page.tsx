@@ -29,10 +29,14 @@ export default function AdminPage() {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
   const [sending, setSending]   = useState(false)
+  const [sendProgress, setSendProgress] = useState(0)
   const [limit, setLimit]       = useState(50)
   const [secteurFilter, setSecteurFilter] = useState('')
   const [testEmail, setTestEmail] = useState('')
   const [sendResult, setSendResult] = useState<any>(null)
+  const [preview, setPreview]   = useState<{ available: number; sectors: [string,number][]; cities: [string,number][] } | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [cronRunning, setCronRunning] = useState(false)
   const [cronResult, setCronResult]   = useState<any>(null)
   const [reviewsRunning, setReviewsRunning] = useState(false)
@@ -45,14 +49,29 @@ export default function AdminPage() {
     setStats(await res.json()); setAuthed(true); setLoading(false)
   }
 
+  async function loadPreview() {
+    setPreviewLoading(true); setPreview(null); setSendResult(null)
+    const res = await fetch('/api/admin/preview', {
+      method: 'POST',
+      headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit, secteur: secteurFilter || undefined }),
+    })
+    setPreview(await res.json()); setPreviewLoading(false); setShowConfirm(true)
+  }
+
   async function sendBatch() {
-    setSending(true); setSendResult(null)
+    setShowConfirm(false); setSending(true); setSendResult(null); setSendProgress(0)
+    // Animation de progression simulée pendant l'envoi
+    const interval = setInterval(() => setSendProgress(p => Math.min(p + 2, 90)), 300)
     const res = await fetch('/api/admin/send', {
       method: 'POST',
       headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
       body: JSON.stringify({ limit, secteur: secteurFilter || undefined, testEmail: testEmail || undefined }),
     })
-    setSendResult(await res.json()); setSending(false); fetchStats()
+    clearInterval(interval); setSendProgress(100)
+    setSendResult(await res.json()); setSending(false); setPreview(null)
+    setTimeout(() => setSendProgress(0), 2000)
+    fetchStats()
   }
 
   async function triggerCron() {
@@ -202,6 +221,56 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Modale de confirmation */}
+        {showConfirm && preview && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Confirmer l'envoi</h3>
+              <p className="text-sm text-gray-500 mb-5">Vérifiez les détails avant de lancer.</p>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Emails à envoyer</span>
+                  <span className="font-bold text-gray-900">{preview.available.toLocaleString()}</span>
+                </div>
+                {secteurFilter && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Secteur ciblé</span>
+                    <span className="font-semibold capitalize text-blue-600">{secteurFilter}</span>
+                  </div>
+                )}
+                {preview.sectors.length > 0 && (
+                  <div className="text-sm">
+                    <span className="text-gray-600">Secteurs : </span>
+                    <span className="text-gray-700">{preview.sectors.map(([s, c]) => `${s} (${c})`).join(', ')}</span>
+                  </div>
+                )}
+                {preview.cities.length > 0 && (
+                  <div className="text-sm">
+                    <span className="text-gray-600">Villes : </span>
+                    <span className="text-gray-700">{preview.cities.map(([c]) => c).join(', ')}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowConfirm(false); setPreview(null) }}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={sendBatch}
+                  className="flex-1 py-2.5 rounded-xl bg-green-600 text-sm font-semibold text-white hover:bg-green-700"
+                >
+                  Envoyer {preview.available} emails →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Envoyer + Secteurs */}
         <div className="grid sm:grid-cols-2 gap-4 mb-6">
           {/* Batch */}
@@ -212,7 +281,7 @@ export default function AdminPage() {
                 <label className="text-xs text-gray-500 w-20">Secteur</label>
                 <select
                   value={secteurFilter}
-                  onChange={e => setSecteurFilter(e.target.value)}
+                  onChange={e => { setSecteurFilter(e.target.value); setPreview(null); setSendResult(null) }}
                   className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Tous les secteurs</option>
@@ -224,7 +293,8 @@ export default function AdminPage() {
               <div className="flex items-center gap-2">
                 <label className="text-xs text-gray-500 w-20">Quantité</label>
                 <input
-                  type="number" value={limit} onChange={e => setLimit(Number(e.target.value))}
+                  type="number" value={limit}
+                  onChange={e => { setLimit(Number(e.target.value)); setPreview(null); setSendResult(null) }}
                   min={1} max={500}
                   className="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
@@ -238,12 +308,36 @@ export default function AdminPage() {
                 />
               </div>
             </div>
-            <button
-              onClick={sendBatch} disabled={sending}
-              className={`w-full py-2.5 rounded-xl font-semibold text-sm text-white transition disabled:opacity-50 ${testEmail ? 'bg-gray-700 hover:bg-gray-800' : 'bg-green-600 hover:bg-green-700'}`}
-            >
-              {sending ? 'En cours...' : testEmail ? `Envoyer un aperçu →` : `Envoyer ${limit} emails →`}
-            </button>
+
+            {/* Barre de progression */}
+            {sending && (
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>Envoi en cours...</span>
+                  <span>{sendProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="bg-green-500 h-2 rounded-full transition-all duration-300" style={{ width: `${sendProgress}%` }} />
+                </div>
+              </div>
+            )}
+
+            {testEmail ? (
+              <button
+                onClick={sendBatch} disabled={sending}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-gray-700 hover:bg-gray-800 disabled:opacity-50"
+              >
+                {sending ? 'Envoi...' : 'Envoyer un aperçu →'}
+              </button>
+            ) : (
+              <button
+                onClick={loadPreview} disabled={sending || previewLoading}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+              >
+                {previewLoading ? 'Vérification...' : sending ? 'Envoi en cours...' : `Préparer l'envoi de ${limit} emails →`}
+              </button>
+            )}
+
             {sendResult && (
               <div className={`mt-3 p-3 rounded-lg text-sm ${sendResult.errors?.length ? 'bg-orange-50 text-orange-700' : 'bg-green-50 text-green-700'}`}>
                 {sendResult.test
