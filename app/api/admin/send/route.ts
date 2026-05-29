@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const APP_URL = 'https://www.thelocalboost.fr'
+const APP_URL = 'https://thelocalboost.fr'
 
 // ── 100 variantes : 10 sujets × 10 accroches ────────────────────────────────
 

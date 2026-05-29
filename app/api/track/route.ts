@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const variantId = searchParams.get('vid')
   const dest      = searchParams.get('url')
 
-  if (!dest) return NextResponse.redirect('https://www.thelocalboost.fr')
+  if (!dest) return NextResponse.redirect('https://thelocalboost.fr')
 
   // Enregistrer le clic sans bloquer la redirection
   if (leadId && variantId !== null) {

@@ -6,7 +6,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const APP_URL = 'https://www.thelocalboost.fr'
+const APP_URL = 'https://thelocalboost.fr'
 
 function buildReportEmail(commerce_name: string, city: string, score: number, gaps: string[], sector: { label: string; average: number } | null) {
   const scoreColor = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
