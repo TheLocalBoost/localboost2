@@ -62,15 +62,41 @@ export default function AdminPage() {
 
   async function sendBatch() {
     setShowConfirm(false); setSending(true); setSendResult(null); setSendProgress(0)
-    // Animation de progression simulée pendant l'envoi
-    const interval = setInterval(() => setSendProgress(p => Math.min(p + 2, 90)), 300)
-    const res = await fetch('/api/admin/send', {
-      method: 'POST',
-      headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit, secteur: secteurFilter || undefined, testEmail: testEmail || undefined }),
-    })
-    clearInterval(interval); setSendProgress(100)
-    setSendResult(await res.json()); setSending(false); setPreview(null)
+
+    // Si test email : un seul appel
+    if (testEmail) {
+      const res = await fetch('/api/admin/send', {
+        method: 'POST',
+        headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 1, secteur: secteurFilter || undefined, testEmail }),
+      })
+      setSendResult(await res.json()); setSending(false); setSendProgress(100)
+      setTimeout(() => setSendProgress(0), 2000)
+      return
+    }
+
+    // Campagne réelle : batches de 5 pour rester sous le timeout Vercel Hobby (10s)
+    const CHUNK = 5
+    let totalSent = 0
+    let allErrors: string[] = []
+    const remaining = limit
+
+    for (let sent = 0; sent < remaining; sent += CHUNK) {
+      const chunkSize = Math.min(CHUNK, remaining - sent)
+      const res = await fetch('/api/admin/send', {
+        method: 'POST',
+        headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: chunkSize, secteur: secteurFilter || undefined }),
+      })
+      const data = await res.json()
+      if (data.sent === 0 && !data.errors) break // plus de leads
+      totalSent += data.sent ?? 0
+      if (data.errors) allErrors = [...allErrors, ...data.errors]
+      setSendProgress(Math.round(((sent + chunkSize) / remaining) * 100))
+    }
+
+    setSendResult({ sent: totalSent, errors: allErrors.length ? allErrors : undefined })
+    setSending(false); setSendProgress(100)
     setTimeout(() => setSendProgress(0), 2000)
     fetchStats()
   }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+export const maxDuration = 300 // Pro/Enterprise uniquement — ignoré sur Hobby (max 10s)
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -323,7 +325,6 @@ export async function POST(req: NextRequest) {
 
       variantCounts[variantId] = (variantCounts[variantId] ?? 0) + 1
       sent++
-      await new Promise(r => setTimeout(r, 200))
     } catch (e: any) {
       errors.push(`${lead.email}: ${e.message}`)
     }
