@@ -12,15 +12,32 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 async function fetchReviews(commerceName: string, city: string): Promise<any[]> {
-  const query = `${commerceName} ${city}`
-  const res = await fetch(
-    `https://api.app.outscraper.com/maps/reviews-v3?query=${encodeURIComponent(query)}&reviewsLimit=10&language=fr&sort=newest`,
-    { headers: { 'X-API-KEY': process.env.OUTSCRAPER_API_KEY! } }
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY
+  if (!apiKey) return []
+
+  // 1. Cherche le place_id via Places Text Search
+  const searchRes = await fetch(
+    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(`${commerceName} ${city}`)}&inputtype=textquery&fields=place_id&key=${apiKey}`
   )
-  const data = await res.json()
-  // Outscraper retourne un tableau de résultats, chacun avec reviews
-  const place = data?.data?.[0]
-  return place?.reviews || []
+  const searchData = await searchRes.json()
+  const placeId = searchData?.candidates?.[0]?.place_id
+  if (!placeId) return []
+
+  // 2. Récupère les détails + avis (Places API retourne jusqu'à 5 avis récents)
+  const detailRes = await fetch(
+    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&language=fr&key=${apiKey}`
+  )
+  const detailData = await detailRes.json()
+  const reviews = detailData?.result?.reviews || []
+
+  // Normalise le format pour correspondre à celui qu'on utilisait avec Outscraper
+  return reviews.map((r: any) => ({
+    reviewId:  `${placeId}_${r.time}`,
+    name:      r.author_name,
+    rating:    r.rating,
+    text:      r.text,
+    date:      new Date(r.time * 1000).toISOString(),
+  }))
 }
 
 async function generateResponses(profile: any, reviewText: string, rating: number): Promise<string[]> {
@@ -195,13 +212,12 @@ export async function GET(req: NextRequest) {
       results.checked++
 
       for (const review of reviews) {
-        // Normalisation du format Outscraper
-        const reviewId = review.reviewId || review.review_id || `${review.date}_${review.name}`
+        const reviewId = review.reviewId
         const reviewData = {
-          author: review.name        || review.user?.name || 'Anonyme',
-          rating: review.rating      || 0,
-          text:   review.text        || review.snippet    || '',
-          date:   review.publishedAtDate || review.date   || '',
+          author: review.name   || 'Anonyme',
+          rating: review.rating || 0,
+          text:   review.text   || '',
+          date:   review.date   || '',
         }
 
         // Vérifier si cet avis est déjà connu
