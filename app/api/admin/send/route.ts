@@ -15,112 +15,105 @@ type Fn = (nom: string, secteur: string, ville: string) => string
 interface Variant { subject: Fn; hook: Fn; cta: Fn }
 
 const VARIANTS: Variant[] = [
-  // 0-4 : Observation
   {
-    subject: () => `Juste une remarque sur votre fiche Google`,
-    hook: (n, s, v) => `J'analyse régulièrement des fiches Google de commerçants locaux. La vôtre a retenu mon attention — dans le bon sens, d'abord. Mais elle présente aussi deux lacunes que j'aurais du mal à ne pas mentionner.`,
-    cta: (n) => `Voir mes remarques sur ${n} →`,
+    subject: (n, s, v) => `${n} — quelques pistes sur votre fiche Google`,
+    hook: (n, s, v) => `J'ai pris quelques minutes pour consulter la fiche Google de <strong>${n}</strong> à <strong>${v}</strong>.\nQuelques ajustements simples pourraient améliorer sa visibilité auprès de vos futurs clients.`,
+    cta: () => `Voir les améliorations possibles →`,
   },
   {
-    subject: (n) => `${n} — j'ai passé 5 minutes sur votre fiche`,
-    hook: (n, s, v) => `Ce que j'ai trouvé en 5 minutes : des atouts réels, une note correcte, quelques avis positifs. Et deux problèmes précis qui, selon moi, vous coûtent des clics chaque semaine. Je vous les détaille volontiers.`,
-    cta: () => `Voir l'analyse complète →`,
+    subject: (n, s, v) => `${n} — des opportunités sur votre fiche Google`,
+    hook: (n, s, v) => `La fiche Google de <strong>${n}</strong> contient déjà de bons éléments.\nJ'ai toutefois identifié plusieurs opportunités qui pourraient l'aider à ressortir davantage sur Google Maps.`,
+    cta: () => `Voir lesquelles →`,
   },
   {
-    subject: () => `Un regard extérieur sur votre présence Google`,
-    hook: (n, s, v) => `Parfois, un œil extérieur voit ce qu'on ne voit plus quand on est dedans. J'ai regardé votre fiche comme le ferait un nouveau client de passage à ${v}. Voici ce que j'ai vu — le positif et ce qu'on peut améliorer.`,
-    cta: () => `Voir mon retour →`,
+    subject: (n, s, v) => `En cherchant ${s} à ${v}...`,
+    hook: (n, s, v) => `En recherchant des commerces de votre secteur à <strong>${v}</strong>, je suis tombé sur la fiche de <strong>${n}</strong>.\nJ'ai remarqué quelques points faciles à optimiser pour gagner en visibilité.`,
+    cta: () => `Découvrir les recommandations →`,
   },
   {
-    subject: () => `Deux choses que j'ai vues sur votre fiche`,
-    hook: (n, s, v) => `La première est un point fort que vous sous-exploitez. La deuxième est un manque qui, selon moi, vous coûte de la visibilité sur "${s} ${v}". Je peux vous montrer l'une et l'autre en quelques minutes.`,
-    cta: () => `Voir ces deux points →`,
+    subject: (n, s, v) => `Ce que vos clients voient sur Google — ${n}`,
+    hook: (n, s, v) => `La plupart des commerçants ignorent ce que leurs clients voient réellement sur Google.\nJ'ai regardé la fiche de <strong>${n}</strong> à <strong>${v}</strong> — et j'ai identifié plusieurs points faciles à améliorer.`,
+    cta: () => `Voir le diagnostic →`,
   },
   {
-    subject: (n) => `${n} — votre fiche mérite mieux`,
-    hook: (n, s, v) => `J'ai l'habitude d'analyser des fiches Google de commerçants locaux. La vôtre a du fond — mais la forme laisse à désirer. Et sur Google Maps, la forme compte autant que le fond pour décrocher le clic.`,
-    cta: () => `Voir comment l'améliorer →`,
-  },
-
-  // 5-9 : Question
-  {
-    subject: (n) => `${n} — savez-vous ce que voient vos clients ?`,
-    hook: (n, s, v) => `La plupart des commerçants n'ont jamais cherché leur propre établissement comme le ferait un inconnu — en mode privé, depuis un autre appareil. Ce que vous verriez vous surprendrait probablement.`,
-    cta: () => `Voir ce que voient vos clients →`,
+    subject: (n, s, v) => `${n} — quelques optimisations à portée de main`,
+    hook: (n, s, v) => `J'ai passé quelques minutes sur la présence Google de <strong>${n}</strong> à <strong>${v}</strong>.\nIl y a plusieurs petites optimisations qui pourraient avoir un impact réel sur vos résultats.`,
+    cta: () => `Les découvrir →`,
   },
   {
-    subject: (n) => `${n} — connaissez-vous votre score de visibilité Google ?`,
-    hook: (n, s, v) => `Il existe des indicateurs précis pour mesurer à quel point une fiche Google est optimisée. J'ai évalué la vôtre. Le score global est moyen — ce qui veut dire qu'il y a une vraie marge de progression accessible rapidement.`,
-    cta: () => `Voir votre score →`,
+    subject: (n, s, v) => `${n} mérite plus de visibilité à ${v}`,
+    hook: (n, s, v) => `<strong>${n}</strong> mérite probablement d'être plus visible qu'aujourd'hui sur Google Maps à <strong>${v}</strong>.\nJ'ai relevé quelques pistes d'amélioration concrètes sur votre fiche.`,
+    cta: () => `Voir les détails →`,
   },
   {
-    subject: () => `Votre fiche Google vous représente-t-elle vraiment ?`,
-    hook: (n, s, v) => `Il y a souvent un écart entre la qualité réelle d'un commerce et ce que sa fiche Google en montre. Cet écart, c'est des clients qui passent à côté de vous. J'ai regardé si c'est le cas pour ${n}.`,
-    cta: () => `Voir le résultat →`,
+    subject: (n, s, v) => `Votre fiche Google à ${v} — quelques observations`,
+    hook: (n, s, v) => `Une simple recherche sur Google Maps à <strong>${v}</strong> m'a amené sur la fiche de <strong>${n}</strong>.\nJ'y ai repéré plusieurs éléments qui pourraient être optimisés rapidement.`,
+    cta: () => `Voir les opportunités →`,
   },
   {
-    subject: (n) => `${n} — avez-vous comparé avec vos concurrents ?`,
-    hook: (n, s, v) => `C'est un exercice que je recommande : regardez votre fiche côte à côte avec celles qui apparaissent avant vous sur "${s} ${v}". L'écart est souvent plus visible qu'on ne le pense. Et souvent moins difficile à combler.`,
-    cta: () => `Voir la comparaison →`,
+    subject: (n, s, v) => `${n} — analyse rapide de votre fiche Google`,
+    hook: (n, s, v) => `J'analyse régulièrement des fiches Google de commerces locaux en France.\nCelle de <strong>${n}</strong> à <strong>${v}</strong> présente quelques leviers intéressants à exploiter.`,
+    cta: () => `Les consulter →`,
   },
   {
-    subject: (n) => `${n} — est-ce que Google vous rend justice ?`,
-    hook: (n, s, v) => `Votre réputation réelle et ce que Google montre de vous sont deux choses différentes. J'ai regardé la seconde. La vitrine numérique que vous présentez n'est pas encore à la hauteur de ce qu'elle pourrait être.`,
+    subject: (n, s, v) => `${n} — un rapide aperçu Google`,
+    hook: (n, s, v) => `Quelques détails sur la fiche Google de <strong>${n}</strong> pourraient influencer la décision de vos futurs clients à <strong>${v}</strong>.\nJe vous ai préparé un rapide aperçu.`,
     cta: () => `Voir l'analyse →`,
   },
-
-  // 10-14 : Empathie
   {
-    subject: () => `Je sais que ce n'est pas votre priorité du moment`,
-    hook: (n, s, v) => `Gérer un commerce, c'est déjà beaucoup. La fiche Google, c'est souvent ce qu'on remet à plus tard. Je comprends ça. C'est pourquoi je me contente de vous montrer ce que j'ai vu sur la vôtre — vous décidez ensuite si ça vaut votre attention.`,
-    cta: () => `Voir ce que j'ai trouvé →`,
+    subject: (n, s, v) => `${n} — votre fiche peut faire plus`,
+    hook: (n, s, v) => `La fiche Google de <strong>${n}</strong> est déjà en place — mais elle pourrait probablement travailler davantage pour vous.\nJ'ai identifié plusieurs pistes concrètes pour <strong>${v}</strong>.`,
+    cta: () => `Voir lesquelles →`,
   },
   {
-    subject: () => `Personne ne vous a appris à optimiser votre fiche Google`,
-    hook: (n, s, v) => `Ce n'est pas enseigné. Ce n'est pas intuitif. Et pourtant, ça a un impact direct sur le nombre de clients qui vous trouvent. J'ai regardé votre fiche et je peux vous montrer, concrètement, ce qui manque.`,
-    cta: () => `Voir ce qui manque →`,
+    subject: (n, s, v) => `Avez-vous vérifié votre fiche Google récemment ?`,
+    hook: (n, s, v) => `Ce que vos clients voient sur Google avant de venir chez vous — avez-vous vérifié récemment ?\nJ'ai consulté la fiche de <strong>${n}</strong> à <strong>${v}</strong> et j'ai quelques observations à partager.`,
+    cta: () => `Voir l'analyse →`,
   },
   {
-    subject: () => `Ce n'est pas de votre faute si votre fiche n'est pas optimisée`,
-    hook: (n, s, v) => `Google change ses critères régulièrement. Ce qui fonctionnait il y a 2 ans est parfois devenu contre-productif. Et personne ne vous prévient. J'ai regardé votre fiche à la lumière des critères actuels.`,
-    cta: () => `Voir votre fiche à jour →`,
+    subject: (n, s, v) => `${n} à ${v} — quelques idées Google Maps`,
+    hook: (n, s, v) => `À <strong>${v}</strong>, les recherches Google vers des commerces comme <strong>${n}</strong> sont quotidiennes.\nJ'ai regardé votre fiche — quelques améliorations simples pourraient faire une vraie différence.`,
+    cta: () => `Découvrir lesquelles →`,
   },
   {
-    subject: (n) => `${n} — je voulais juste vous montrer quelque chose`,
-    hook: (n, s, v) => `Pas de discours, pas de promesse. Juste une observation concrète sur votre fiche Google, que j'ai faite en cherchant ${s} à ${v}. Vous verrez vous-même si ça vaut la peine d'en parler.`,
-    cta: () => `Voir l'observation →`,
+    subject: (n, s, v) => `${n} — votre fiche pourrait convertir davantage`,
+    hook: (n, s, v) => `J'ai consulté la fiche Google de <strong>${n}</strong> ce matin.\nElle est visible — mais elle pourrait convertir bien davantage de curieux en clients réels à <strong>${v}</strong>.`,
+    cta: () => `Voir comment →`,
   },
   {
-    subject: () => `La plupart des bons commerçants ont une mauvaise fiche Google`,
-    hook: (n, s, v) => `Ce n'est pas une contradiction — c'est une réalité. Les meilleurs commerçants passent leur temps à faire leur métier, pas à gérer leur présence numérique. C'est compréhensible. Et c'est corrigeable.`,
-    cta: () => `Voir comment corriger ça →`,
-  },
-
-  // 15-19 : Curiosité
-  {
-    subject: () => `Il y a un truc que Google ne vous dit pas`,
-    hook: (n, s, v) => `Google vous montre votre fiche — mais pas comment elle est perçue par l'algorithme. Il y a un écart entre ce que vous voyez et ce que Google "lit" dans votre fiche. J'ai analysé les deux. L'écart est plus important qu'il n'y paraît.`,
-    cta: () => `Voir cet écart →`,
+    subject: (n, s, v) => `Ce que voient vos clients sur Google Maps`,
+    hook: (n, s, v) => `Savez-vous ce qu'un client potentiel voit en cherchant <strong>${n}</strong> sur Google Maps à <strong>${v}</strong> ?\nJ'ai regardé — et j'ai identifié plusieurs points qui méritent attention.`,
+    cta: () => `Voir le rapport →`,
   },
   {
-    subject: (n) => `${n} — le vrai facteur qui détermine votre position`,
-    hook: (n, s, v) => `Ce n'est pas la note. Ce n'est pas le nombre d'avis. C'est quelque chose que la plupart des commerçants n'ont jamais configuré correctement sur leur fiche Google. Et ça change tout pour le classement local.`,
-    cta: () => `Voir ce facteur →`,
+    subject: (n, s, v) => `${n} — quelques ajustements à ${v}`,
+    hook: (n, s, v) => `La fiche Google de <strong>${n}</strong> existe. C'est déjà bien.\nMais à <strong>${v}</strong>, quelques ajustements simples pourraient lui donner beaucoup plus de portée.`,
+    cta: () => `Voir les pistes →`,
   },
   {
-    subject: () => `Un paramètre que 9 commerçants sur 10 négligent`,
-    hook: (n, s, v) => `Il est dans votre fiche Google. Il influence votre positionnement local. Et pourtant, la grande majorité des commerçants ne l'ont jamais optimisé — soit parce qu'ils ne savent pas qu'il existe, soit parce qu'ils pensent que ça ne compte pas.`,
-    cta: () => `Voir ce paramètre →`,
+    subject: (n, s, v) => `Quelques observations sur ${n}`,
+    hook: (n, s, v) => `En parcourant les fiches Google de commerces à <strong>${v}</strong>, j'ai noté plusieurs choses sur <strong>${n}</strong>.\nCertaines optimisations sont rapides à mettre en place et peuvent avoir un impact direct.`,
+    cta: () => `Les voir maintenant →`,
   },
   {
-    subject: (n) => `${n} — ce que Google voit et que vous ne voyez pas`,
-    hook: (n, s, v) => `Il y a la fiche que vous voyez — et la fiche que Google analyse. Ces deux versions ne sont pas identiques. Ce que Google y lit détermine votre position sur "${s} ${v}". J'ai regardé la version que Google voit.`,
-    cta: () => `Voir ce que Google voit →`,
+    subject: (n, s, v) => `Vos futurs clients vous cherchent sur Google`,
+    hook: (n, s, v) => `Chaque semaine, des clients potentiels cherchent des commerces comme <strong>${n}</strong> sur Google à <strong>${v}</strong>.\nVotre fiche leur donne-t-elle envie de venir ? J'ai quelques observations.`,
+    cta: () => `Voir l'analyse →`,
   },
   {
-    subject: (n) => `${n} — ce que j'ai découvert en 10 minutes sur votre fiche`,
-    hook: (n, s, v) => `J'analyse des fiches Google de commerçants locaux régulièrement. En 10 minutes sur la vôtre, j'ai trouvé quelque chose d'intéressant — pas un problème majeur, mais un levier précis que vous n'avez pas encore actionné.`,
-    cta: () => `Voir ce levier →`,
+    subject: (n, s, v) => `${n} sur Google Maps — quelques points`,
+    hook: (n, s, v) => `J'ai regardé comment <strong>${n}</strong> apparaît sur Google Maps à <strong>${v}</strong>.\nIl y a quelques points simples qui, une fois corrigés, pourraient améliorer nettement votre visibilité.`,
+    cta: () => `Voir les détails →`,
+  },
+  {
+    subject: (n, s, v) => `Une fiche Google qui travaille pour vous — ${n}`,
+    hook: (n, s, v) => `Une fiche Google bien entretenue peut faire une différence réelle pour un commerce comme <strong>${n}</strong> à <strong>${v}</strong>.\nJ'ai identifié quelques opportunités sur la vôtre.`,
+    cta: () => `Les découvrir →`,
+  },
+  {
+    subject: (n, s, v) => `${n} à ${v} — mes recommandations Google`,
+    hook: (n, s, v) => `Je travaille sur la visibilité Google des commerces locaux en France.\nJ'ai regardé la fiche de <strong>${n}</strong> à <strong>${v}</strong> — et j'ai quelques recommandations concrètes à vous partager.`,
+    cta: () => `Voir les recommandations →`,
   },
 ]
 
@@ -213,25 +206,27 @@ function buildEmail(nom: string, ville: string, secteur: string, leadId: number,
   const dest = `${APP_URL}?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(villeLabel)}&utm_source=outreach&utm_medium=email&utm_campaign=cold&vid=${variantId}`
   const trackUrl = `${APP_URL}/api/track?lid=${leadId}&vid=${variantId}&url=${encodeURIComponent(dest)}`
 
-  return `<div style="font-family:Georgia,serif;max-width:500px;margin:0 auto;padding:36px 20px;color:#1a1a1a;font-size:15px;line-height:1.8;">
+  const hookHtml = hookText.replace(/\n/g, '<br>')
+
+  return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;color:#1a1a1a;font-size:15px;line-height:1.7;">
+
   <p style="margin:0 0 20px;">Bonjour,</p>
 
-  <p style="margin:0 0 20px;color:#374151;">
-    ${hookText}
+  <p style="margin:0 0 28px;color:#374151;">${hookHtml}</p>
+
+  <p style="margin:0 0 32px;">
+    <a href="${trackUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-family:Arial,sans-serif;font-size:14px;font-weight:600;padding:11px 22px;border-radius:6px;text-decoration:none;">${ctaText}</a>
   </p>
 
-  <p style="margin:0 0 28px;">
-    <a href="${trackUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-family:Arial,sans-serif;font-size:14px;font-weight:600;padding:12px 22px;border-radius:6px;text-decoration:none;">${ctaText}</a>
+  <p style="margin:0;font-size:14px;color:#374151;">Brian<br>
+  <span style="color:#9ca3af;font-size:12px;">LocalBoost · <a href="mailto:contact@thelocalboost.fr" style="color:#9ca3af;text-decoration:none;">contact@thelocalboost.fr</a></span></p>
+
+  <hr style="border:none;border-top:1px solid #f3f4f6;margin:32px 0 16px;">
+  <p style="color:#d1d5db;font-size:11px;margin:0;">
+    Vous recevez cet email car votre établissement est référencé sur Google Maps. ·
+    <a href="mailto:contact@thelocalboost.fr?subject=désinscription" style="color:#d1d5db;">Se désinscrire</a>
   </p>
 
-  <p style="margin:0 0 4px;font-size:14px;color:#374151;">Brian Mansart<br>
-  <span style="color:#6b7280;font-size:13px;">LocalBoost — visibilité Google pour les commerces locaux</span></p>
-
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 16px;">
-  <p style="color:#9ca3af;font-size:11px;margin:0;font-family:Arial,sans-serif;">
-    Vous recevez cet email car ${nom} est référencé sur Google Maps.
-    <a href="mailto:contact@thelocalboost.fr?subject=désinscription ${encodeURIComponent(nom)}" style="color:#9ca3af;">Se désinscrire</a>
-  </p>
 </div>`
 }
 
