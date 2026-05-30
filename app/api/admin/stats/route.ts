@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     { data: recentClicksRaw },
     { data: dailyRaw },
     { data: quotaRaw },
+    { data: availableSectorsRaw },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('sent', true),
@@ -48,14 +49,22 @@ export async function GET(req: NextRequest) {
     supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').order('clicked_at', { ascending: false }).limit(10),
     supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo),
     supabase.from('api_quota').select('count, date').order('date', { ascending: false }).limit(7),
+    supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid').limit(2000),
   ])
 
-  // ── Secteurs ────────────────────────────────────────────────────────────────
+  // ── Secteurs (envoyés) ──────────────────────────────────────────────────────
   const sectorCounts: Record<string, number> = {}
   variantRaw?.forEach(r => {
     if (r.secteur) sectorCounts[r.secteur] = (sectorCounts[r.secteur] || 0) + 1
   })
   const bySector = Object.entries(sectorCounts).sort((a, b) => b[1] - a[1])
+
+  // ── Secteurs disponibles (non envoyés) ──────────────────────────────────────
+  const availableSectorCounts: Record<string, number> = {}
+  availableSectorsRaw?.forEach(r => {
+    if (r.secteur) availableSectorCounts[r.secteur] = (availableSectorCounts[r.secteur] || 0) + 1
+  })
+  const availableSectors = Object.entries(availableSectorCounts).sort((a, b) => b[1] - a[1])
 
   // ── Variantes avec CTR ──────────────────────────────────────────────────────
   const sendsByVariant: Record<number, number> = {}
@@ -137,6 +146,7 @@ export async function GET(req: NextRequest) {
     trialingSubscribers,
     estimatedMRR: activeSubscribers * 59,
     bySector,
+    availableSectors,
     byVariantCTR,
     recentSends,
     recentClicks,

@@ -13,6 +13,7 @@ interface Stats {
   totalClicks: number; ctrGlobal: string
   waitlistCount: number; activeSubscribers: number; trialingSubscribers: number; estimatedMRR: number
   bySector: [string, number][]
+  availableSectors: [string, number][]
   byVariantCTR: VariantCTR[]
   recentSends: { nom: string; email: string; secteur: string; ville: string; sent_at: string; subject_variant: string }[]
   recentClicks: RecentClick[]
@@ -285,8 +286,8 @@ export default function AdminPage() {
                   className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Tous les secteurs</option>
-                  {s?.bySector.map(([sec]) => (
-                    <option key={sec} value={sec}>{sec}</option>
+                  {(s?.availableSectors ?? s?.bySector ?? []).map(([sec, count]) => (
+                    <option key={sec} value={sec}>{sec} ({count})</option>
                   ))}
                 </select>
               </div>
