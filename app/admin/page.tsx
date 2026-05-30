@@ -233,7 +233,11 @@ export default function AdminPage() {
               <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Emails à envoyer</span>
-                  <span className="font-bold text-gray-900">{preview.available.toLocaleString()}</span>
+                  <span className="font-bold text-gray-900">{Math.min(preview.available, limit).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Leads disponibles total</span>
+                  <span className="text-gray-500">{preview.available.toLocaleString()}</span>
                 </div>
                 {secteurFilter && (
                   <div className="flex justify-between text-sm">
@@ -266,7 +270,7 @@ export default function AdminPage() {
                   onClick={sendBatch}
                   className="flex-1 py-2.5 rounded-xl bg-green-600 text-sm font-semibold text-white hover:bg-green-700"
                 >
-                  Envoyer {preview.available} emails →
+                  Envoyer {Math.min(preview.available, limit).toLocaleString()} emails →
                 </button>
               </div>
             </div>
@@ -297,9 +301,10 @@ export default function AdminPage() {
                 <input
                   type="number" value={limit}
                   onChange={e => { setLimit(Number(e.target.value)); setPreview(null); setSendResult(null) }}
-                  min={1} max={500}
+                  min={1} max={10000}
                   className="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
+                <span className="text-xs text-gray-400">max 10 000</span>
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-xs text-gray-500 w-20">Test email</label>
