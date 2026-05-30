@@ -9,7 +9,7 @@ interface RecentClick {
   variant_id: number; clicked_at: string; lead: { nom: string; email: string; secteur: string } | null
 }
 interface Stats {
-  total: number; sent: number; remaining: number
+  total: number; sent: number; remaining: number; withEmail: number
   totalClicks: number; ctrGlobal: string
   waitlistCount: number; activeSubscribers: number; trialingSubscribers: number; estimatedMRR: number
   bySector: [string, number][]
@@ -139,16 +139,17 @@ export default function AdminPage() {
         {s && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             {[
-              { label: 'Total leads',   value: s.total.toLocaleString(),          color: 'text-gray-900'   },
-              { label: 'Envoyés',       value: s.sent.toLocaleString(),           color: 'text-blue-600'   },
-              { label: 'Clics',         value: s.totalClicks.toLocaleString(),    color: 'text-green-600'  },
-              { label: 'CTR global',    value: `${s.ctrGlobal}%`,                color: 'text-amber-600'  },
+              { label: 'Total leads',   value: s.total.toLocaleString(),          color: 'text-gray-900',   sub: `dont ${s.withEmail.toLocaleString()} avec email` },
+              { label: 'Envoyés',       value: s.sent.toLocaleString(),           color: 'text-blue-600',   sub: `${s.remaining.toLocaleString()} restants` },
+              { label: 'Clics',         value: s.totalClicks.toLocaleString(),    color: 'text-green-600',  sub: undefined },
+              { label: 'CTR global',    value: `${s.ctrGlobal}%`,                color: 'text-amber-600',  sub: undefined },
               { label: `${s.activeSubscribers} abonnés · ${s.trialingSubscribers} essai`,
-                value: `${s.estimatedMRR}€/mois`,                                color: 'text-purple-600' },
+                value: `${s.estimatedMRR}€/mois`,                                color: 'text-purple-600', sub: undefined },
             ].map((k, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 text-center shadow-sm">
                 <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{k.label}</p>
+                {k.sub && <p className="text-xs text-gray-400 mt-0.5">{k.sub}</p>}
               </div>
             ))}
           </div>

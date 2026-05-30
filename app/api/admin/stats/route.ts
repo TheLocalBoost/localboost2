@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
   const [
     { count: total },
     { count: sent },
+    { count: withEmail },
     { count: waitlistCount },
     { data: subscriberData },
     { data: variantRaw },
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('sent', true),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).not('email', 'is', null),
     supabase.from('waitlist').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('subscription_status').or('subscription_status.eq.active,subscription_status.eq.trialing'),
     supabase.from('leads').select('subject_variant, secteur').eq('sent', true),
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest) {
     supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').order('clicked_at', { ascending: false }).limit(10),
     supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo),
     supabase.from('api_quota').select('count, date').order('date', { ascending: false }).limit(7),
-    supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid').limit(2000),
+    supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid'),
   ])
 
   // ── Secteurs (envoyés) ──────────────────────────────────────────────────────
@@ -138,6 +140,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     total:     total || 0,
     sent:      sent  || 0,
+    withEmail: withEmail || 0,
     remaining: (total || 0) - (sent || 0),
     totalClicks,
     ctrGlobal,
