@@ -322,21 +322,22 @@ export default function AdminPage() {
               </div>
             )}
 
-            {testEmail ? (
-              <button
-                onClick={sendBatch} disabled={sending}
-                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-gray-700 hover:bg-gray-800 disabled:opacity-50"
-              >
-                {sending ? 'Envoi...' : 'Envoyer un aperçu →'}
-              </button>
-            ) : (
+            <div className="flex flex-col gap-2">
+              {testEmail && (
+                <button
+                  onClick={sendBatch} disabled={sending}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {sending ? 'Envoi...' : `Envoyer aperçu à ${testEmail.split('@')[0]}@... →`}
+                </button>
+              )}
               <button
                 onClick={loadPreview} disabled={sending || previewLoading}
                 className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
               >
-                {previewLoading ? 'Vérification...' : sending ? 'Envoi en cours...' : `Préparer l'envoi de ${limit} emails →`}
+                {previewLoading ? 'Vérification...' : sending ? 'Envoi en cours...' : `🚀 Lancer la campagne — ${limit} emails →`}
               </button>
-            )}
+            </div>
 
             {sendResult && (
               <div className={`mt-3 p-3 rounded-lg text-sm ${sendResult.errors?.length ? 'bg-orange-50 text-orange-700' : 'bg-green-50 text-green-700'}`}>
