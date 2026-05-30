@@ -170,7 +170,8 @@ export async function POST(req: NextRequest) {
     .from('leads')
     .select('id, nom, email, secteur, ville')
     .eq('sent', false)
-    .neq('email_status', 'invalid')
+    .not('email', 'is', null)
+    .or('email_status.is.null,email_status.neq.invalid')
     .limit(limit)
 
   if (secteur) query = query.eq('secteur', secteur)
