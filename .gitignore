@@ -47,3 +47,5 @@ scripts/outreach/fb_leads_*.csv
 scripts/outreach/leads_*.csv
 scripts/outreach/sent.csv
 scripts/outreach/serper_state.json
+
+.vercel

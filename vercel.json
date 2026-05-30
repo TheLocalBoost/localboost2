@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/reviews",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/devisboost/relance",
+      "schedule": "0 9 * * *"
     }
   ]
 }

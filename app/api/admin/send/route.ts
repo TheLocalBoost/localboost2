@@ -178,8 +178,8 @@ export async function POST(req: NextRequest) {
   const [{ data: leads, error }, stats] = await Promise.all([query, loadStats()])
 
   // Mode test : envoie un seul email de démo à l'adresse fournie
-  if (testEmail && leads?.[0]) {
-    const lead = leads[0]
+  if (testEmail) {
+    const lead = leads?.[0] ?? { id: 0, nom: 'Boulangerie Exemple', ville: 'Paris', secteur: 'boulangerie' }
     const variantId = await pickVariant(stats)
     const { subject, hook } = getVariant(variantId)
     const nom = lead.nom || 'votre établissement'
