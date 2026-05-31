@@ -20,7 +20,24 @@ export default function DevisBoostLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
+
+      // Vérifier l'abonnement Stripe
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_status, trial_ends_at')
+        .eq('id', user.id)
+        .single()
+
+      const now = new Date()
+      const trialEnd = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+      const hasAccess =
+        profile?.subscription_status === 'active' ||
+        profile?.subscription_status === 'trialing' && trialEnd && trialEnd > now
+
+      if (!hasAccess) { router.push('/pricing'); return }
+
       if (pathname === '/devisboost/onboarding') { setReady(true); return }
+
       const { data } = await supabase
         .from('devisboost_profiles')
         .select('id')
