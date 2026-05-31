@@ -100,6 +100,13 @@ export default function SignupPage() {
       })
     }
 
+    // Tracker l'événement signup
+    fetch('/api/analytics/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'signup', path: '/signup', meta: { secteur: form.secteur, ville: form.ville } }),
+    }).catch(() => {})
+
     setStatus('success')
   }
 

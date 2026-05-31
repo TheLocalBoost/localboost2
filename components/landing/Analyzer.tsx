@@ -29,6 +29,11 @@ export default function Analyzer() {
       const data = await res.json()
       setResult(data)
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
+      fetch('/api/analytics/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'analyzer', path: '/', meta: { ville: ville, score: data.score } }),
+      }).catch(() => {})
     } catch {
       setResult({ error: true })
     } finally {

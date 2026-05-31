@@ -1,22 +1,25 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
+import { Analytics } from '@/components/Analytics'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'LocalBoost — Votre fiche Google Business gérée par l\'IA',
-  description: 'Posts Google Business et réponses aux avis générés par IA. En 60 secondes par semaine.',
+  title: 'LocalBoost — Google Business & Devis IA pour artisans',
+  description: 'Automatisez votre Google Business et générez des devis professionnels en 30 secondes grâce à l\'IA. Sans engagement.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+      </body>
     </html>
   )
 }

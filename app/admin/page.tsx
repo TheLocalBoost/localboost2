@@ -156,6 +156,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">🚀 Outreach Admin</h1>
           <div className="flex gap-3">
+            <a href="/admin/analytics" className="text-sm text-blue-600 hover:underline">📊 Analytics</a>
             <button onClick={() => fetchStats()} className="text-sm text-green-600 hover:underline">↻ Rafraîchir</button>
             <button onClick={() => { setAuthed(false); setStats(null) }} className="text-sm text-gray-400 hover:text-gray-600">Déconnexion</button>
           </div>
