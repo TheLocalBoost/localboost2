@@ -89,7 +89,7 @@ export default function Modules() {
                 </div>
 
                 <a
-                  href="/devisboost/dashboard"
+                  href="/signup"
                   className="block w-full rounded-xl bg-green-600 py-3 text-center text-sm font-semibold text-white hover:bg-green-700 transition"
                 >
                   Essayer DevisBoost →

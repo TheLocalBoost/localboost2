@@ -92,7 +92,7 @@ export default function Pricing() {
             price="39€"
             features={DB_FEATURES}
             cta="Essayer DevisBoost"
-            href="/devisboost/dashboard"
+            href="/signup"
             ctaClass="bg-green-600 text-white hover:bg-green-700"
           />
         </div>
