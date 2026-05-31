@@ -34,6 +34,7 @@ export default function SignupPage() {
     secteur: '',
     email: '',
     password: '',
+    confirm: '',
   })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -51,6 +52,12 @@ export default function SignupPage() {
     e.preventDefault()
     setStatus('loading')
     setErrorMsg('')
+
+    if (form.password !== form.confirm) {
+      setErrorMsg('Les mots de passe ne correspondent pas.')
+      setStatus('error')
+      return
+    }
 
     const { error } = await supabase.auth.signUp({
       email: form.email,
@@ -186,6 +193,17 @@ export default function SignupPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Mot de passe *</label>
                 <input type="password" value={form.password} onChange={set('password')} placeholder="Minimum 8 caractères" required minLength={8} className={input} />
                 <p className="text-xs text-gray-400 mt-1">Au moins 8 caractères</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmer le mot de passe *</label>
+                <input
+                  type="password" value={form.confirm} onChange={set('confirm')}
+                  placeholder="Répétez votre mot de passe" required minLength={8}
+                  className={`${input} ${form.confirm && form.confirm !== form.password ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : ''}`}
+                />
+                {form.confirm && form.confirm !== form.password && (
+                  <p className="text-xs text-red-500 mt-1">Les mots de passe ne correspondent pas</p>
+                )}
               </div>
 
               {status === 'error' && (
