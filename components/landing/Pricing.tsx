@@ -1,4 +1,4 @@
-const GUARANTEE = '✓ 7 jours gratuits · ✓ Satisfait ou remboursé 30 jours · ✓ Annulation en 1 clic'
+const GUARANTEE = '✓ Satisfait ou remboursé 30 jours · ✓ Annulation en 1 clic'
 
 const LB_FEATURES = [
   'Post Google Business hebdomadaire par IA',
@@ -44,7 +44,7 @@ function Card({
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 mb-6">après 7 jours gratuits</p>
+      <p className="text-xs text-gray-400 mb-6">sans engagement</p>
       <ul className="space-y-2.5 mb-6 flex-1">
         {features.map(f => (
           <li key={f} className="flex items-start gap-2 text-sm text-gray-600">

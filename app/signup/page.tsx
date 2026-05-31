@@ -116,7 +116,7 @@ export default function SignupPage() {
           </p>
           <p className="font-semibold text-gray-900 mb-6">{form.email}</p>
           <p className="text-sm text-gray-400">
-            Cliquez sur le lien pour activer votre compte et accéder à votre essai gratuit de 7 jours.
+            Cliquez sur le lien pour activer votre compte et accéder à la plateforme.
           </p>
         </div>
       </div>
@@ -133,7 +133,7 @@ export default function SignupPage() {
             <img src="/logo.png.png" alt="LocalBoost" className="h-9 w-auto mx-auto" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte</h1>
-          <p className="text-gray-500 text-sm">7 jours gratuits · Sans engagement · Annulation en 1 clic</p>
+          <p className="text-gray-500 text-sm">Sans engagement · Annulation en 1 clic</p>
         </div>
 
         {/* Étapes */}

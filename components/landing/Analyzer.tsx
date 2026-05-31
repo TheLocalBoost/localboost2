@@ -124,7 +124,7 @@ export default function Analyzer() {
                 <a href="/signup" className="block w-full rounded-xl bg-blue-600 py-4 text-center text-sm font-semibold text-white hover:bg-blue-700 transition">
                   Corriger ces problèmes automatiquement →
                 </a>
-                <p className="text-xs text-gray-400 text-center mt-2">7 jours gratuits · Sans engagement · Annulation en 1 clic</p>
+                <p className="text-xs text-gray-400 text-center mt-2">Sans engagement · Annulation en 1 clic</p>
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   {captureStatus === 'done' ? (
                     <p className="text-xs text-green-600 text-center">✓ Rapport envoyé par email.</p>

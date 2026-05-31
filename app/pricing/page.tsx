@@ -57,7 +57,7 @@ function PricingContent() {
             <span>🚀</span><span>LocalBoost</span>
           </a>
           <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Accès bêta</h1>
-          <p className="text-gray-500">7 jours gratuits, puis 59€/mois. Annulez à tout moment.</p>
+          <p className="text-gray-500">Sans engagement. Annulez à tout moment.</p>
         </div>
         <div className="rounded-2xl border-2 border-green-500 bg-white p-8 shadow-sm">
           <div className="text-center mb-6">
@@ -68,7 +68,7 @@ function PricingContent() {
               <span className="text-5xl font-extrabold text-gray-900">59€</span>
               <span className="text-gray-500">/mois</span>
             </div>
-            <p className="text-sm text-gray-400 mt-1">après 7 jours gratuits</p>
+            <p className="text-sm text-gray-400 mt-1">sans engagement</p>
           </div>
           <ul className="space-y-3 mb-8">
             {[
@@ -89,7 +89,7 @@ function PricingContent() {
             disabled={loading || checking}
             className="w-full rounded-xl bg-green-600 py-4 text-sm font-semibold text-white hover:bg-green-700 transition disabled:opacity-60"
           >
-            {loading ? 'Chargement...' : 'Commencer 7 jours gratuits'}
+            {loading ? 'Chargement...' : 'Commencer maintenant'}
           </button>
           <p className="mt-3 text-center text-xs text-gray-400">Carte requise. Annulation en 1 clic.</p>
         </div>

@@ -40,7 +40,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 href="/signup"
                 className="rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white hover:bg-blue-700 transition text-center"
               >
-                Commencer gratuitement — 7 jours offerts
+                Commencer gratuitement
               </a>
               <a
                 href="#modules"
@@ -51,7 +51,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </div>
 
             <p className="text-xs text-gray-400 mb-6">
-              ⚡ Configuration en 3 minutes — Aucune carte requise
+              ⚡ Configuration en 3 minutes — Sans engagement
             </p>
 
             <div className="flex items-center gap-2 text-sm text-gray-500">

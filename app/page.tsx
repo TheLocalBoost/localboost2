@@ -3,7 +3,7 @@ import LandingPage from '@/components/landing/LandingPage'
 
 export const metadata: Metadata = {
   title: 'LocalBoost — Google Business & Devis IA pour artisans',
-  description: 'Automatisez votre Google Business et générez des devis professionnels en 30 secondes grâce à l\'IA. 7 jours gratuits. Sans engagement.',
+  description: 'Automatisez votre Google Business et générez des devis professionnels en 30 secondes grâce à l\'IA. Sans engagement. Annulation en 1 clic.',
   openGraph: {
     title: 'LocalBoost — Google Business & Devis IA pour artisans',
     description: 'Automatisez votre Google Business et générez des devis professionnels en 30 secondes grâce à l\'IA.',

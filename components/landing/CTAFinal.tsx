@@ -15,7 +15,7 @@ export default function CTAFinal() {
           Commencer gratuitement →
         </a>
         <p className="text-sm text-blue-200/70">
-          ⚡ Configuration en 3 minutes — 7 jours gratuits — Aucune carte requise
+          ⚡ Configuration en 3 minutes — Sans engagement — Annulation en 1 clic
         </p>
       </div>
     </section>
