@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { sendTransactional } from '@/lib/email'
 
 const supabase = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,18 +82,14 @@ async function sendRelance(email: string, name: string, numero: string, titre: s
   const msg48 = `Nous vous contactons car vous n'avez pas encore eu l'occasion de consulter le devis ${numero} que nous vous avons envoyé. N'hésitez pas à nous contacter pour toute question.`
   const msg7  = `Suite à notre devis ${numero} envoyé il y a 7 jours, nous souhaitions vous relancer. Ce devis reste valable. N'hésitez pas à nous contacter pour modifier les conditions ou obtenir des informations complémentaires.`
 
-  await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY! },
-    body: JSON.stringify({
-      sender:  { name: profile?.company_name ?? 'DevisBoost', email: 'contact@thelocalboost.fr' },
-      to:      [{ email, name }],
-      subject: type === '48h' ? `Avez-vous reçu notre devis ${numero} ?` : `Relance — Devis ${numero} — ${titre}`,
-      htmlContent: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
-        <p>Bonjour ${name},</p>
-        <p>${type === '48h' ? msg48 : msg7}</p>
-        <p>Cordialement,<br><strong>${profile?.company_name ?? ''}</strong><br>${profile?.phone ?? ''}</p>
-      </div>`,
-    }),
+  await sendTransactional({
+    to:      email,
+    toName:  name,
+    subject: type === '48h' ? `Avez-vous reçu notre devis ${numero} ?` : `Relance — Devis ${numero} — ${titre}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
+      <p>Bonjour ${name},</p>
+      <p>${type === '48h' ? msg48 : msg7}</p>
+      <p>Cordialement,<br><strong>${profile?.company_name ?? ''}</strong><br>${profile?.phone ?? ''}</p>
+    </div>`,
   })
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
+import { sendTransactional } from '@/lib/email'
 
 const APP_URL = 'https://thelocalboost.fr'
 
@@ -60,23 +61,13 @@ export async function POST(req: NextRequest) {
   <p style="color:#bbb;font-size:12px;margin:0;">Ce devis a été généré avec DevisBoost.</p>
 </div>`
 
-  const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY! },
-    body: JSON.stringify({
-      sender:  { name: profile?.company_name ?? 'DevisBoost', email: 'contact@thelocalboost.fr' },
-      to:      [{ email: client.email, name: client.name }],
-      replyTo: profile?.email ? { email: profile.email } : undefined,
-      subject: `Devis ${devis.numero} — ${devis.titre}`,
-      htmlContent: htmlEmail,
-      attachment: [{ content: pdfBase64, name: `devis-${devis.numero}.pdf` }],
-    }),
+  await sendTransactional({
+    to:      client.email,
+    toName:  client.name,
+    subject: `Devis ${devis.numero} — ${devis.titre}`,
+    html:    htmlEmail,
+    attachments: [{ filename: `devis-${devis.numero}.pdf`, content: Buffer.from(pdfBuffer) }],
   })
-
-  if (!brevoRes.ok) {
-    const err = await brevoRes.json()
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
 
   await supabase
     .from('devisboost_devis')

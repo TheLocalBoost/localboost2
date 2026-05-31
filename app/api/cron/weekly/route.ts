@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { sendTransactional } from '@/lib/email'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -143,15 +144,11 @@ function buildEmail(profile: any, post: string, score: number, previousScore: nu
 }
 
 async function sendEmail(to: string, commerceName: string, html: string) {
-  await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'api-key': process.env.BREVO_API_KEY! },
-    body: JSON.stringify({
-      sender: { name: 'LocalBoost', email: 'contact@thelocalboost.fr' },
-      to: [{ email: to, name: commerceName }],
-      subject: `📍 Votre contenu Google Business — ${commerceName}`,
-      htmlContent: html,
-    }),
+  await sendTransactional({
+    to,
+    toName: commerceName,
+    subject: `📍 Votre contenu Google Business — ${commerceName}`,
+    html,
   })
 }
 

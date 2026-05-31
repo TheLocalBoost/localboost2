@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendTransactional } from '@/lib/email'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,18 +82,11 @@ export async function POST(req: NextRequest) {
       ? buildReportEmail(commerce_name, city, score, gaps || [], sector || null)
       : buildReportEmail(commerce_name, city, 0, [], null)
 
-    await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': process.env.BREVO_API_KEY!,
-      },
-      body: JSON.stringify({
-        sender: { name: 'LocalBoost', email: 'contact@thelocalboost.fr' },
-        to: [{ email, name: commerce_name || '' }],
-        subject: `📊 Votre score de visibilité Google — ${commerce_name || 'votre commerce'}`,
-        htmlContent: html,
-      }),
+    await sendTransactional({
+      to: email,
+      toName: commerce_name || '',
+      subject: `📊 Votre score de visibilité Google — ${commerce_name || 'votre commerce'}`,
+      html,
     })
 
     return NextResponse.json({ success: true })
