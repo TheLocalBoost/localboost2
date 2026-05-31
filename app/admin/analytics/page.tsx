@@ -68,10 +68,10 @@ export default function AnalyticsPage() {
             {/* KPIs */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               {[
-                { label: 'Pages vues',       value: data.totalViews.toLocaleString(),                         color: 'text-blue-600'  },
-                { label: 'Signups',          value: (data.eventCounts['signup']    || 0).toString(),          color: 'text-green-600' },
-                { label: 'Waitlist',         value: (data.eventCounts['waitlist']  || 0).toString(),          color: 'text-amber-600' },
-                { label: 'Analyseur lancé', value: (data.eventCounts['analyzer']  || 0).toString(),          color: 'text-purple-600'},
+                { label: 'Pages vues',        value: data.totalViews.toLocaleString(),                         color: 'text-blue-600'  },
+                { label: 'Clics emails',      value: (data.emailClicks?.total || 0).toLocaleString(),          color: 'text-green-600' },
+                { label: 'Signups',           value: (data.eventCounts['signup']   || 0).toString(),           color: 'text-purple-600'},
+                { label: 'Analyseur lancé',  value: (data.eventCounts['analyzer'] || 0).toString(),           color: 'text-amber-600' },
               ].map((k, i) => (
                 <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm text-center">
                   <p className={`text-3xl font-bold ${k.color}`}>{k.value}</p>
@@ -180,6 +180,51 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Clics emails */}
+            {data.emailClicks?.total > 0 && (
+              <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
+                <h2 className="font-semibold text-gray-900 mb-4 text-sm">📧 Clics emails — {data.emailClicks.total} total</h2>
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Top variantes cliquées</p>
+                    <div className="space-y-2">
+                      {data.emailClicks.byVariant.map(([vid, count]: [string, number]) => (
+                        <div key={vid} className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Variante #{vid}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${Math.round((count / data.emailClicks.total) * 100)}%` }} />
+                            </div>
+                            <span className="text-xs font-semibold text-gray-900 w-6 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Clics par jour</p>
+                    <div className="space-y-1.5">
+                      {Object.entries(data.emailClicks.daily)
+                        .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7)
+                        .map(([date, count]: [string, any]) => (
+                        <div key={date} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">
+                            {new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 bg-gray-100 rounded-full h-1.5">
+                              <div className="bg-green-400 h-1.5 rounded-full" style={{ width: `${Math.min(count * 10, 100)}%` }} />
+                            </div>
+                            <span className="font-semibold text-gray-900 w-4 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Visites récentes */}
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">

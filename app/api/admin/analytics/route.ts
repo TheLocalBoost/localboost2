@@ -23,6 +23,9 @@ export async function GET(req: NextRequest) {
     { data: daily },
     { data: events },
     { data: recent },
+    { count: totalEmailClicks },
+    { data: emailClicksByVariant },
+    { data: emailClicksDaily },
   ] = await Promise.all([
     supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', since),
     supabase.from('page_views').select('path').gte('created_at', since),
@@ -32,6 +35,9 @@ export async function GET(req: NextRequest) {
     supabase.from('page_views').select('created_at').gte('created_at', since),
     supabase.from('analytics_events').select('name, created_at').gte('created_at', since),
     supabase.from('page_views').select('path, country, device, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('email_clicks').select('*', { count: 'exact', head: true }),
+    supabase.from('email_clicks').select('variant_id').order('variant_id'),
+    supabase.from('email_clicks').select('clicked_at').order('clicked_at', { ascending: false }).limit(500),
   ])
 
   // Top pages
@@ -72,6 +78,21 @@ export async function GET(req: NextRequest) {
   const eventCounts: Record<string, number> = {}
   events?.forEach(r => { eventCounts[r.name] = (eventCounts[r.name] || 0) + 1 })
 
+  // Email clicks par variante
+  const variantCounts: Record<number, number> = {}
+  emailClicksByVariant?.forEach(r => {
+    variantCounts[r.variant_id] = (variantCounts[r.variant_id] || 0) + 1
+  })
+  const topVariantClicks = Object.entries(variantCounts)
+    .sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 5)
+
+  // Email clicks par jour
+  const emailDailyCounts: Record<string, number> = {}
+  emailClicksDaily?.forEach(r => {
+    const day = r.clicked_at?.split('T')[0] ?? ''
+    if (day) emailDailyCounts[day] = (emailDailyCounts[day] || 0) + 1
+  })
+
   return NextResponse.json({
     totalViews: totalViews || 0,
     topPages,
@@ -81,5 +102,10 @@ export async function GET(req: NextRequest) {
     dailyViews,
     eventCounts,
     recent,
+    emailClicks: {
+      total: totalEmailClicks || 0,
+      byVariant: topVariantClicks,
+      daily: emailDailyCounts,
+    },
   })
 }
