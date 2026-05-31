@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
-import { Analytics } from '@/components/Analytics'
+import { Analytics } from '@vercel/analytics/next'
+import { Analytics as CustomAnalytics } from '@/components/Analytics'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -16,8 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body className={inter.className}>
         {children}
+        <Analytics />
         <Suspense fallback={null}>
-          <Analytics />
+          <CustomAnalytics />
         </Suspense>
       </body>
     </html>
