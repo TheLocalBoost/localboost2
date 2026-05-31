@@ -14,9 +14,9 @@ export async function GET(req: NextRequest) {
 
   if (!dest) return NextResponse.redirect('https://thelocalboost.fr')
 
-  // Enregistrer le clic sans bloquer la redirection
+  // Await l'insert AVANT le redirect — sinon Vercel kill la fonction trop tôt
   if (leadId && variantId !== null) {
-    void supabase.from('email_clicks').insert({
+    await supabase.from('email_clicks').insert({
       lead_id:    Number(leadId),
       variant_id: Number(variantId),
       clicked_at: new Date().toISOString(),
