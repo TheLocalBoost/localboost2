@@ -33,6 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <a href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">Dashboard</a>
           <a href="/dashboard/generate" className="text-sm text-gray-600 hover:text-gray-900">Générer</a>
           <a href="/dashboard/onboarding" className="text-sm text-gray-600 hover:text-gray-900">Mon commerce</a>
+          <a href="/devisboost/dashboard" className="text-sm font-semibold text-green-600 hover:text-green-700 border border-green-200 rounded-lg px-3 py-1">📋 DevisBoost</a>
           <a href="/dashboard/account" className="text-sm text-gray-600 hover:text-gray-900">Compte</a>
         </div>
       </nav>
