@@ -80,12 +80,14 @@ export default function DashboardPage() {
         <p className="text-gray-500 mt-1">Votre assistant Google Business est prêt.</p>
       </div>
 
-      {!merchant && (
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-6 mb-6">
-          <p className="font-semibold text-amber-800 mb-2">Configurez votre commerce</p>
-          <p className="text-sm text-amber-700 mb-4">Renseignez les informations de votre commerce pour que l'IA génère du contenu personnalisé.</p>
-          <Link href="/dashboard/onboarding" className="inline-block rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition">
-            Configurer maintenant
+      {merchant && !merchant.specialties && (
+        <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4 mb-6 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-blue-800 text-sm">Personnalisez votre profil</p>
+            <p className="text-xs text-blue-600 mt-0.5">Ajoutez vos spécialités pour des posts encore plus précis.</p>
+          </div>
+          <Link href="/dashboard/onboarding" className="shrink-0 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition">
+            Compléter →
           </Link>
         </div>
       )}

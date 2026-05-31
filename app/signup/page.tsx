@@ -59,17 +59,17 @@ export default function SignupPage() {
       return
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/pricing`,
         data: {
-          prenom:    form.prenom,
-          nom:       form.nom,
-          commerce:  form.commerce,
-          ville:     form.ville,
-          secteur:   form.secteur,
+          prenom:   form.prenom,
+          nom:      form.nom,
+          commerce: form.commerce,
+          ville:    form.ville,
+          secteur:  form.secteur,
         },
       },
     })
@@ -82,6 +82,22 @@ export default function SignupPage() {
       )
       setStatus('error')
       return
+    }
+
+    // Créer le profil merchant automatiquement
+    if (data.user) {
+      await fetch('/api/auth/setup-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId:        data.user.id,
+          commerce_name: form.commerce,
+          city:          form.ville,
+          commerce_type: form.secteur,
+          prenom:        form.prenom,
+          nom:           form.nom,
+        }),
+      })
     }
 
     setStatus('success')
