@@ -362,7 +362,8 @@ export default function LandingPage() {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-4">
             LocalBoost s'occupe de votre Google Business à votre place
           </h2>
-          <p className="text-gray-500 text-center mb-12">Chaque semaine, automatiquement. Vous n'avez rien à faire.</p>
+          <p className="text-gray-500 text-center mb-4">Chaque semaine, automatiquement. Vous n'avez rien à faire.</p>
+          <p className="text-center text-2xl mb-12 tracking-widest">🥖 · ✂️ · 🍽️ · 🔧 · 💐 · 💊 · 🏨 · 🚗</p>
           <div className="grid sm:grid-cols-2 gap-6">
             {[
               { emoji: '📍', title: 'Publication hebdomadaire automatique', desc: 'Un post Google Business généré chaque semaine — adapté à votre commerce, votre ville et la saison. Vous copiez-collez en 30 secondes.' },
@@ -466,7 +467,8 @@ export default function LandingPage() {
               <span className="text-5xl font-extrabold text-gray-900">59€</span>
               <span className="text-gray-500">/mois</span>
             </div>
-            <p className="text-sm text-gray-400 mb-2">après 7 jours gratuits</p>
+            <p className="text-sm text-gray-400 mb-0.5">après 7 jours gratuits</p>
+            <p className="text-xs text-gray-400 mb-2">soit moins d'un café par jour</p>
             <p className="text-xs text-green-600 font-medium mb-6">Un seul nouveau client couvre l'abonnement.</p>
             <ul className="space-y-3 mb-8 text-left">
               {[
@@ -487,6 +489,11 @@ export default function LandingPage() {
             >
               Commencer 7 jours gratuits →
             </a>
+            <div className="flex items-center justify-center gap-4 mt-3 text-xs text-gray-400">
+              <span>✓ 7 jours gratuits</span>
+              <span>✓ Remboursé 30 jours</span>
+              <span>✓ Annulation 1 clic</span>
+            </div>
           </div>
         </div>
       </div>
@@ -530,7 +537,7 @@ export default function LandingPage() {
           >
             Commencer gratuitement →
           </a>
-          <p className="text-xs text-gray-400 mt-3">Carte requise. Aucun débit pendant l'essai.</p>
+          <p className="text-xs text-gray-400 mt-2">Configuration en 3 minutes · Carte requise · Aucun débit pendant l'essai.</p>
         </div>
       </div>
 
