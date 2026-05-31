@@ -49,7 +49,7 @@ export default function Modules() {
                   <span className="text-3xl font-extrabold text-gray-900">59€</span>
                   <span className="text-gray-400">/mois</span>
                 </div>
-                <p className="text-xs italic text-gray-400 mb-4">soit moins d'un café par jour</p>
+
                 <a
                   href="/signup"
                   className="block w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700 transition"
@@ -87,7 +87,7 @@ export default function Modules() {
                   <span className="text-3xl font-extrabold text-gray-900">39€</span>
                   <span className="text-gray-400">/mois</span>
                 </div>
-                <p className="text-xs italic text-gray-400 mb-4">soit moins d'un café par jour</p>
+
                 <a
                   href="/devisboost/dashboard"
                   className="block w-full rounded-xl bg-green-600 py-3 text-center text-sm font-semibold text-white hover:bg-green-700 transition"

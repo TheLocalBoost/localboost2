@@ -43,7 +43,7 @@ function Card({
           <span className="text-gray-400">/mois</span>
         </div>
       </div>
-      <p className="text-xs italic text-gray-400 mb-1">soit moins d'un café par jour</p>
+
       <p className="text-xs text-gray-400 mb-6">après 7 jours gratuits</p>
       <ul className="space-y-2.5 mb-6 flex-1">
         {features.map(f => (
