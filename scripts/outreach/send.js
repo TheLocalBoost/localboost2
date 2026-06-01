@@ -82,9 +82,9 @@ function buildEmail(c) {
         Aucune inscription, aucune carte bancaire — juste un diagnostic gratuit et immédiat.
       </p>
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://localboost2.vercel.app?utm_source=outreach&utm_medium=email&utm_campaign=cold&secteur=${secteurKey}&ville=${encodeURIComponent(ville)}"
+        <a href="https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}&utm_source=outreach&utm_medium=email&utm_campaign=cold&secteur=${secteurKey}"
            style="background: #16a34a; color: white; padding: 16px 36px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">
-          Voir votre score Google gratuit →
+          Voir mon score Google gratuit →
         </a>
       </div>
       <p style="font-size: 13px; color: #888; text-align: center; margin: 0 0 24px;">Analyse gratuite · Aucune carte bancaire · Résultat immédiat</p>
