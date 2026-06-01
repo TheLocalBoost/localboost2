@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# outreach scripts (contiennent des credentials)
+scripts/outreach/*.mjs
+
 # outreach data files
 scripts/outreach/ALL_LEADS_*.csv
 scripts/outreach/ig_leads_*.csv
