@@ -64,6 +64,26 @@ Réponds directement, sans introduction.`,
   telephone: (b) => `Pour "${b.name}", rédige un message court (3-4 lignes) qui explique à l'artisan pourquoi ajouter son numéro de téléphone sur Google Business est urgent, avec un exemple chiffré de l'impact sur les appels entrants. Puis donne les 3 étapes exactes pour l'ajouter. Ton direct et motivant.`,
 
   site: (b) => `Pour "${b.name}" (${b.address}), rédige un message court qui explique pourquoi avoir un lien web sur sa fiche Google est important, même si c'est une page simple. Puis propose 3 options concrètes classées par difficulté (de la plus rapide à la plus complète) pour créer une présence web minimale sans compétences techniques. Inclure des outils gratuits ou peu chers. Ton pratique et encourageant.`,
+
+  premiere_demande: (b) => `Tu es expert en relation client pour artisans français.
+Rédige un email de demande d'avis Google pour "${b.name}" — c'est le PREMIER email que cet artisan va envoyer à ses clients.
+Contraintes :
+- Court (6-8 lignes max), ton sincère et humain
+- Mentionne que ça prend 30 secondes
+- Variables : [NOM_CLIENT], [PRESTATION], [LIEN_AVIS]
+- Objet de l'email en première ligne : "Objet : ..."
+- Inspire confiance, pas commercial
+Ensuite, donne 3 conseils courts pour maximiser le taux de réponse sur les premières demandes.
+Réponds UNIQUEMENT avec l'email + les conseils, sans commentaire.`,
+
+  conversion_nulle: (b) => `Tu es expert en relation client pour artisans français.
+"${b.name}" a envoyé des demandes d'avis à ses clients mais n'a obtenu aucune réponse.
+Analyse les 3 raisons les plus probables pour un artisan en France et propose :
+1. Une version améliorée de l'objet d'email (plus engageant)
+2. Une version améliorée du corps du message (plus court, plus direct)
+3. 2 conseils sur le timing d'envoi (quel moment envoyer pour maximiser l'ouverture)
+Variables à utiliser : [NOM_CLIENT], [PRESTATION], [LIEN_AVIS]
+Réponds directement avec les améliorations concrètes, sans introduction.`,
 }
 
 export async function POST(req: NextRequest) {

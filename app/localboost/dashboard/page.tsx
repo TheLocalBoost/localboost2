@@ -16,7 +16,9 @@ const PRIORITY_MAP: Record<string, {
   site:        { icon: '🌐', label: 'Ajoutez votre site web',                      why: 'Les clients font davantage confiance à une fiche avec un site, même une simple page.',          cta: 'Ouvrir Google Business', href: 'https://business.google.com', external: true, aiLabel: 'Comment créer un site' },
   photos:      { icon: '📸', label: 'Ajoutez des photos de votre activité',       why: 'Les fiches avec 10+ photos reçoivent 35% de clics en plus. C\'est l\'action la plus rapide.',  cta: 'Voir les conseils photos', href: '/localboost/photos',          aiLabel: 'Mon plan photo IA' },
   avis20:      { icon: '⭐', label: 'Demandez des avis à vos clients',             why: 'Les fiches avec 20+ avis reçoivent 3× plus d\'appels. Envoyez un email ou SMS après chaque prestation.', cta: 'Envoyer des demandes', href: '/localboost/avis', aiLabel: 'Écrire mon email d\'avis' },
-  note4:       { icon: '💬', label: 'Répondez à vos avis sans réponse',           why: 'Une note ≥ 4.0 double le taux de clic. Répondre aux avis négatifs améliore votre note perçue.', cta: 'Voir mes avis',           href: '/localboost/avis',          aiLabel: 'Générer des réponses' },
+  note4:            { icon: '💬', label: 'Répondez à vos avis sans réponse',     why: 'Une note ≥ 4.0 double le taux de clic. Répondre aux avis négatifs améliore votre note perçue.',  cta: 'Voir mes avis',            href: '/localboost/avis', aiLabel: 'Générer des réponses' },
+  premiere_demande: { icon: '📩', label: 'Envoyez votre première demande d\'avis', why: 'Vous n\'avez encore jamais demandé d\'avis. C\'est l\'action qui a le plus d\'impact sur votre fiche.', cta: 'Envoyer maintenant',       href: '/localboost/avis', aiLabel: 'Écrire mon premier email' },
+  conversion_nulle: { icon: '📉', label: 'Améliorez votre email de demande d\'avis', why: 'Vous avez envoyé des demandes mais aucun client n\'a laissé d\'avis. L\'email peut être optimisé.',    cta: 'Voir l\'historique',       href: '/localboost/avis', aiLabel: 'Optimiser mon email' },
 }
 
 function ScoreGauge({ score }: { score: number }) {
@@ -35,9 +37,15 @@ function ScoreGauge({ score }: { score: number }) {
   )
 }
 
-function getPriorities(details: Record<string, boolean>) {
-  return ['avis20', 'photos', 'horaires', 'description', 'telephone', 'site', 'note4']
-    .filter(k => details[k] === false).slice(0, 3)
+function getPriorities(details: Record<string, boolean>, avisEnvoyes: number, avisRecus: number): string[] {
+  const extra: string[] = []
+  if (avisEnvoyes === 0) extra.push('premiere_demande')
+  else if (avisEnvoyes >= 3 && avisRecus === 0) extra.push('conversion_nulle')
+
+  const google = ['avis20', 'photos', 'horaires', 'description', 'telephone', 'site', 'note4']
+    .filter(k => details[k] === false)
+
+  return [...extra, ...google].slice(0, 3)
 }
 
 async function fetchScore() {
@@ -171,7 +179,7 @@ export default function LocalBoostDashboard() {
       if (p?.google_place_id) {
         fetchScore().then(s => {
           setScore(s)
-          if (s?.details) setPriorities(getPriorities(s.details))
+          if (s?.details) setPriorities(getPriorities(s.details, s.avisEnvoyes ?? 0, s.avisRecus ?? 0))
         })
       }
     })
