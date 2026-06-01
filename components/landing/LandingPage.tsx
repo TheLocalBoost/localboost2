@@ -7,8 +7,9 @@ import HowItWorks from './HowItWorks'
 import Modules    from './Modules'
 import Pricing    from './Pricing'
 import FAQ        from './FAQ'
-import CTAFinal   from './CTAFinal'
-import Footer     from './Footer'
+import CTAFinal        from './CTAFinal'
+import Footer          from './Footer'
+import DashboardPreview from './DashboardPreview'
 
 function AnalyzeCTA() {
   return (
@@ -77,6 +78,8 @@ export default function LandingPage() {
       <PainPoints />
 
       <AnalyzeCTA />
+
+      <DashboardPreview />
 
       <HowItWorks />
 
