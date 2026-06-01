@@ -44,7 +44,7 @@ export default function AuditPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Audit de fiche Google</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Analyser ma fiche Google</h1>
           <p className="text-sm text-gray-500 mt-0.5">{place.name}</p>
         </div>
         <button
@@ -58,7 +58,7 @@ export default function AuditPage() {
       <div className="grid sm:grid-cols-3 gap-5 mb-8">
         {/* Score global */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Score de complétude</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Complétude de la fiche</p>
           <p className={`text-6xl font-extrabold ${scoreColor(score)}`}>{score}</p>
           <p className="text-gray-400 text-lg">/100</p>
           <div className="w-full bg-gray-100 rounded-full h-2 mt-3">

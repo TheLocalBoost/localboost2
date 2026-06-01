@@ -49,7 +49,7 @@ export default function NapPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Cohérence NAP</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Mes annuaires en ligne</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           Vérifiez que votre nom, adresse et téléphone sont identiques sur tous les annuaires.
         </p>

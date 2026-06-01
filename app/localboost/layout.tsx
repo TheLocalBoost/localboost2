@@ -6,11 +6,11 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
 const NAV = [
-  { href: '/localboost/dashboard', label: 'Tableau de bord', icon: '📍' },
-  { href: '/localboost/avis',      label: 'Avis clients',    icon: '⭐' },
-  { href: '/localboost/photos',    label: 'Photos',          icon: '📸' },
-  { href: '/localboost/audit',     label: 'Audit de fiche',  icon: '🔍' },
-  { href: '/localboost/nap',       label: 'Cohérence NAP',   icon: '🗂️' },
+  { href: '/localboost/dashboard', label: 'Tableau de bord',    icon: '📍' },
+  { href: '/localboost/avis',      label: 'Avis clients',       icon: '⭐' },
+  { href: '/localboost/photos',    label: 'Photos',             icon: '📸' },
+  { href: '/localboost/audit',     label: 'Analyser ma fiche',  icon: '🔍' },
+  { href: '/localboost/nap',       label: 'Mes annuaires',      icon: '🗂️' },
 ]
 
 export default function LocalBoostLayout({ children }: { children: React.ReactNode }) {

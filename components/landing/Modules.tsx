@@ -1,27 +1,27 @@
 const FEATURES = [
   {
     icon: '📍',
-    title: 'Un post Google Business chaque semaine',
-    desc: 'L\'IA génère un post adapté à votre activité, votre ville et la saison. Vous copiez-collez en 30 secondes sur Google Business.',
+    title: 'Un post Google chaque semaine',
+    desc: 'L\'IA génère un post adapté à votre métier, votre ville et la saison. Vous copiez-collez en 30 secondes sur votre fiche Google.',
     exemple: '"Ce mois-ci, pose de carrelage à Bordeaux — résultat avant/après en photo. Devis gratuit sous 48h. 🔨"',
   },
   {
     icon: '⭐',
     title: 'Réponses aux avis prêtes à publier',
-    desc: 'Collez un avis reçu → obtenez 3 réponses personnalisées et professionnelles → publiez en 1 clic. Plus jamais d\'avis sans réponse.',
+    desc: 'Collez un avis reçu → obtenez 3 réponses personnalisées → publiez en 1 clic. Plus jamais d\'avis sans réponse.',
     exemple: '"Merci beaucoup Mme Martin pour votre confiance ! C\'est une belle rénovation dont nous sommes fiers..."',
   },
   {
     icon: '📊',
-    title: 'Score de visibilité suivi chaque semaine',
-    desc: 'Suivez l\'évolution de votre fiche Google en temps réel. Comparez-vous à vos concurrents directs dans votre ville.',
-    exemple: 'Score 34 → 78 en 30 jours. Position Google Maps : #4 → #2.',
+    title: 'Vos actions prioritaires chaque semaine',
+    desc: 'LocalBoost analyse votre fiche et vous dit exactement quoi faire en premier pour attirer plus de clients. Pas de jargon, juste des actions concrètes.',
+    exemple: '"Cette semaine : ajoutez 3 photos et répondez à 2 avis — impact estimé +12% de clics."',
   },
   {
     icon: '📧',
-    title: 'Tout dans votre boîte mail le lundi matin',
+    title: 'Tout dans votre boîte mail le lundi',
     desc: 'Aucune application à installer, aucun outil à apprendre. Votre contenu de la semaine arrive directement par email.',
-    exemple: '"Objet : Votre semaine LocalBoost — Post prêt + 2 réponses avis + score 78/100 ▲+5"',
+    exemple: '"Objet : Votre semaine LocalBoost — Post prêt + 2 réponses avis + 3 actions prioritaires"',
   },
 ]
 

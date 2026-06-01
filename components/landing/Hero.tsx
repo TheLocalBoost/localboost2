@@ -19,28 +19,26 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
-              {detectedCity ? (
-                <>Les artisans {' '}
-                  <span className="text-blue-600">à {detectedCity}</span>{' '}
-                  perdent en moyenne<br />
-                  <span className="text-red-500">3 à 8 clients/mois</span>{' '}
-                  sur Google.
-                </>
-              ) : (
-                <>Les artisans perdent en moyenne{' '}
-                  <span className="text-red-500">3 à 8 clients/mois</span>{' '}
-                  à cause d'une fiche Google inactive.
-                </>
-              )}
+              Obtenez plus de clients grâce à votre{' '}
+              <span className="text-blue-600">fiche Google.</span>
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              Pas parce qu'ils travaillent mal. Parce que leur fiche Google n'est pas entretenue.
-              LocalBoost s'en occupe <strong className="text-gray-800">chaque semaine, automatiquement.</strong>
+              {detectedCity ? (
+                <>Entrez votre entreprise{' '}
+                  <strong className="text-gray-800">à {detectedCity}</strong>. LocalBoost analyse votre présence Google
+                  et vous montre les actions prioritaires à réaliser.
+                </>
+              ) : (
+                <>Entrez votre entreprise. LocalBoost analyse votre présence Google
+                  et vous montre{' '}
+                  <strong className="text-gray-800">les actions prioritaires à réaliser.</strong>
+                </>
+              )}
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
-              Posts hebdomadaires · Réponses aux avis · Score de visibilité · Tout par email le lundi
+              Demandes d'avis automatiques · Réponses aux clients · Actions prioritaires chaque semaine
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -48,7 +46,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 onClick={() => document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' })}
                 className="rounded-xl bg-blue-600 px-6 py-4 text-sm font-bold text-white hover:bg-blue-700 transition text-center"
               >
-                Calculer mes pertes gratuitement →
+                Analyser ma fiche gratuitement →
               </button>
               <button
                 onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}
@@ -74,9 +72,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
 
           {/* Visuel */}
           <div className="relative">
-            {/* Carte Google Maps simulée */}
             <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-              {/* Header maps */}
               <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-red-400"/>
@@ -88,9 +84,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 </div>
               </div>
 
-              {/* Résultats Google Maps */}
               <div className="p-4 space-y-2">
-                {/* Concurrent 1 — mieux positionné */}
                 <div className="rounded-xl border border-gray-100 p-3 bg-gray-50">
                   <div className="flex items-start justify-between">
                     <div>
@@ -102,7 +96,6 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                   </div>
                 </div>
 
-                {/* Concurrent 2 */}
                 <div className="rounded-xl border border-gray-100 p-3 bg-gray-50">
                   <div className="flex items-start justify-between">
                     <div>
@@ -114,7 +107,6 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                   </div>
                 </div>
 
-                {/* VOUS — relégué */}
                 <div className="rounded-xl border-2 border-red-200 p-3 bg-red-50/50 relative">
                   <div className="flex items-start justify-between">
                     <div>
@@ -131,7 +123,6 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
               </div>
             </div>
 
-            {/* Badge animé */}
             <div className="absolute -bottom-3 -right-3 bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
               LocalBoost remonte votre fiche ↑
             </div>
