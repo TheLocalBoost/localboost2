@@ -96,9 +96,9 @@ const VARIANTS: Variant[] = [
     cta: () => `Les découvrir →`,
   },
   {
-    subject: (n,s,v) => `${n} à ${v} — mes recommandations Google`,
-    hook: (n,s,v) => `Je travaille sur la visibilité Google des commerces locaux en France.\nJ'ai regardé la fiche de <strong>${n}</strong> à <strong>${v}</strong> — et j'ai quelques recommandations concrètes à vous partager.`,
-    cta: () => `Voir les recommandations →`,
+    subject: (n,s,v) => `Un concurrent moins bien noté que vous apparaît avant vous`,
+    hook: (n,s,v) => `J'ai fait une recherche de ${s} sur Google Maps à <strong>${v}</strong>.\n<strong>${n}</strong> a de meilleures notes — mais un concurrent apparaît avant vous dans les résultats. C'est souvent une question d'activité sur la fiche, pas de qualité.`,
+    cta: () => `Voir pourquoi →`,
   },
   {
     subject: (n,s,v) => `J'ai regardé votre fiche Google ce matin`,

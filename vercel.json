@@ -11,6 +11,14 @@
     {
       "path": "/api/devisboost/relance",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/factureboost/relances",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/localboost/avis-relance",
+      "schedule": "0 9 * * *"
     }
   ]
 }

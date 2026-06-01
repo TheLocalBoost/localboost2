@@ -1,24 +1,21 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import Navbar from './Navbar'
-import Hero from './Hero'
-import CommerceLogos from './CommerceLogos'
+import { useState, useEffect } from 'react'
+import Navbar    from './Navbar'
+import Hero      from './Hero'
 import PainPoints from './PainPoints'
-import Analyzer from './Analyzer'
-import Modules from './Modules'
+import Analyzer  from './Analyzer'
 import HowItWorks from './HowItWorks'
-import Pricing from './Pricing'
-import FAQ from './FAQ'
-import CTAFinal from './CTAFinal'
-import Footer from './Footer'
+import Modules   from './Modules'
+import Pricing   from './Pricing'
+import FAQ       from './FAQ'
+import CTAFinal  from './CTAFinal'
+import Footer    from './Footer'
 
 export default function LandingPage() {
   const [detectedCity, setDetectedCity] = useState('')
-  const [signupCount, setSignupCount] = useState(0)
-  const [animScore, setAnimScore] = useState(34)
-  const heroRef = useRef<HTMLDivElement>(null)
+  const [signupCount, setSignupCount]   = useState(0)
+  const [animScore, setAnimScore]       = useState(34)
 
-  // Géolocalisation IP
   useEffect(() => {
     fetch('https://ipapi.co/json/')
       .then(r => r.json())
@@ -26,7 +23,6 @@ export default function LandingPage() {
       .catch(() => {})
   }, [])
 
-  // Compteur inscrits
   useEffect(() => {
     fetch('/api/public-stats')
       .then(r => r.json())
@@ -34,50 +30,50 @@ export default function LandingPage() {
       .catch(() => {})
   }, [])
 
-  // Animation score 34→78 via IntersectionObserver sur le hero
   useEffect(() => {
-    const el = document.getElementById('hero-score-anim')
+    const el = document.getElementById('hero-anim')
     if (!el) return
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      observer.disconnect()
-      let current = 34
-      const step = () => {
-        current = Math.min(current + 2, 78)
-        setAnimScore(current)
-        if (current < 78) requestAnimationFrame(step)
-      }
-      setTimeout(() => requestAnimationFrame(step), 400)
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      obs.disconnect()
+      let n = 34
+      const run = () => { n = Math.min(n + 2, 78); setAnimScore(n); if (n < 78) requestAnimationFrame(run) }
+      setTimeout(() => requestAnimationFrame(run), 300)
     }, { threshold: 0.3 })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  // Pre-fill depuis lien email (?nom=...&ville=...)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const nom = params.get('nom')
-    const ville = params.get('ville')
-    if (nom || ville) {
-      const el = document.getElementById('analyzer')
-      if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 300)
-    }
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div id="hero-score-anim">
+
+      {/* 1 — Hero : hook sur la perte */}
+      <div id="hero-anim">
         <Hero detectedCity={detectedCity} signupCount={signupCount} animScore={animScore} />
       </div>
-      <CommerceLogos />
+
+      {/* 2 — Chiffres : preuve que le problème est réel */}
       <PainPoints />
+
+      {/* 3 — Analyzer : l'outil de conversion (aha moment) */}
       <Analyzer />
-      <Modules />
+
+      {/* 4 — Comment ça marche : lever les frictions */}
       <HowItWorks />
+
+      {/* 5 — Ce qu'on reçoit : concrétiser la valeur */}
+      <Modules />
+
+      {/* 6 — Pricing : simple, trial, ROI ancré */}
       <Pricing />
+
+      {/* 7 — FAQ : traiter les objections */}
       <FAQ />
+
+      {/* 8 — CTA final : urgence douce */}
       <CTAFinal />
+
       <Footer />
     </div>
   )

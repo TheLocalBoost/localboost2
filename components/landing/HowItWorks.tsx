@@ -1,33 +1,66 @@
 const STEPS = [
-  { n: '1', title: 'Créez votre compte et configurez votre commerce', time: '2 min', desc: 'Renseignez votre nom, ville et type d\'activité. L\'IA s\'adapte automatiquement à votre secteur.' },
-  { n: '2', title: 'L\'IA analyse votre activité et génère votre contenu', time: '30 sec', desc: 'Post Google Business, réponses aux avis, score de visibilité — tout est prêt chaque semaine.' },
-  { n: '3', title: 'Vous recevez tout par email — copiez-collez en 30 secondes', time: '0 effort', desc: 'Chaque lundi matin dans votre boîte mail. Aucune application à ouvrir, aucun outil à apprendre.' },
+  {
+    n: '1',
+    title: 'Vous configurez votre commerce en 3 minutes',
+    time: '3 min — une fois',
+    desc: 'Nom, ville, type d\'activité. LocalBoost comprend votre métier et génère du contenu adapté à votre secteur.',
+    example: '→ "Plombier à Lyon, spécialiste rénovation salle de bain"',
+  },
+  {
+    n: '2',
+    title: 'Chaque lundi, votre contenu arrive dans votre boîte mail',
+    time: 'Automatique, chaque semaine',
+    desc: 'Un post Google Business rédigé par IA, des réponses prêtes pour vos avis, et votre score de visibilité de la semaine.',
+    example: '→ "Votre post du lundi : Intervention rapide ce week-end pour une fuite sous l\'évier..."',
+  },
+  {
+    n: '3',
+    title: 'Vous copiez-collez en 30 secondes sur Google Business',
+    time: '30 sec / semaine',
+    desc: 'Aucune application. Aucune formation. Vous ouvrez votre email, vous copiez, vous collez sur Google Business. C\'est tout.',
+    example: '→ Résultat : fiche active, score en hausse, clients qui appellent',
+  },
 ]
 
 export default function HowItWorks() {
   return (
-    <section className="py-20 px-6 bg-gray-50">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 text-center mb-3">
-          Opérationnel en 3 minutes chrono
-        </h2>
-        <p className="text-gray-400 text-center mb-12">Pas de technique. Pas de formation. Juste des résultats.</p>
+    <section id="how" className="py-20 px-6 bg-white">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-3">
+            Opérationnel en 3 minutes
+          </h2>
+          <p className="text-gray-500">Pas de technique. Pas de formation. Juste votre email du lundi.</p>
+        </div>
 
-        <div className="space-y-6">
-          {STEPS.map(({ n, title, time, desc }) => (
+        <div className="space-y-4">
+          {STEPS.map(({ n, title, time, desc, example }) => (
             <div key={n} className="flex gap-5 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+              <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg">
                 {n}
               </div>
               <div className="flex-1">
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-semibold text-gray-900 text-[15px] leading-snug">{title}</h3>
-                  <span className="shrink-0 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{time}</span>
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <h3 className="font-bold text-gray-900 text-[15px] leading-snug">{title}</h3>
+                  <span className="shrink-0 text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full whitespace-nowrap">
+                    {time}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{desc}</p>
+                <p className="text-sm text-gray-500 leading-relaxed mb-2">{desc}</p>
+                <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2 font-medium">{example}</p>
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <a
+            href="/signup"
+            className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white hover:bg-blue-700 transition"
+          >
+            Démarrer mon essai gratuit →
+          </a>
+          <p className="text-xs text-gray-400 mt-2">0€ pendant 7 jours · Sans engagement · Annulation en 1 clic</p>
         </div>
       </div>
     </section>

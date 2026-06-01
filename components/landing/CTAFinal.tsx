@@ -1,21 +1,25 @@
 export default function CTAFinal() {
   return (
-    <section className="py-24 px-6" style={{ backgroundColor: '#1e3a5f' }}>
+    <section className="py-20 px-6 bg-blue-600">
       <div className="max-w-xl mx-auto text-center">
-        <h2 className="text-3xl font-extrabold text-white mb-4">
-          Prêt à gagner 5h par semaine ?
+        <p className="text-blue-200 text-sm font-semibold uppercase tracking-wide mb-4">
+          Pendant que vous lisez ces lignes
+        </p>
+        <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">
+          Des clients cherchent votre métier sur Google Maps.
+          Sont-ils en train de vous trouver ?
         </h2>
-        <p className="text-blue-200 mb-8 text-lg leading-relaxed">
-          Rejoignez les artisans qui ont choisi l'IA pour développer leur activité.
+        <p className="text-blue-200 mb-8 leading-relaxed">
+          Calculez votre score gratuitement — résultat en 30 secondes.
         </p>
         <a
           href="/signup"
-          className="inline-block rounded-xl bg-white text-blue-700 font-bold text-sm px-8 py-4 hover:bg-blue-50 transition mb-4"
+          className="inline-block rounded-xl bg-white text-blue-700 font-bold text-sm px-8 py-4 hover:bg-blue-50 transition mb-3"
         >
-          Commencer gratuitement →
+          Démarrer 7 jours gratuits →
         </a>
-        <p className="text-sm text-blue-200/70">
-          ⚡ Configuration en 3 minutes — Sans engagement — Annulation en 1 clic
+        <p className="text-blue-300 text-xs">
+          0€ débité pendant l'essai · Annulation en 1 clic · Satisfait ou remboursé 30j
         </p>
       </div>
     </section>
