@@ -1,41 +1,43 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 const SCORE_CACHE_KEY = 'lb_score_cache'
-const SCORE_CACHE_TTL = 24 * 60 * 60 * 1000 // 24h
+const SCORE_CACHE_TTL = 24 * 60 * 60 * 1000
 
-const PRIORITY_MAP: Record<string, { label: string; why: string; href: string; external?: boolean; icon: string }> = {
-  telephone:   { icon: '📞', label: 'Ajoutez votre numéro de téléphone',       why: 'Les clients appellent directement depuis Google — sans numéro, ils appellent un concurrent.',    href: 'https://business.google.com', external: true },
-  horaires:    { icon: '🕐', label: 'Renseignez vos horaires d\'ouverture',    why: 'Un client qui ne sait pas si vous êtes ouvert ira chez quelqu\'un d\'autre.',                     href: 'https://business.google.com', external: true },
-  description: { icon: '✍️', label: 'Écrivez une description de votre activité', why: 'Google comprend mal votre métier — il vous positionne moins bien que vos concurrents.',        href: 'https://business.google.com', external: true },
-  site:        { icon: '🌐', label: 'Ajoutez votre site web',                   why: 'Les clients font davantage confiance à une fiche avec un site, même une simple page.',           href: 'https://business.google.com', external: true },
-  photos:      { icon: '📸', label: 'Ajoutez des photos de votre activité',    why: 'Les fiches avec 10+ photos reçoivent 35% de clics en plus. C\'est l\'action la plus rapide.',   href: '/localboost/photos' },
-  avis20:      { icon: '⭐', label: 'Demandez des avis à vos clients',          why: 'Les fiches avec 20+ avis reçoivent 3× plus d\'appels. Envoyez un email ou SMS après chaque prestation.', href: '/localboost/avis' },
-  note4:       { icon: '💬', label: 'Répondez à vos avis sans réponse',        why: 'Une note ≥ 4.0 double le taux de clic. Répondre aux avis négatifs améliore votre note perçue.', href: '/localboost/avis' },
+const PRIORITY_MAP: Record<string, {
+  label: string; why: string; icon: string
+  cta: string; href?: string; external?: boolean; aiLabel: string
+}> = {
+  description: { icon: '✍️', label: 'Écrivez une description de votre activité', why: 'Google comprend mal votre métier — il vous positionne moins bien que vos concurrents.',        cta: 'Ouvrir Google Business', href: 'https://business.google.com', external: true, aiLabel: 'Rédiger ma description' },
+  telephone:   { icon: '📞', label: 'Ajoutez votre numéro de téléphone',          why: 'Les clients appellent directement depuis Google — sans numéro, ils appellent un concurrent.',   cta: 'Ouvrir Google Business', href: 'https://business.google.com', external: true, aiLabel: 'Pourquoi c\'est urgent' },
+  horaires:    { icon: '🕐', label: 'Renseignez vos horaires d\'ouverture',       why: 'Un client qui ne sait pas si vous êtes ouvert ira chez quelqu\'un d\'autre.',                    cta: 'Ouvrir Google Business', href: 'https://business.google.com', external: true, aiLabel: 'Quels horaires mettre' },
+  site:        { icon: '🌐', label: 'Ajoutez votre site web',                      why: 'Les clients font davantage confiance à une fiche avec un site, même une simple page.',          cta: 'Ouvrir Google Business', href: 'https://business.google.com', external: true, aiLabel: 'Comment créer un site' },
+  photos:      { icon: '📸', label: 'Ajoutez des photos de votre activité',       why: 'Les fiches avec 10+ photos reçoivent 35% de clics en plus. C\'est l\'action la plus rapide.',  cta: 'Voir les conseils photos', href: '/localboost/photos',          aiLabel: 'Mon plan photo IA' },
+  avis20:      { icon: '⭐', label: 'Demandez des avis à vos clients',             why: 'Les fiches avec 20+ avis reçoivent 3× plus d\'appels. Envoyez un email ou SMS après chaque prestation.', cta: 'Envoyer des demandes', href: '/localboost/avis', aiLabel: 'Écrire mon email d\'avis' },
+  note4:       { icon: '💬', label: 'Répondez à vos avis sans réponse',           why: 'Une note ≥ 4.0 double le taux de clic. Répondre aux avis négatifs améliore votre note perçue.', cta: 'Voir mes avis',           href: '/localboost/avis',          aiLabel: 'Générer des réponses' },
 }
 
 function ScoreGauge({ score }: { score: number }) {
-  const r = 48
-  const circ = 2 * Math.PI * r
-  const offset = circ - (score / 100) * circ
+  const r = 48, circ = 2 * Math.PI * r
   const color = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
   return (
     <svg width="120" height="120" viewBox="0 0 120 120">
       <circle cx="60" cy="60" r={r} fill="none" stroke="#f3f4f6" strokeWidth="10" />
       <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="10"
-        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-        transform="rotate(-90 60 60)" style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+        strokeDasharray={circ} strokeDashoffset={circ - (score / 100) * circ}
+        strokeLinecap="round" transform="rotate(-90 60 60)"
+        style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
       <text x="60" y="55" textAnchor="middle" fontSize="24" fontWeight="700" fill="#111827">{score}</text>
       <text x="60" y="72" textAnchor="middle" fontSize="10" fill="#6b7280">/100</text>
     </svg>
   )
 }
 
-function getPriorities(details: Record<string, boolean>): string[] {
-  const order = ['avis20', 'photos', 'horaires', 'telephone', 'description', 'site', 'note4']
-  return order.filter(k => details[k] === false).slice(0, 3)
+function getPriorities(details: Record<string, boolean>) {
+  return ['avis20', 'photos', 'horaires', 'description', 'telephone', 'site', 'note4']
+    .filter(k => details[k] === false).slice(0, 3)
 }
 
 async function fetchScore() {
@@ -49,11 +51,118 @@ async function fetchScore() {
   return data
 }
 
+function PriorityCard({ priorityKey, index }: { priorityKey: string; index: number }) {
+  const p = PRIORITY_MAP[priorityKey]
+  const [aiResult, setAiResult]   = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [copied, setCopied]       = useState(false)
+  const textRef = useRef<HTMLTextAreaElement>(null)
+
+  async function generate() {
+    setGenerating(true)
+    setAiResult('')
+    const res = await fetch('/api/localboost/ai-action', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ priority: priorityKey }),
+    })
+    const { content } = await res.json()
+    setAiResult(content ?? '')
+    setGenerating(false)
+  }
+
+  function copy() {
+    navigator.clipboard.writeText(aiResult)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (!p) return null
+
+  return (
+    <div className="rounded-xl border border-gray-100 hover:border-blue-200 transition overflow-hidden">
+      <div className="flex items-start gap-3 p-4">
+        <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-base">
+          {p.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs font-bold text-blue-600">Priorité {index + 1}</span>
+          <p className="text-sm font-semibold text-gray-900 leading-snug mt-0.5">{p.label}</p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{p.why}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 px-4 pb-4">
+        <button
+          onClick={generate}
+          disabled={generating}
+          className="flex-1 rounded-lg bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition flex items-center justify-center gap-1.5"
+        >
+          {generating ? (
+            <><span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" /> Génération...</>
+          ) : (
+            <>✨ {p.aiLabel}</>
+          )}
+        </button>
+        {p.href && (
+          p.external ? (
+            <a href={p.href} target="_blank" rel="noopener noreferrer"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition whitespace-nowrap">
+              {p.cta} →
+            </a>
+          ) : (
+            <Link href={p.href}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition whitespace-nowrap">
+              {p.cta} →
+            </Link>
+          )
+        )}
+      </div>
+
+      {(aiResult || generating) && (
+        <div className="border-t border-blue-100 bg-blue-50/40 p-4">
+          {generating && !aiResult && (
+            <div className="flex items-center gap-2 text-xs text-blue-600">
+              <span className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin" />
+              L'IA rédige votre contenu...
+            </div>
+          )}
+          {aiResult && (
+            <>
+              <textarea
+                ref={textRef}
+                value={aiResult}
+                onChange={e => setAiResult(e.target.value)}
+                className="w-full text-xs text-gray-700 bg-transparent resize-none border-none outline-none leading-relaxed min-h-[120px]"
+                rows={8}
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={copy}
+                  className={`flex-1 rounded-lg py-2 text-xs font-semibold transition ${copied ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-gray-700'}`}
+                >
+                  {copied ? '✓ Copié !' : '📋 Copier le texte'}
+                </button>
+                <button
+                  onClick={generate}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition"
+                >
+                  ↻ Regénérer
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function LocalBoostDashboard() {
-  const [profile, setProfile]     = useState<any>(null)
-  const [score, setScore]         = useState<any>(null)
+  const [profile, setProfile]       = useState<any>(null)
+  const [score, setScore]           = useState<any>(null)
   const [priorities, setPriorities] = useState<string[]>([])
-  const [loading, setLoading]     = useState(true)
+  const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
     fetch('/api/localboost/setup').then(r => r.json()).then(p => {
@@ -75,9 +184,7 @@ export default function LocalBoostDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {profile ? `${profile.business_name}` : 'Bienvenue sur LocalBoost'}
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">{profile?.business_name ?? 'Bienvenue sur LocalBoost'}</p>
         </div>
         {!profile && (
           <Link href="/localboost/setup" className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition">
@@ -91,9 +198,7 @@ export default function LocalBoostDashboard() {
           <span className="text-2xl">⚙️</span>
           <div>
             <p className="font-semibold text-amber-800 mb-1">Commencez par chercher votre entreprise</p>
-            <p className="text-sm text-amber-700">
-              Entrez le nom de votre commerce pour que LocalBoost analyse votre présence Google et vous montre quoi améliorer.
-            </p>
+            <p className="text-sm text-amber-700">Entrez le nom de votre commerce pour que LocalBoost analyse votre présence Google et vous montre quoi améliorer.</p>
             <Link href="/localboost/setup" className="inline-block mt-3 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition">
               Trouver mon entreprise →
             </Link>
@@ -102,7 +207,7 @@ export default function LocalBoostDashboard() {
       )}
 
       {profile && (
-        <div className="grid sm:grid-cols-3 gap-5 mb-8">
+        <div className="grid sm:grid-cols-3 gap-5 mb-6">
           {/* Score */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center justify-center">
             {score ? (
@@ -110,102 +215,69 @@ export default function LocalBoostDashboard() {
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ma visibilité Google</p>
                 <ScoreGauge score={score.score} />
                 <div className="mt-3 w-full space-y-2">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-500">Fiche Google</span>
-                      <span className="font-semibold text-gray-700">{score.audit}/100</span>
+                  {[
+                    { label: 'Fiche Google', val: score.audit, color: 'bg-blue-500' },
+                    { label: 'Avis collectés', val: score.avis, color: 'bg-amber-400' },
+                  ].map(b => (
+                    <div key={b.label}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-500">{b.label}</span>
+                        <span className="font-semibold text-gray-700">{b.val}/100</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className={`${b.color} h-1.5 rounded-full transition-all`} style={{ width: `${b.val}%` }} />
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${score.audit}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-500">Avis collectés</span>
-                      <span className="font-semibold text-gray-700">{score.avis}/100</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div className="bg-amber-400 h-1.5 rounded-full transition-all" style={{ width: `${score.avis}%` }} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-32">
+              <div className="flex items-center justify-center h-36">
                 <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>
 
-          {/* Priorités */}
+          {/* Priorités IA */}
           <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-sm font-bold text-gray-900 mb-4">
+            <p className="text-sm font-bold text-gray-900 mb-3">
               {priorities.length > 0 ? '🎯 Vos priorités cette semaine' : '✅ Votre fiche est bien optimisée'}
             </p>
 
-            {priorities.length === 0 && score && (
+            {!score && (
+              <div className="space-y-3">
+                {[1,2,3].map(i => <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />)}
+              </div>
+            )}
+
+            {score && priorities.length === 0 && (
               <div className="text-center py-6">
                 <p className="text-3xl mb-2">🏆</p>
                 <p className="text-sm text-gray-600">Tous les critères essentiels sont remplis.</p>
-                <p className="text-sm text-gray-500 mt-1">Continuez à collecter des avis pour maintenir votre avance.</p>
                 <Link href="/localboost/avis" className="inline-block mt-3 text-sm font-semibold text-blue-600 hover:underline">
-                  Envoyer des demandes d'avis →
+                  Continuer à collecter des avis →
                 </Link>
               </div>
             )}
 
-            {!score && (
-              <div className="space-y-3">
-                {[1,2,3].map(i => (
-                  <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            )}
-
             {priorities.length > 0 && (
-              <div className="space-y-3">
-                {priorities.map((key, i) => {
-                  const p = PRIORITY_MAP[key]
-                  if (!p) return null
-                  return (
-                    <div key={key} className="flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition">
-                      <div className="shrink-0 w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-base">
-                        {p.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs font-bold text-blue-600">Priorité {i + 1}</span>
-                        </div>
-                        <p className="text-sm font-semibold text-gray-900 leading-snug">{p.label}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{p.why}</p>
-                      </div>
-                      {p.external ? (
-                        <a href={p.href} target="_blank" rel="noopener noreferrer"
-                          className="shrink-0 text-xs font-semibold text-blue-600 hover:underline whitespace-nowrap">
-                          Ouvrir →
-                        </a>
-                      ) : (
-                        <Link href={p.href} className="shrink-0 text-xs font-semibold text-blue-600 hover:underline whitespace-nowrap">
-                          Voir →
-                        </Link>
-                      )}
-                    </div>
-                  )
-                })}
+              <div className="space-y-2">
+                {priorities.map((key, i) => (
+                  <PriorityCard key={key} priorityKey={key} index={i} />
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Stats rapides */}
       {profile && score && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Demandes d\'avis envoyées', value: score.avisEnvoyes ?? 0, color: 'text-gray-900', href: '/localboost/avis' },
-            { label: 'Avis Google obtenus',        value: score.avisRecus ?? 0,    color: 'text-green-600', href: '/localboost/avis' },
-            { label: 'Critères manquants',          value: Object.values(score.details ?? {}).filter(v => !v).length, color: 'text-red-500', href: '/localboost/audit' },
-            { label: 'Score fiche Google',          value: `${score.audit}%`,      color: 'text-blue-600', href: '/localboost/audit' },
+            { label: 'Demandes d\'avis',  value: score.avisEnvoyes ?? 0,  color: 'text-gray-900',  href: '/localboost/avis'  },
+            { label: 'Avis obtenus',       value: score.avisRecus ?? 0,    color: 'text-green-600', href: '/localboost/avis'  },
+            { label: 'Critères manquants', value: Object.values(score.details ?? {}).filter(v => !v).length, color: 'text-red-500', href: '/localboost/audit' },
+            { label: 'Score fiche',        value: `${score.audit}%`,       color: 'text-blue-600',  href: '/localboost/audit' },
           ].map((k, i) => (
             <Link key={i} href={k.href} className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:border-blue-200 transition">
               <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
