@@ -43,6 +43,12 @@ next-env.d.ts
 # outreach scripts (contiennent des credentials)
 scripts/outreach/*.mjs
 
+# Google Business OAuth (en développement)
+app/api/google-business/
+app/localboost/connect/
+lib/google-business.ts
+supabase_gbp_migration.sql
+
 # outreach data files
 scripts/outreach/ALL_LEADS_*.csv
 scripts/outreach/ig_leads_*.csv

@@ -29,18 +29,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Récupérer le profil LocalBoost pour le lien d'avis
-  const [{ data: lbProfile }, { data: dbProfile }] = await Promise.all([
-    supabase.from('localboost_profiles').select('*').eq('user_id', user.id).single(),
-    supabase.from('devisboost_profiles').select('company_name, email, phone').eq('user_id', user.id).single(),
-  ])
+  const { data: lbProfile } = await supabase
+    .from('localboost_profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
 
   if (!lbProfile?.google_review_link) {
     return NextResponse.json({ error: 'Fiche Google non configurée' }, { status: 400 })
   }
 
   const reviewLink   = lbProfile.google_review_link
-  const companyName  = dbProfile?.company_name ?? 'Votre prestataire'
-  const companyEmail = dbProfile?.email ?? ''
+  const companyName  = lbProfile.business_name ?? 'Votre prestataire'
+  const companyEmail = ''
 
   // Email au client
   const html = `

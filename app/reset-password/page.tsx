@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
       return
     }
     setStatus('success')
-    setTimeout(() => router.push('/dashboard'), 2000)
+    setTimeout(() => router.push('/localboost/dashboard'), 2000)
   }
 
   if (status === 'success') {

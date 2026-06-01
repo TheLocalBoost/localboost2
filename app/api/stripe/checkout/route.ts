@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       subscription_data: { trial_period_days: 7 },
       customer_email: user.email,
       metadata: { userId: user.id },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/localboost/dashboard`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
     })
 

@@ -26,21 +26,11 @@ export async function GET(req: NextRequest) {
 
   if (!requests?.length) return NextResponse.json({ processed: 0 })
 
-  // Récupérer les profils artisans pour la signature
-  const userIds  = [...new Set(requests.map((r: any) => r.user_id))]
-  const { data: profiles } = await supabase
-    .from('devisboost_profiles')
-    .select('user_id, company_name, email')
-    .in('user_id', userIds)
-
-  const profileMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.user_id, p]))
-
   let processed = 0
 
   for (const r of requests) {
     try {
-      const artisan      = profileMap[r.user_id] ?? {}
-      const companyName  = artisan.company_name ?? 'Votre prestataire'
+      const companyName  = (r as any).localboost_profiles?.business_name ?? 'Votre prestataire'
       const reviewLink   = (r as any).localboost_profiles?.google_review_link ?? r.review_link
 
       const html = `

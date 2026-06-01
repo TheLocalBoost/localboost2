@@ -6,12 +6,11 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
 const NAV = [
-  { href: '/localboost/dashboard', label: 'Tableau de bord',   icon: '📍' },
-  { href: '/localboost/connect',   label: 'Google Business',   icon: '🔗' },
-  { href: '/localboost/avis',      label: 'Avis clients',      icon: '⭐' },
-  { href: '/localboost/photos',    label: 'Photos',            icon: '📸' },
-  { href: '/localboost/audit',     label: 'Audit de fiche',    icon: '🔍' },
-  { href: '/localboost/nap',       label: 'Cohérence NAP',     icon: '🗂️' },
+  { href: '/localboost/dashboard', label: 'Tableau de bord', icon: '📍' },
+  { href: '/localboost/avis',      label: 'Avis clients',    icon: '⭐' },
+  { href: '/localboost/photos',    label: 'Photos',          icon: '📸' },
+  { href: '/localboost/audit',     label: 'Audit de fiche',  icon: '🔍' },
+  { href: '/localboost/nap',       label: 'Cohérence NAP',   icon: '🗂️' },
 ]
 
 export default function LocalBoostLayout({ children }: { children: React.ReactNode }) {
@@ -37,15 +36,6 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
         (profile?.subscription_status === 'trialing' && trialEnd && trialEnd > now)
 
       if (!hasAccess) { router.push('/pricing'); return }
-
-      if (pathname === '/localboost/setup') { setReady(true); return }
-
-      const { data: dbProfile } = await supabase
-        .from('devisboost_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-      if (!dbProfile) { router.push('/devisboost/onboarding'); return }
 
       setReady(true)
     })
@@ -84,7 +74,7 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
         </div>
         <div className="flex items-center gap-3">
           <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Configuration</Link>
-          <Link href="/dashboard" className="text-xs text-gray-400 hover:text-gray-600">← Dashboard</Link>
+          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600">← Accueil</Link>
         </div>
       </nav>
       <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
