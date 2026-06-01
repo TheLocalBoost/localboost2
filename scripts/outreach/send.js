@@ -16,11 +16,11 @@ function markSent(email) {
   appendFileSync(SENT_FILE, email + "\n", "utf-8");
 }
 
-const allCsvFiles = readdirSync(__dirname).filter(f => f.startsWith("ALL_LEADS_")).sort().reverse();
-if (!allCsvFiles.length) { console.error("❌ Aucun fichier ALL_LEADS_*.csv trouvé. Lance merge.js d'abord."); process.exit(1); }
+const CSV_FILE = join(__dirname, "leads_clean.csv");
+if (!existsSync(CSV_FILE)) { console.error("❌ leads_clean.csv introuvable."); process.exit(1); }
 
 function parseCSV(file) {
-  const lines = readFileSync(join(__dirname, file), "utf-8").replace(/^﻿/, "").trim().split("\n");
+  const lines = readFileSync(file, "utf-8").replace(/^﻿/, "").trim().split("\n");
   const headers = lines[0].match(/"([^"]*)"/g).map(v => v.slice(1,-1));
   return lines.slice(1).map(line => {
     const vals = line.match(/"([^"]*)"/g)?.map(v => v.slice(1,-1)) || [];
@@ -29,9 +29,9 @@ function parseCSV(file) {
 }
 
 const alreadySent = loadSent();
-const allContacts = parseCSV(allCsvFiles[0]);
+const allContacts = parseCSV(CSV_FILE);
 const contacts = allContacts.filter(c => !alreadySent.has(c.Email.toLowerCase()));
-console.log(`(${alreadySent.size} déjà envoyés ignorés — ${contacts.length} nouveaux contacts)`);
+console.log(`✅ leads_clean.csv — ${alreadySent.size} déjà envoyés, ${contacts.length} restants sur ${allContacts.length} total`);
 
 const LABELS = {
   boulangerie: "boulangerie", restaurant: "restaurant", pharmacie: "pharmacie",
