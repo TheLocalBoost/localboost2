@@ -28,10 +28,23 @@ function parseCSV(file) {
   }).filter(r => r.Email);
 }
 
+function isValidLead(c) {
+  const nom = c.Nom || ''
+  if (nom.length < 3 || nom.length > 80) return false          // trop court ou trop long
+  if (nom.split(' ').length > 7) return false                   // phrase entière scrappée
+  if (/[<>{}\[\]@#]/.test(nom)) return false                    // caractères suspects
+  if (/\d{5,}/.test(nom)) return false                          // numéros de SIRET/tel
+  if (/instagram|facebook|twitter|www\.|https?:/i.test(nom)) return false
+  if (!c.Ville || c.Ville === 'France') return false            // sans ville réelle
+  if (!c.Email?.includes('@')) return false                     // email invalide
+  return true
+}
+
 const alreadySent = loadSent();
 const allContacts = parseCSV(CSV_FILE);
-const contacts = allContacts.filter(c => !alreadySent.has(c.Email.toLowerCase()));
-console.log(`✅ leads_clean.csv — ${alreadySent.size} déjà envoyés, ${contacts.length} restants sur ${allContacts.length} total`);
+const validContacts = allContacts.filter(isValidLead)
+const contacts = validContacts.filter(c => !alreadySent.has(c.Email.toLowerCase()));
+console.log(`✅ leads_clean.csv — ${allContacts.length} total → ${validContacts.length} valides → ${contacts.length} à envoyer (${alreadySent.size} déjà envoyés)`);
 
 const LABELS = {
   boulangerie: "boulangerie", restaurant: "restaurant", pharmacie: "pharmacie",
