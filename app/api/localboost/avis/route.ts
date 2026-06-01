@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  const { client_name, client_email, prestation } = await req.json()
+  const { client_name, client_email, client_phone, prestation, send_sms } = await req.json()
   if (!client_name || !client_email) {
     return NextResponse.json({ error: 'Nom et email requis' }, { status: 400 })
   }
@@ -84,16 +84,27 @@ export async function POST(req: NextRequest) {
     html,
   })
 
+  if (send_sms && client_phone) {
+    const phone = client_phone.replace(/[\s.-]/g, '').replace(/^0/, '+33')
+    const smsText = `Bonjour ${client_name} ! ${companyName} vous remercie. Laissez un avis Google en 30s : ${reviewLink}`
+    await fetch('https://api.brevo.com/v3/transactionalSMS/sms', {
+      method:  'POST',
+      headers: { 'api-key': process.env.BREVO_API_KEY!, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sender: 'LocalBoost', recipient: phone, content: smsText }),
+    }).catch(() => {})
+  }
+
   // Sauvegarder en base
   const { data: created, error } = await supabase
     .from('localboost_review_requests')
     .insert({
-      user_id:     user.id,
+      user_id:      user.id,
       client_name,
       client_email,
-      prestation:  prestation ?? null,
-      review_link: reviewLink,
-      status:      'sent',
+      client_phone: client_phone ?? null,
+      prestation:   prestation ?? null,
+      review_link:  reviewLink,
+      status:       'sent',
     })
     .select()
     .single()
