@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
-import { Analytics } from '@vercel/analytics/next'
+import { VercelAnalytics } from '@/components/VercelAnalytics'
 import { Analytics as CustomAnalytics } from '@/components/Analytics'
 import './globals.css'
 
@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body className={inter.className}>
         {children}
-        <Analytics />
+        <VercelAnalytics />
         <Suspense fallback={null}>
           <CustomAnalytics />
         </Suspense>

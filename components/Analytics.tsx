@@ -8,6 +8,7 @@ export function Analytics() {
   const lastPath    = useRef('')
 
   useEffect(() => {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard/admin')) return
     const path = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
     if (path === lastPath.current) return
     lastPath.current = path
