@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import LandingPage from '@/components/landing/LandingPage'
 
 export const metadata: Metadata = {
@@ -19,6 +20,14 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Page() {
+export default function Page({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
+  return <LandingWithCodeInterceptor searchParams={searchParams} />
+}
+
+async function LandingWithCodeInterceptor({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
+  const params = await searchParams
+  if (params.code) {
+    redirect(`/auth/callback?code=${params.code}`)
+  }
   return <LandingPage />
 }
