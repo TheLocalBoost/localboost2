@@ -48,10 +48,27 @@ export default function SignupPage() {
     setStep(2)
   }
 
+  function checkPassword(pwd: string): string | null {
+    if (pwd.length < 8)          return 'Au moins 8 caractères'
+    if (!/[A-Z]/.test(pwd))      return 'Au moins une majuscule'
+    if (!/[0-9]/.test(pwd))      return 'Au moins un chiffre'
+    if (!/[^A-Za-z0-9]/.test(pwd)) return 'Au moins un caractère spécial (!@#$...)'
+    return null
+  }
+
+  const passwordError = form.password ? checkPassword(form.password) : null
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('loading')
     setErrorMsg('')
+
+    const pwdErr = checkPassword(form.password)
+    if (pwdErr) {
+      setErrorMsg(pwdErr)
+      setStatus('error')
+      return
+    }
 
     if (form.password !== form.confirm) {
       setErrorMsg('Les mots de passe ne correspondent pas.')
@@ -137,7 +154,7 @@ export default function SignupPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-6">
-            <img src="/logo.png.png" alt="LocalBoost" className="h-9 w-auto mx-auto" />
+            <img src="/logo.png.png" alt="LocalBoost" className="h-16 w-auto mx-auto" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte</h1>
           <p className="text-gray-500 text-sm">Sans engagement · Annulation en 1 clic</p>
@@ -214,8 +231,16 @@ export default function SignupPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Mot de passe *</label>
-                <input type="password" value={form.password} onChange={set('password')} placeholder="Minimum 8 caractères" required minLength={8} className={input} />
-                <p className="text-xs text-gray-400 mt-1">Au moins 8 caractères</p>
+                <input type="password" value={form.password} onChange={set('password')} placeholder="Ex: MonMot2passe!" required minLength={8} className={input} />
+                {form.password && passwordError && (
+                  <p className="text-xs text-red-500 mt-1">⚠ {passwordError}</p>
+                )}
+                {form.password && !passwordError && (
+                  <p className="text-xs text-green-600 mt-1">✓ Mot de passe fort</p>
+                )}
+                {!form.password && (
+                  <p className="text-xs text-gray-400 mt-1">8 caractères min · 1 majuscule · 1 chiffre · 1 caractère spécial</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmer le mot de passe *</label>
