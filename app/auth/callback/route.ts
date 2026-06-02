@@ -23,9 +23,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=lien_invalide', origin))
   }
 
-  // Email confirmé — créer le profil maintenant avec les metadata du signup
+  // Email confirmé — créer le profil avec les metadata du signup
   const { data: { user } } = await supabase.auth.getUser()
-  if (user && !user.app_metadata?.profile_created) {
+  if (user) {
     const meta = user.user_metadata ?? {}
     await fetch(`${origin}/api/auth/setup-profile`, {
       method:  'POST',
@@ -39,6 +39,9 @@ export async function GET(req: NextRequest) {
         nom:           meta.nom      ?? '',
       }),
     }).catch(() => {})
+
+    // Déconnecter — l'utilisateur doit se connecter manuellement
+    await supabase.auth.signOut()
   }
 
   return NextResponse.redirect(new URL('/auth/confirm', origin))

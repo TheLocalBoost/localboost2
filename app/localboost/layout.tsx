@@ -20,7 +20,9 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) { router.push('/login'); return }
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
       const { data: profile } = await supabase
@@ -75,7 +77,12 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
         </div>
         <div className="flex items-center gap-3">
           <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Configuration</Link>
-          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600">← Accueil</Link>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
+            className="text-xs text-gray-400 hover:text-red-500 transition"
+          >
+            Déconnexion
+          </button>
         </div>
       </nav>
       <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
