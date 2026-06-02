@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { usePro } from '@/lib/pro-context'
 
 const SCORE_CACHE_KEY = 'lb_score_cache'
 const SCORE_CACHE_TTL = 24 * 60 * 60 * 1000
@@ -60,7 +61,8 @@ async function fetchScore() {
 }
 
 function PriorityCard({ priorityKey, index }: { priorityKey: string; index: number }) {
-  const p = PRIORITY_MAP[priorityKey]
+  const p     = PRIORITY_MAP[priorityKey]
+  const isPro = usePro()
   const [aiResult, setAiResult]   = useState('')
   const [generating, setGenerating] = useState(false)
   const [copied, setCopied]       = useState(false)
@@ -101,17 +103,26 @@ function PriorityCard({ priorityKey, index }: { priorityKey: string; index: numb
       </div>
 
       <div className="flex gap-2 px-4 pb-4">
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="flex-1 rounded-lg bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition flex items-center justify-center gap-1.5"
-        >
-          {generating ? (
-            <><span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" /> Génération...</>
-          ) : (
-            <>✨ {p.aiLabel}</>
-          )}
-        </button>
+        {isPro ? (
+          <button
+            onClick={generate}
+            disabled={generating}
+            className="flex-1 rounded-lg bg-blue-600 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60 transition flex items-center justify-center gap-1.5"
+          >
+            {generating ? (
+              <><span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" /> Génération...</>
+            ) : (
+              <>✨ {p.aiLabel}</>
+            )}
+          </button>
+        ) : (
+          <Link
+            href="/pricing"
+            className="flex-1 rounded-lg bg-gray-100 border border-gray-200 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-200 transition flex items-center justify-center gap-1.5"
+          >
+            🔒 {p.aiLabel} — Passer Pro
+          </Link>
+        )}
         {p.href && (
           p.external ? (
             <a href={p.href} target="_blank" rel="noopener noreferrer"

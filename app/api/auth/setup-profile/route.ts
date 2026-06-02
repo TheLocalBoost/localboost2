@@ -13,8 +13,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
   }
 
-  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-
   // Profil merchant (ancien système)
   await supabase.from('merchant_profiles').upsert({
     id:            userId,
@@ -29,8 +27,7 @@ export async function POST(req: NextRequest) {
   // Profil subscription — trial 7 jours sans CB
   await supabase.from('profiles').upsert({
     id:                  userId,
-    subscription_status: 'trialing',
-    trial_ends_at:       trialEndsAt,
+    subscription_status: 'free',
     updated_at:          new Date().toISOString(),
   }, { onConflict: 'id' })
 
@@ -46,7 +43,7 @@ export async function POST(req: NextRequest) {
 <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
   <h2 style="font-size:20px;font-weight:700;margin:0 0 8px;">Bonjour ${prenom || commerce_name} 👋</h2>
   <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 20px;">
-    Votre essai gratuit de <strong>7 jours</strong> vient de démarrer — aucune carte bancaire requise.
+    Votre compte LocalBoost est prêt — accès gratuit, sans carte bancaire.
   </p>
   <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px;">
     LocalBoost va analyser votre fiche Google et vous montrer les 3 actions prioritaires pour attirer plus de clients.
@@ -58,8 +55,7 @@ export async function POST(req: NextRequest) {
     </a>
   </div>
   <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
-    Votre essai se termine le ${new Date(trialEndsAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}.
-    Aucun prélèvement sans votre accord.
+    Accès gratuit illimité au diagnostic. Les actions IA sont disponibles en version Pro à partir de 29€/mois.
   </p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;">
   <p style="color:#9ca3af;font-size:12px;margin:0;">LocalBoost · contact@thelocalboost.fr</p>
