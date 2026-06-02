@@ -1,4 +1,6 @@
 'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   detectedCity: string
@@ -7,6 +9,16 @@ interface Props {
 }
 
 export default function Hero({ detectedCity, signupCount, animScore }: Props) {
+  const router = useRouter()
+  const [query, setQuery] = useState('')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const q = query.trim()
+    if (!q) return
+    router.push(`/audit?q=${encodeURIComponent(q)}`)
+  }
+
   return (
     <section className="pt-24 pb-16 px-6 bg-white">
       <div className="max-w-5xl mx-auto">
@@ -41,33 +53,40 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
               Demandes d'avis automatiques · Réponses aux clients · Actions prioritaires chaque semaine
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-5">
-              <button
-                onClick={() => document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth' })}
-                className="rounded-xl bg-blue-600 px-6 py-4 text-sm font-bold text-white hover:bg-blue-700 transition text-center"
-              >
-                Analyser ma fiche gratuitement →
-              </button>
-              <button
-                onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}
-                className="rounded-xl border border-gray-200 px-6 py-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition text-center"
-              >
-                Comment ça marche
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3 text-sm text-gray-400">
-              <div className="flex -space-x-1.5">
-                {['🔧', '✂️', '🥖', '🍽️', '🎨'].map((e, i) => (
-                  <div key={i} className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs">
-                    {e}
-                  </div>
-                ))}
+            {/* Formulaire de recherche */}
+            <form id="hero-search" onSubmit={handleSubmit} className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder={detectedCity
+                    ? `Ex: Plomberie Dubois, ${detectedCity}`
+                    : 'Ex: Plomberie Martin, Lyon'}
+                  className="flex-1 rounded-xl border border-gray-200 px-4 py-3.5 text-sm focus:border-blue-500 focus:outline-none bg-white shadow-sm"
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap"
+                >
+                  Voir mon score gratuit →
+                </button>
               </div>
-              <span>
-                {signupCount > 10 ? `${signupCount}+` : '100+'} artisans utilisent LocalBoost
-              </span>
-            </div>
+              <p className="text-xs text-gray-400">Aucune carte bancaire requise · Résultats en 60 secondes</p>
+            </form>
+
+            {signupCount > 0 && (
+              <div className="flex items-center gap-3 text-sm text-gray-400 mt-3">
+                <div className="flex -space-x-1.5">
+                  {['🔧', '✂️', '🥖', '🍽️', '🎨'].map((e, i) => (
+                    <div key={i} className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs">
+                      {e}
+                    </div>
+                  ))}
+                </div>
+                <span>Rejoint par {signupCount} artisans</span>
+              </div>
+            )}
           </div>
 
           {/* Visuel */}

@@ -25,9 +25,12 @@ export default function Navbar() {
           <a href="/login" className="text-sm text-gray-600 hover:text-gray-900">
             Se connecter
           </a>
-          <a href="/signup" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition">
-            Essai gratuit 7 jours →
-          </a>
+          <button
+            onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+          >
+            Analyser ma fiche →
+          </button>
         </div>
 
         <button onClick={() => setOpen(v => !v)} className="md:hidden p-2 text-gray-500">
@@ -49,9 +52,12 @@ export default function Navbar() {
           <a href="#pricing" className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Tarifs</a>
           <hr className="border-gray-100" />
           <a href="/login" className="block text-sm text-gray-700 py-1">Se connecter</a>
-          <a href="/signup" className="block w-full text-center text-sm font-semibold text-white bg-blue-600 rounded-xl px-4 py-2.5">
-            Essai gratuit 7 jours →
-          </a>
+          <button
+            onClick={() => { setOpen(false); document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' }) }}
+            className="block w-full text-center text-sm font-semibold text-white bg-blue-600 rounded-xl px-4 py-2.5"
+          >
+            Analyser ma fiche →
+          </button>
         </div>
       )}
     </nav>

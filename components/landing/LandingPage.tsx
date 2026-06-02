@@ -1,38 +1,16 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Navbar     from './Navbar'
-import Hero       from './Hero'
-import PainPoints from './PainPoints'
-import HowItWorks from './HowItWorks'
-import Modules    from './Modules'
-import Pricing    from './Pricing'
-import FAQ        from './FAQ'
+import Navbar          from './Navbar'
+import Hero            from './Hero'
+import PainPoints      from './PainPoints'
+import DashboardPreview from './DashboardPreview'
+import CTASection      from './CTASection'
+import HowItWorks      from './HowItWorks'
+import Modules         from './Modules'
+import Pricing         from './Pricing'
+import FAQ             from './FAQ'
 import CTAFinal        from './CTAFinal'
 import Footer          from './Footer'
-import DashboardPreview from './DashboardPreview'
-
-function AnalyzeCTA() {
-  return (
-    <section id="analyzer" className="py-20 px-6 bg-blue-600">
-      <div className="max-w-3xl mx-auto text-center">
-        <p className="text-blue-200 text-sm font-semibold uppercase tracking-wide mb-3">Diagnostic gratuit</p>
-        <h2 className="text-3xl lg:text-4xl font-extrabold text-white mb-4 leading-tight">
-          Découvrez en 60 secondes pourquoi votre fiche Google n'attire pas assez de clients
-        </h2>
-        <p className="text-blue-100 text-lg mb-8 leading-relaxed">
-          LocalBoost analyse votre présence Google et vous montre les actions prioritaires à réaliser — sans jargon, sans abonnement pour commencer.
-        </p>
-        <a
-          href="/signup"
-          className="inline-block rounded-xl bg-white text-blue-600 font-bold text-base px-8 py-4 hover:bg-blue-50 transition shadow-lg"
-        >
-          Analyser ma fiche gratuitement →
-        </a>
-        <p className="text-blue-200 text-sm mt-4">Sans carte bancaire · 7 jours d'essai gratuit</p>
-      </div>
-    </section>
-  )
-}
 
 export default function LandingPage() {
   const [detectedCity, setDetectedCity] = useState('')
@@ -77,9 +55,9 @@ export default function LandingPage() {
 
       <PainPoints />
 
-      <AnalyzeCTA />
-
       <DashboardPreview />
+
+      <CTASection />
 
       <HowItWorks />
 
