@@ -24,10 +24,14 @@ export default function Page({ searchParams }: { searchParams: Promise<{ code?: 
   return <LandingWithCodeInterceptor searchParams={searchParams} />
 }
 
-async function LandingWithCodeInterceptor({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
+async function LandingWithCodeInterceptor({ searchParams }: { searchParams: Promise<{ code?: string; error?: string; error_code?: string }> }) {
   const params = await searchParams
   if (params.code) {
     redirect(`/auth/callback?code=${params.code}`)
+  }
+  if (params.error) {
+    const msg = params.error_code === 'otp_expired' ? 'lien_expire' : 'lien_invalide'
+    redirect(`/login?error=${msg}`)
   }
   return <LandingPage />
 }

@@ -48,7 +48,16 @@ function LoginForm() {
           </div>
         )}
 
-        {linkError && (
+        {linkError === 'lien_expire' && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-5 text-center">
+            <p className="text-amber-800 font-semibold text-sm">⏰ Lien expiré</p>
+            <p className="text-amber-700 text-xs mt-1">
+              Le lien de confirmation n'est valable qu'1 heure.{' '}
+              <Link href="/signup" className="underline font-semibold">Recréez un compte →</Link>
+            </p>
+          </div>
+        )}
+        {linkError && linkError !== 'lien_expire' && (
           <div className="rounded-xl bg-red-50 border border-red-100 p-4 mb-5 text-center">
             <p className="text-red-700 text-sm">Lien de confirmation invalide ou expiré.</p>
           </div>
