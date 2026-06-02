@@ -12,12 +12,12 @@ export async function GET(req: NextRequest) {
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(new URL('/login?confirmed=1', origin))
+    if (!error) return NextResponse.redirect(new URL('/auth/confirm', origin))
   }
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
-    if (!error) return NextResponse.redirect(new URL('/login?confirmed=1', origin))
+    if (!error) return NextResponse.redirect(new URL('/auth/confirm', origin))
   }
 
   return NextResponse.redirect(new URL('/login?error=lien_invalide', origin))
