@@ -22,23 +22,21 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { router.push('/login'); return }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_status, trial_ends_at')
+        .select('subscription_status')
         .eq('id', user.id)
         .single()
 
-      const now      = new Date()
-      const trialEnd = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
-      const isTrial  = profile?.subscription_status === 'trialing' || profile?.subscription_status === 'trial'
-      const hasAccess =
-        profile?.subscription_status === 'active' ||
-        (isTrial && trialEnd && trialEnd > now)
-
-      if (!hasAccess) { router.push('/pricing'); return }
+      // Seul 'active' donne accès au dashboard
+      if (profile?.subscription_status !== 'active') {
+        router.push('/pricing')
+        return
+      }
 
       setReady(true)
     })

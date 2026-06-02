@@ -11,10 +11,6 @@
     {
       "path": "/api/localboost/avis-relance",
       "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/trial-reminder",
-      "schedule": "0 9 * * *"
     }
   ]
 }

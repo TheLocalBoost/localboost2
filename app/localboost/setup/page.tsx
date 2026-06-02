@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function LocalBoostSetup() {
-  const router = useRouter()
+function LocalBoostSetupInner() {
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const [showWelcome, setShowWelcome] = useState(false)
   const [search, setSearch]     = useState('')
   const [city, setCity]         = useState('')
   const [results, setResults]   = useState<any[]>([])
@@ -14,6 +17,10 @@ export default function LocalBoostSetup() {
   const [profile, setProfile]   = useState<any>(null)
 
   useEffect(() => {
+    if (searchParams.get('welcome') === '1') {
+      setShowWelcome(true)
+      setTimeout(() => setShowWelcome(false), 5000)
+    }
     fetch('/api/localboost/setup').then(r => r.json()).then(d => {
       if (d?.google_place_id) setProfile(d)
     })
@@ -50,6 +57,18 @@ export default function LocalBoostSetup() {
 
   return (
     <div className="max-w-xl mx-auto">
+      {showWelcome && (
+        <div
+          onClick={() => setShowWelcome(false)}
+          className="cursor-pointer rounded-xl bg-green-50 border border-green-200 px-4 py-3 mb-6 flex items-start gap-3"
+        >
+          <span className="text-green-500 shrink-0 mt-0.5">✓</span>
+          <p className="text-sm font-semibold text-green-800">
+            Bienvenue ! Votre accès est actif. Commencez par connecter votre fiche Google.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mb-6">
         <button onClick={() => router.push('/localboost/dashboard')} className="text-sm text-gray-400 hover:text-gray-600">
           ← Dashboard
@@ -149,5 +168,13 @@ export default function LocalBoostSetup() {
         {saving ? 'Enregistrement...' : 'Enregistrer ma fiche →'}
       </button>
     </div>
+  )
+}
+
+export default function LocalBoostSetup() {
+  return (
+    <Suspense>
+      <LocalBoostSetupInner />
+    </Suspense>
   )
 }

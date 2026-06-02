@@ -1,49 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase-browser'
-import { Suspense } from 'react'
 
 const FEATURES = [
-  'Priorités IA personnalisées chaque semaine',
-  'Demandes d\'avis par email et SMS illimitées',
-  'QR code Google avis à imprimer',
-  'Analyse complète de votre fiche Google',
-  'Suggestions photos par IA',
-  'Vérification sur tous les annuaires',
-  'Contenu IA généré en 1 clic',
-  'Sans engagement — annulation en 1 clic',
+  'Plan d\'action personnalisé mis à jour chaque semaine',
+  'Description Google rédigée par IA',
+  'Réponses aux avis générées par IA',
+  'Générateur de demandes d\'avis + QR Code',
+  'Publications Google automatiques',
+  'Rapport hebdomadaire par email',
+  'Historique de votre score sur 12 mois',
 ]
 
+const TESTIMONIALS = [
+  { name: 'Marc D.', role: 'Plombier · Lyon', text: '« En 3 semaines, je suis passé de la 5e à la 2e position sur Google. 4 nouveaux clients ce mois-ci. »', stars: 5 },
+  { name: 'Sophie L.', role: 'Coiffeuse · Bordeaux', text: '« L\'email de demande d\'avis a multiplié mes avis Google par 3 en un mois. Simple et efficace. »', stars: 5 },
+  { name: 'Thomas R.', role: 'Électricien · Nantes', text: '« Les priorités IA m\'ont évité de perdre du temps sur ce qui n\'avait pas d\'impact. Très bien. »', stars: 5 },
+]
+
+const SPOTS_LEFT = parseInt(process.env.NEXT_PUBLIC_FOUNDER_SPOTS_LEFT ?? '47', 10)
+
 function PricingContent() {
-  const [loading, setLoading]   = useState(false)
-  const [trialDays, setTrialDays] = useState<number | null>(null)
   const supabase = createClient()
+  const [user, setUser]       = useState<{ email: string; id: string } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('trial_ends_at')
-        .eq('id', user.id)
-        .single()
-      if (data?.trial_ends_at) {
-        const days = Math.ceil((new Date(data.trial_ends_at).getTime() - Date.now()) / 86400000)
-        setTrialDays(days > 0 ? days : 0)
-      }
+    supabase.auth.getUser().then(({ data: { user: u } }) => {
+      if (u) setUser({ email: u.email ?? '', id: u.id })
+      setChecking(false)
     })
   }, [])
 
-  const handleSubscribe = async () => {
+  const handleCTA = async () => {
+    if (!user) {
+      window.location.href = '/signup?redirect=pricing'
+      return
+    }
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/checkout', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID }),
-      })
-      const data = await res.json()
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const data: { url?: string; error?: string } = await res.json()
       if (data.url)   window.location.href = data.url
       if (data.error) alert('Erreur : ' + data.error)
     } catch {
@@ -53,68 +52,114 @@ function PricingContent() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-20">
-      <div className="w-full max-w-md">
+  const ctaLabel = loading
+    ? 'Chargement...'
+    : user
+      ? 'Activer mon accès →'
+      : 'Commencer →'
 
-        <div className="text-center mb-8">
+  return (
+    <div className="min-h-screen bg-gray-50 py-16 px-4">
+      <div className="max-w-lg mx-auto">
+
+        {/* Logo */}
+        <div className="text-center mb-10">
           <a href="/" className="inline-flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
             <span>📍</span><span>LocalBoost</span>
           </a>
-          {trialDays !== null && trialDays === 0 ? (
+
+          {checking ? null : user ? (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Votre essai est terminé</h1>
-              <p className="text-gray-500">Continuez à attirer plus de clients avec LocalBoost.</p>
-            </>
-          ) : trialDays !== null && trialDays > 0 ? (
-            <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Passez à l'abonnement</h1>
-              <p className="text-gray-500">Il vous reste <strong>{trialDays} jour{trialDays > 1 ? 's' : ''}</strong> d'essai gratuit.</p>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
+                Vous y êtes presque
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Votre compte est créé. Activez votre accès pour débloquer votre plan d'action.
+              </p>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Commencer LocalBoost</h1>
-              <p className="text-gray-500">Sans engagement. Annulez à tout moment.</p>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
+                Débloquez votre plan d'action complet
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Rejoignez les artisans qui améliorent leur visibilité Google chaque semaine.
+              </p>
             </>
           )}
         </div>
 
-        <div className="rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-sm">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-3 py-1 text-xs font-semibold text-amber-700 mb-5">
-            🏆 Tarif fondateur — places limitées
+        {/* Compteur urgence */}
+        {SPOTS_LEFT > 0 && (
+          <div className="rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-center mb-6">
+            <p className="text-sm font-semibold text-yellow-800">
+              Offre fondateur — {SPOTS_LEFT} places restantes sur 50
+            </p>
+          </div>
+        )}
+
+        {/* Carte pricing */}
+        <div className="rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-md mb-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 mb-5">
+            Offre fondateur
           </div>
 
-          <div className="text-center mb-6">
+          <div className="text-center mb-2">
             <div className="flex items-baseline justify-center gap-1">
               <span className="text-5xl font-extrabold text-gray-900">29€</span>
-              <span className="text-gray-500">/mois</span>
+              <span className="text-gray-500 text-lg">/mois</span>
             </div>
-            <p className="text-sm text-gray-400 mt-1 line-through">49€ après les 50 premiers</p>
+            <p className="text-sm text-gray-400 mt-1">puis 29€/mois, résiliable à tout moment</p>
           </div>
 
-          <ul className="space-y-3 mb-8">
+          <ul className="space-y-3 mt-6 mb-8">
             {FEATURES.map(f => (
-              <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-blue-500 shrink-0 font-bold">✓</span>{f}
+              <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
+                <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{f}
               </li>
             ))}
           </ul>
 
           <button
-            onClick={handleSubscribe}
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 py-4 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-60"
+            onClick={handleCTA}
+            disabled={loading || checking}
+            className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
           >
-            {loading ? 'Chargement...' : 'S\'abonner — 29€/mois →'}
+            {ctaLabel}
           </button>
-          <p className="mt-3 text-center text-xs text-gray-400">Sans engagement · Annulation en 1 clic</p>
+
+          {/* Réassurance */}
+          <div className="flex items-center justify-around mt-5 pt-5 border-t border-gray-100">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-lg">🔒</span>
+              <p className="text-xs text-gray-500">Paiement sécurisé<br />Stripe</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-lg">📅</span>
+              <p className="text-xs text-gray-500">Résiliable<br />en 1 clic</p>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <span className="text-lg">⭐</span>
+              <p className="text-xs text-gray-500">Résultats en 30 jours<br />ou remboursé</p>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 bg-gray-50 rounded-xl p-4 text-center">
-          <p className="text-sm text-gray-600">
-            🛡️ <strong>Satisfait ou remboursé 30 jours.</strong>
-          </p>
+        {/* Témoignages */}
+        <div className="space-y-3">
+          {TESTIMONIALS.map(t => (
+            <div key={t.name} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex items-center gap-0.5 mb-2">
+                {Array.from({ length: t.stars }).map((_, i) => (
+                  <span key={i} className="text-amber-400 text-xs">★</span>
+                ))}
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed mb-2">{t.text}</p>
+              <p className="text-xs text-gray-400 font-semibold">{t.name} · {t.role}</p>
+            </div>
+          ))}
         </div>
+
       </div>
     </div>
   )
