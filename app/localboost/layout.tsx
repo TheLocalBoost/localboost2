@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import { ProContext } from '@/lib/pro-context'
 import Link from 'next/link'
 
 const NAV = [
@@ -19,7 +18,6 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   const pathname = usePathname()
   const supabase = createClient()
   const [ready, setReady] = useState(false)
-  const [isPro, setIsPro] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -33,12 +31,15 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
         .eq('id', user.id)
         .single()
 
-      const status = profile?.subscription_status
-      const now    = new Date()
+      const now      = new Date()
       const trialEnd = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
-      const isTrial  = (status === 'trialing' || status === 'trial') && trialEnd && trialEnd > now
+      const isTrial  = profile?.subscription_status === 'trialing' || profile?.subscription_status === 'trial'
+      const hasAccess =
+        profile?.subscription_status === 'active' ||
+        (isTrial && trialEnd && trialEnd > now)
 
-      setIsPro(status === 'active' || !!isTrial)
+      if (!hasAccess) { router.push('/pricing'); return }
+
       setReady(true)
     })
   }, [pathname])
@@ -52,49 +53,39 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <ProContext.Provider value={isPro}>
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/localboost/dashboard" className="flex items-center gap-2 font-bold text-gray-900">
-              <span className="text-lg">📍</span>
-              <span>LocalBoost</span>
-            </Link>
-            <div className="flex items-center gap-1">
-              {NAV.map(n => (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition
-                    ${pathname.startsWith(n.href)
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
-                >
-                  <span>{n.icon}</span>{n.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {!isPro && (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <Link href="/localboost/dashboard" className="flex items-center gap-2 font-bold text-gray-900">
+            <span className="text-lg">📍</span>
+            <span>LocalBoost</span>
+          </Link>
+          <div className="flex items-center gap-1">
+            {NAV.map(n => (
               <Link
-                href="/pricing"
-                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition"
+                key={n.href}
+                href={n.href}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition
+                  ${pathname.startsWith(n.href)
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
               >
-                Passer Pro →
+                <span>{n.icon}</span>{n.label}
               </Link>
-            )}
-            <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Configuration</Link>
-            <button
-              onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
-              className="text-xs text-gray-400 hover:text-red-500 transition"
-            >
-              Déconnexion
-            </button>
+            ))}
           </div>
-        </nav>
-        <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
-      </div>
-    </ProContext.Provider>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Configuration</Link>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
+            className="text-xs text-gray-400 hover:text-red-500 transition"
+          >
+            Déconnexion
+          </button>
+        </div>
+      </nav>
+      <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
+    </div>
   )
 }

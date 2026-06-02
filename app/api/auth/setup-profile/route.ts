@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
   // Profil subscription — trial 7 jours sans CB
   await supabase.from('profiles').upsert({
     id:                  userId,
-    subscription_status: 'free',
+    subscription_status: 'trialing',
+    trial_ends_at:       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     updated_at:          new Date().toISOString(),
   }, { onConflict: 'id' })
 
