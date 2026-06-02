@@ -101,22 +101,6 @@ export default function SignupPage() {
       return
     }
 
-    // Créer le profil merchant automatiquement
-    if (data.user) {
-      await fetch('/api/auth/setup-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId:        data.user.id,
-          commerce_name: form.commerce,
-          city:          form.ville,
-          commerce_type: form.secteur,
-          prenom:        form.prenom,
-          nom:           form.nom,
-        }),
-      })
-    }
-
     // Tracker l'événement signup
     fetch('/api/analytics/event', {
       method: 'POST',

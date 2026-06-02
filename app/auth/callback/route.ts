@@ -6,19 +6,40 @@ export async function GET(req: NextRequest) {
   const code       = searchParams.get('code')
   const token_hash = searchParams.get('token_hash')
   const type       = searchParams.get('type') as 'signup' | 'recovery' | 'email' | null
-  const next       = searchParams.get('next') ?? '/localboost/setup'
 
   const supabase = await createClient()
 
+  let verified = false
+
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) return NextResponse.redirect(new URL('/auth/confirm', origin))
-  }
-
-  if (token_hash && type) {
+    if (!error) verified = true
+  } else if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type })
-    if (!error) return NextResponse.redirect(new URL('/auth/confirm', origin))
+    if (!error) verified = true
   }
 
-  return NextResponse.redirect(new URL('/login?error=lien_invalide', origin))
+  if (!verified) {
+    return NextResponse.redirect(new URL('/login?error=lien_invalide', origin))
+  }
+
+  // Email confirmé — créer le profil maintenant avec les metadata du signup
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user && !user.app_metadata?.profile_created) {
+    const meta = user.user_metadata ?? {}
+    await fetch(`${origin}/api/auth/setup-profile`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId:        user.id,
+        commerce_name: meta.commerce ?? '',
+        city:          meta.ville    ?? '',
+        commerce_type: meta.secteur  ?? '',
+        prenom:        meta.prenom   ?? '',
+        nom:           meta.nom      ?? '',
+      }),
+    }).catch(() => {})
+  }
+
+  return NextResponse.redirect(new URL('/auth/confirm', origin))
 }
