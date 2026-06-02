@@ -63,7 +63,7 @@ export default function SignupPage() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/pricing`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/localboost/setup`,
         data: {
           prenom:   form.prenom,
           nom:      form.nom,
