@@ -12,32 +12,22 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-async function fetchReviews(commerceName: string, city: string): Promise<any[]> {
+async function fetchReviews(placeId: string): Promise<any[]> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY
-  if (!apiKey) return []
+  if (!apiKey || !placeId) return []
 
-  // 1. Cherche le place_id via Places Text Search
-  const searchRes = await fetch(
-    `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(`${commerceName} ${city}`)}&inputtype=textquery&fields=place_id&key=${apiKey}`
-  )
-  const searchData = await searchRes.json()
-  const placeId = searchData?.candidates?.[0]?.place_id
-  if (!placeId) return []
-
-  // 2. Récupère les détails + avis (Places API retourne jusqu'à 5 avis récents)
   const detailRes = await fetch(
     `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&language=fr&key=${apiKey}`
   )
   const detailData = await detailRes.json()
   const reviews = detailData?.result?.reviews || []
 
-  // Normalise le format pour correspondre à celui qu'on utilisait avec Outscraper
   return reviews.map((r: any) => ({
-    reviewId:  `${placeId}_${r.time}`,
-    name:      r.author_name,
-    rating:    r.rating,
-    text:      r.text,
-    date:      new Date(r.time * 1000).toISOString(),
+    reviewId: `${placeId}_${r.time}`,
+    name:     r.author_name,
+    rating:   r.rating,
+    text:     r.text,
+    date:     new Date(r.time * 1000).toISOString(),
   }))
 }
 
@@ -174,22 +164,32 @@ export async function GET(req: NextRequest) {
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, subscription_status, trial_ends_at')
-    .or('subscription_status.eq.active,subscription_status.eq.trialing')
+    .in('subscription_status', ['active', 'trialing', 'trial'])
 
   const activeIds = (profiles || [])
     .filter(p => {
       if (p.subscription_status === 'active') return true
-      if (p.subscription_status === 'trialing') return p.trial_ends_at && new Date(p.trial_ends_at) > now
-      return false
+      return p.trial_ends_at && new Date(p.trial_ends_at) > now
     })
     .map(p => p.id)
 
   if (!activeIds.length) return NextResponse.json({ sent: 0, checked: 0 })
 
-  const { data: merchants } = await supabase
-    .from('merchant_profiles')
-    .select('id, commerce_name, city, commerce_type, tone')
-    .in('id', activeIds)
+  const { data: lbProfiles } = await supabase
+    .from('localboost_profiles')
+    .select('user_id, business_name, business_address, google_place_id')
+    .in('user_id', activeIds)
+    .not('google_place_id', 'is', null)
+
+  // Adapter au format attendu par la suite du code
+  const merchants = (lbProfiles ?? []).map(lb => ({
+    id:           lb.user_id,
+    commerce_name: lb.business_name,
+    city:          (lb.business_address ?? '').split(',').slice(-2, -1)[0]?.trim() ?? '',
+    commerce_type: 'commerce local',
+    tone:          'chaleureux',
+    google_place_id: lb.google_place_id,
+  }))
 
   const listResult = await supabase.auth.admin.listUsers({ perPage: 1000 })
   const authUsers  = listResult.data?.users ?? []
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
       const email = emailById[merchant.id]
       if (!email) continue
 
-      const reviews = await fetchReviews(merchant.commerce_name, merchant.city)
+      const reviews = await fetchReviews(merchant.google_place_id)
       results.checked++
 
       for (const review of reviews) {
