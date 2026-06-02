@@ -31,9 +31,10 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
 
       const now      = new Date()
       const trialEnd = profile?.trial_ends_at ? new Date(profile.trial_ends_at) : null
+      const isTrial = profile?.subscription_status === 'trialing' || profile?.subscription_status === 'trial'
       const hasAccess =
         profile?.subscription_status === 'active' ||
-        (profile?.subscription_status === 'trialing' && trialEnd && trialEnd > now)
+        (isTrial && trialEnd && trialEnd > now)
 
       if (!hasAccess) { router.push('/pricing'); return }
 
