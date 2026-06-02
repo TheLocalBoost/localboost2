@@ -36,8 +36,9 @@ export default function SignupPage() {
     password: '',
     confirm: '',
   })
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [status, setStatus]       = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg]   = useState('')
+  const [alreadyExists, setAlreadyExists] = useState(false)
   const supabase = createClient()
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -92,11 +93,9 @@ export default function SignupPage() {
     })
 
     if (error) {
-      setErrorMsg(
-        error.message.includes('already registered')
-          ? 'Un compte existe déjà avec cet email. Connectez-vous.'
-          : error.message
-      )
+      const exists = error.message.includes('already registered') || error.message.includes('already been registered')
+      setAlreadyExists(exists)
+      setErrorMsg(exists ? '' : error.message)
       setStatus('error')
       return
     }
@@ -238,7 +237,15 @@ export default function SignupPage() {
                 )}
               </div>
 
-              {status === 'error' && (
+              {status === 'error' && alreadyExists && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm">
+                  <p className="font-semibold text-amber-800 mb-1">Un compte existe déjà avec cet email.</p>
+                  <Link href="/login" className="inline-block mt-1 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700 transition">
+                    Se connecter →
+                  </Link>
+                </div>
+              )}
+              {status === 'error' && !alreadyExists && errorMsg && (
                 <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-600">{errorMsg}</div>
               )}
 
