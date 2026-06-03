@@ -28,6 +28,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><a href="/cgv" className="text-sm text-gray-500 hover:text-gray-900">CGV</a></li>
               <li><a href="/mentions-legales" className="text-sm text-gray-500 hover:text-gray-900">Mentions légales</a></li>
+              <li><a href="/contact" className="text-sm text-gray-500 hover:text-gray-900">Nous contacter</a></li>
               <li><a href="mailto:contact@thelocalboost.fr" className="text-sm text-gray-500 hover:text-gray-900">contact@thelocalboost.fr</a></li>
             </ul>
           </div>

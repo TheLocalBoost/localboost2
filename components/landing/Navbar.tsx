@@ -19,6 +19,7 @@ export default function Navbar() {
             Comment ça marche
           </button>
           <a href="#pricing">Tarifs</a>
+          <a href="/contact" className="hover:text-gray-900">Contact</a>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
@@ -50,6 +51,7 @@ export default function Navbar() {
             Calculer mon score gratuit
           </button>
           <a href="#pricing" className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Tarifs</a>
+          <a href="/contact" className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Contact</a>
           <hr className="border-gray-100" />
           <a href="/login" className="block text-sm text-gray-700 py-1">Se connecter</a>
           <button
