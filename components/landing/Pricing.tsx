@@ -8,7 +8,7 @@ const FEATURES = [
   'Analyse complète de votre fiche Google',
   'Suggestions photos par IA',
   'Vérification sur tous les annuaires',
-  'Contenu IA généré en 1 clic (description, réponses...)',
+  'Contenu prêt à publier en 1 clic (description, réponses aux avis, posts)',
   'Sans engagement — annulation en 1 clic',
 ]
 
@@ -44,8 +44,7 @@ export default function Pricing() {
               <span className="text-gray-400 text-lg">/mois</span>
             </div>
             <p className="text-sm text-gray-400 mt-1">
-              <span className="line-through text-gray-300">{PRICE_REGULAR}€</span>
-              {' '}après les 50 premiers inscrits
+              Prix actuel : 29€/mois · Passe à {PRICE_REGULAR}€/mois après les 50 premiers inscrits
             </p>
           </div>
 
@@ -70,19 +69,13 @@ export default function Pricing() {
             href="/pricing"
             className="block w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition text-center"
           >
-            Démarrer maintenant →
+            Commencer — 29€/mois →
           </a>
           <p className="text-xs text-gray-400 text-center mt-3">
             Sans engagement · Résiliation en 1 clic
           </p>
         </div>
 
-        {/* Garantie */}
-        <div className="mt-5 bg-gray-50 rounded-xl p-4 text-center">
-          <p className="text-sm text-gray-600">
-            🛡️ <strong>Satisfait ou remboursé 30 jours.</strong> Si LocalBoost ne vous convient pas, on rembourse sans question.
-          </p>
-        </div>
       </div>
     </section>
   )

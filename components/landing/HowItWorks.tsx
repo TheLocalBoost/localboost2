@@ -15,9 +15,9 @@ const STEPS = [
   },
   {
     n: '3',
-    title: 'Vous copiez-collez en 30 secondes sur Google Business',
+    title: 'Vous publiez en 30 secondes depuis votre tableau de bord',
     time: '30 sec / semaine',
-    desc: 'Aucune application. Aucune formation. Vous ouvrez votre email, vous copiez, vous collez sur Google Business. C\'est tout.',
+    desc: 'Votre contenu est prêt dans votre tableau de bord. Vous publiez en un clic, LocalBoost fait le reste.',
     example: '→ Résultat : fiche active, score en hausse, clients qui appellent',
   },
 ]
@@ -54,13 +54,13 @@ export default function HowItWorks() {
         </div>
 
         <div className="mt-8 text-center">
-          <a
-            href="/signup"
+          <button
+            onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
             className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white hover:bg-blue-700 transition"
           >
-            Démarrer mon essai gratuit →
-          </a>
-          <p className="text-xs text-gray-400 mt-2">0€ pendant 7 jours · Sans engagement · Annulation en 1 clic</p>
+            Voir mon score gratuit →
+          </button>
+          <p className="text-xs text-gray-400 mt-2">Aucune carte bancaire requise · Résultats en 60 secondes</p>
         </div>
       </div>
     </section>

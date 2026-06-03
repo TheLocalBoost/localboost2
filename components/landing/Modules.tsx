@@ -1,8 +1,8 @@
 const FEATURES = [
   {
     icon: '📍',
-    title: 'Un post Google chaque semaine',
-    desc: 'L\'IA génère un post adapté à votre métier, votre ville et la saison. Vous copiez-collez en 30 secondes sur votre fiche Google.',
+    title: 'Un post Google rédigé par IA chaque semaine',
+    desc: 'Adapté à votre métier, votre ville et la saison. Prêt à publier en 1 clic depuis votre tableau de bord.',
     exemple: '"Ce mois-ci, pose de carrelage à Bordeaux — résultat avant/après en photo. Devis gratuit sous 48h. 🔨"',
   },
   {
@@ -19,8 +19,8 @@ const FEATURES = [
   },
   {
     icon: '📧',
-    title: 'Tout dans votre boîte mail le lundi',
-    desc: 'Aucune application à installer, aucun outil à apprendre. Votre contenu de la semaine arrive directement par email.',
+    title: 'Rapport hebdomadaire chaque lundi',
+    desc: 'Score de la semaine, contenu prêt, actions prioritaires. Tout dans un email clair, rien à apprendre.',
     exemple: '"Objet : Votre semaine LocalBoost — Post prêt + 2 réponses avis + 3 actions prioritaires"',
   },
 ]
@@ -31,7 +31,7 @@ export default function Modules() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Ce que vous recevez chaque semaine
+            Ce que LocalBoost fait pour vous chaque semaine
           </h2>
           <p className="text-gray-500">Concrètement. Pas de promesses vagues.</p>
         </div>

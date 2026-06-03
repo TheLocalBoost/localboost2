@@ -1,3 +1,5 @@
+'use client'
+
 export default function CTAFinal() {
   return (
     <section className="py-20 px-6 bg-blue-600">
@@ -12,14 +14,14 @@ export default function CTAFinal() {
         <p className="text-blue-200 mb-8 leading-relaxed">
           Calculez votre score gratuitement — résultat en 30 secondes.
         </p>
-        <a
-          href="/signup"
+        <button
+          onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
           className="inline-block rounded-xl bg-white text-blue-700 font-bold text-sm px-8 py-4 hover:bg-blue-50 transition mb-3"
         >
-          Démarrer 7 jours gratuits →
-        </a>
+          Analyser ma fiche gratuitement →
+        </button>
         <p className="text-blue-300 text-xs">
-          0€ débité pendant l'essai · Annulation en 1 clic · Satisfait ou remboursé 30j
+          Aucune carte bancaire requise · Résultats en 60 secondes
         </p>
       </div>
     </section>

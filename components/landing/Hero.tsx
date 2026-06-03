@@ -31,22 +31,14 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
-              Obtenez plus de clients grâce à votre{' '}
-              <span className="text-blue-600">fiche Google.</span>
+              Pendant que vous lisez ceci, vos concurrents captent{' '}
+              <span className="text-blue-600">vos clients sur Google Maps.</span>
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              {detectedCity ? (
-                <>Découvrez pourquoi vos concurrents de{' '}
-                  <strong className="text-gray-800">{detectedCity}</strong> apparaissent avant vous sur Google Maps —
-                  et les 3 actions pour les dépasser.
-                </>
-              ) : (
-                <>Entrez votre entreprise. LocalBoost analyse votre présence Google
-                  et vous montre{' '}
-                  <strong className="text-gray-800">les actions prioritaires à réaliser.</strong>
-                </>
-              )}
+              LocalBoost détecte ce qui fait perdre des clients à votre fiche
+              et génère chaque semaine le contenu pour remonter —{' '}
+              <strong className="text-gray-800">sans effort de votre part.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">

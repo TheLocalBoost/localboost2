@@ -19,7 +19,7 @@ export default function Footer() {
               <li><a href="#features" className="text-sm text-gray-500 hover:text-gray-900">Fonctionnalités</a></li>
               <li><a href="#pricing" className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a></li>
               <li><a href="#faq" className="text-sm text-gray-500 hover:text-gray-900">FAQ</a></li>
-              <li><a href="/signup" className="text-sm text-gray-500 hover:text-gray-900">Essai gratuit</a></li>
+              <li><a href="/#hero-search" className="text-sm text-gray-500 hover:text-gray-900">Analyser ma fiche</a></li>
             </ul>
           </div>
 
@@ -35,7 +35,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-gray-400">© 2026 TheLocalBoost · SIREN 105 578 884</p>
+          <p className="text-xs text-gray-400">© 2026 TheLocalBoost · SIRET 105 578 884 00014</p>
           <p className="text-xs text-gray-400">Fait avec ❤️ en France</p>
         </div>
       </div>

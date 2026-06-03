@@ -4,19 +4,19 @@ import { useState } from 'react'
 const FAQS = [
   {
     q: 'Est-ce que LocalBoost publie automatiquement sur Google ?',
-    a: 'Non — Google Business ne permet pas la publication automatique via des outils externes. LocalBoost génère le contenu et vous l\'envoie chaque lundi. Vous publiez en 30 secondes avec un simple copier-coller. C\'est le bon équilibre : automatisation sans perte de contrôle.',
-  },
-  {
-    q: 'Faut-il connecter mon compte Google Business ?',
-    a: 'Non. Aucune connexion, aucune autorisation à donner. Vous restez 100% maître de votre compte Google. LocalBoost travaille en coulisses et vous envoie le résultat par email.',
+    a: 'Non — Google Business ne permet pas la publication automatique via des outils externes. LocalBoost génère le contenu et vous le présente dans votre tableau de bord. Vous publiez en 30 secondes avec un simple copier-coller. C\'est le bon équilibre : automatisation sans perte de contrôle.',
   },
   {
     q: 'Est-ce adapté à mon type de commerce ?',
     a: 'Oui. LocalBoost est conçu pour tous les indépendants français : artisans du bâtiment, coiffeurs, restaurateurs, fleuristes, garagistes, boulangers... Le contenu est personnalisé selon votre activité et votre ville.',
   },
   {
-    q: 'Que se passe-t-il après les 7 jours gratuits ?',
-    a: 'Votre abonnement démarre automatiquement à 29€/mois. Vous êtes prévenu par email avant le débit. Si vous annulez pendant les 7 jours, vous ne payez rien du tout.',
+    q: 'Est-ce que je suis engagé si je m\'abonne ?',
+    a: 'Non. Vous pouvez annuler à tout moment depuis votre espace client en un clic. Aucun préavis, aucune question posée.',
+  },
+  {
+    q: 'Comment publier le contenu sur ma fiche Google ?',
+    a: 'LocalBoost génère votre contenu (posts, réponses aux avis, description) et vous le présente prêt à l\'emploi dans votre tableau de bord. Vous le copiez et le collez directement sur Google Business en moins de 30 secondes. Aucune connexion technique requise.',
   },
   {
     q: 'Comment annuler ?',
