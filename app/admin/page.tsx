@@ -42,12 +42,18 @@ export default function AdminPage() {
   const [cronResult, setCronResult]   = useState<any>(null)
   const [reviewsRunning, setReviewsRunning] = useState(false)
   const [reviewsResult, setReviewsResult]   = useState<any>(null)
+  const [analyticsData, setAnalyticsData]   = useState<any>(null)
 
   async function fetchStats(k = key) {
     setLoading(true); setError('')
-    const res = await fetch('/api/admin/stats', { headers: { 'x-admin-key': k } })
-    if (res.status === 401) { setError('Clé invalide'); setLoading(false); return }
-    setStats(await res.json()); setAuthed(true); setLoading(false)
+    const [statsRes, analyticsRes] = await Promise.all([
+      fetch('/api/admin/stats',     { headers: { 'x-admin-key': k } }),
+      fetch('/api/admin/analytics?days=30', { headers: { 'x-admin-key': k } }),
+    ])
+    if (statsRes.status === 401) { setError('Clé invalide'); setLoading(false); return }
+    setStats(await statsRes.json())
+    setAnalyticsData(await analyticsRes.json())
+    setAuthed(true); setLoading(false)
   }
 
   async function loadPreview() {
@@ -156,7 +162,7 @@ export default function AdminPage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">🚀 Outreach Admin</h1>
           <div className="flex gap-3">
-            <a href="/admin/analytics" className="text-sm text-blue-600 hover:underline">📊 Analytics</a>
+            <button onClick={() => fetchStats()} className="text-sm text-blue-600 hover:underline">📊 Rafraîchir analytics</button>
             <button onClick={() => fetchStats()} className="text-sm text-green-600 hover:underline">↻ Rafraîchir</button>
             <button onClick={() => { setAuthed(false); setStats(null) }} className="text-sm text-gray-400 hover:text-gray-600">Déconnexion</button>
           </div>
@@ -502,6 +508,50 @@ export default function AdminPage() {
             </div>
           )}
         </div>
+
+        {/* Analytics site */}
+        {analyticsData && (
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
+            <h2 className="font-semibold text-gray-900 mb-4 text-sm">📊 Analytics site — 30 derniers jours</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {[
+                { label: 'Pages vues',    value: analyticsData.totalViews,                          color: 'text-blue-600'  },
+                { label: 'Clics emails',  value: analyticsData.emailClicks?.total ?? 0,             color: 'text-green-600' },
+                { label: 'Analyseur',     value: analyticsData.eventCounts?.['analyzer_search'] ?? 0, color: 'text-amber-600' },
+                { label: 'Signups',       value: analyticsData.eventCounts?.['signup'] ?? 0,         color: 'text-purple-600'},
+              ].map((k, i) => (
+                <div key={i} className="bg-gray-50 rounded-xl p-3 text-center">
+                  <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{k.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Sources</p>
+                <div className="space-y-1.5">
+                  {analyticsData.topSources?.map(([src, count]: [string, number]) => (
+                    <div key={src} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 truncate max-w-[140px]">{src || 'direct'}</span>
+                      <span className="font-semibold text-gray-900">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Top pages</p>
+                <div className="space-y-1.5">
+                  {analyticsData.topPages?.slice(0, 6).map(([path, count]: [string, number]) => (
+                    <div key={path} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 truncate max-w-[140px]">{path || '/'}</span>
+                      <span className="font-semibold text-gray-900">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Outils automatiques */}
         <div className="grid sm:grid-cols-2 gap-4">

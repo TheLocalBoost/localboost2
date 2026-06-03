@@ -36,13 +36,13 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              LocalBoost détecte ce qui fait perdre des clients à votre fiche
-              et génère chaque semaine le contenu pour remonter —{' '}
-              <strong className="text-gray-800">sans effort de votre part.</strong>
+              Chaque semaine, LocalBoost vous indique exactement quoi faire
+              pour apparaître plus souvent sur Google Maps —{' '}
+              <strong className="text-gray-800">et prépare le contenu à votre place.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
-              Demandes d'avis automatiques · Réponses aux clients · Actions prioritaires chaque semaine
+              Moins de 5 minutes par semaine · Votre publication est prête · Vos priorités sont triées
             </p>
 
             {/* Formulaire de recherche */}
