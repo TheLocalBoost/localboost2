@@ -1,7 +1,30 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import EmailCaptureBlock from '@/components/analyser/EmailCaptureBlock'
+import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
+import TestimonialCard from '@/components/shared/TestimonialCard'
+import { getTestimonial } from '@/lib/testimonials'
+import type { Competitor } from '@/app/api/analyse-public/route'
+
+interface AnalyzerProps {
+  onEmailCapture?: (email: string) => void
+  onResult?: (data: { score: number; name: string; city: string; category: string }) => void
+}
+
+interface AnalysisResult {
+  name: string
+  address: string
+  city: string
+  category: string
+  score: number
+  reviews: number
+  rating: number
+  photos: number
+  problems: string[]
+  missed: { clicks: number; clients: number; revenue: number }
+  competitors: Competitor[]
+}
 
 function ScoreRing({ score }: { score: number }) {
   const r = 44, circ = 2 * Math.PI * r
@@ -36,15 +59,16 @@ function LockedBlock({ children, label }: { children: React.ReactNode; label: st
   )
 }
 
-function AnalyzerInner() {
-  const searchParams = useSearchParams()
-  const [form, setForm]       = useState({ name: '', city: '' })
-  const [loading, setLoading] = useState(false)
-  const [step, setStep]       = useState(0)
-  const [result, setResult]   = useState<any>(null)
-  const [error, setError]     = useState('')
+const STEPS = ['Recherche de votre fiche...', 'Analyse de votre présence...', 'Calcul du score...']
 
-  const STEPS = ['Recherche de votre fiche...', 'Analyse de votre présence...', 'Calcul du score...']
+function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
+  const searchParams               = useSearchParams()
+  const [form, setForm]            = useState({ name: '', city: '' })
+  const [loading, setLoading]      = useState(false)
+  const [step, setStep]            = useState(0)
+  const [result, setResult]        = useState<AnalysisResult | null>(null)
+  const [error, setError]          = useState('')
+  const [emailCaptured, setEmailCaptured] = useState(false)
 
   useEffect(() => {
     const nom   = searchParams.get('nom')
@@ -73,7 +97,8 @@ function AnalyzerInner() {
       })
       const data = await res.json()
       if (data.error) { setError(data.error); return }
-      setResult(data)
+      setResult(data as AnalysisResult)
+      onResult?.({ score: data.score, name: data.name, city: data.city, category: data.category })
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch {
       setError('Erreur de connexion. Réessayez.')
@@ -86,6 +111,17 @@ function AnalyzerInner() {
     e.preventDefault()
     if (form.name && form.city) runAnalysis(form.name, form.city)
   }
+
+  function handleEmailCapture(email: string) {
+    setEmailCaptured(true)
+    onEmailCapture?.(email)
+  }
+
+  const volumeEstimate = result ? Math.round((100 - result.score) * 4 + 200) : 0
+  const testimonial    = result ? getTestimonial(result.category) : null
+  const pricingUrl     = result
+    ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}`
+    : '/pricing'
 
   return (
     <section id="analyzer" className="py-20 px-6 bg-gray-50">
@@ -134,7 +170,7 @@ function AnalyzerInner() {
           {result && (
             <div className="space-y-4">
 
-              {/* En-tête résultat */}
+              {/* Score + stats */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <p className="text-xs text-gray-400 mb-4 font-medium">{result.name} · {result.address}</p>
                 <div className="flex items-center justify-around gap-4">
@@ -154,9 +190,9 @@ function AnalyzerInner() {
                       <p className="text-2xl font-bold text-blue-600">{result.photos}</p>
                       <p className="text-xs text-gray-500 mt-1">Photos</p>
                     </div>
-                    <div className={`rounded-xl p-4 text-center ${result.problems?.length > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
-                      <p className={`text-2xl font-bold ${result.problems?.length > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                        {result.problems?.length ?? 0}
+                    <div className={`rounded-xl p-4 text-center ${result.problems.length > 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+                      <p className={`text-2xl font-bold ${result.problems.length > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                        {result.problems.length}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">Problèmes</p>
                     </div>
@@ -164,10 +200,10 @@ function AnalyzerInner() {
                 </div>
               </div>
 
-              {/* Problèmes détectés — VERROUILLÉ */}
-              <LockedBlock label={`${result.problems?.length} problèmes détectés sur votre fiche`}>
+              {/* Problèmes — verrouillé */}
+              <LockedBlock label={`${result.problems.length} problèmes détectés sur votre fiche`}>
                 <div className="space-y-2">
-                  {(result.problems ?? ['Problème 1', 'Problème 2', 'Problème 3']).slice(0, 3).map((p: string, i: number) => (
+                  {result.problems.slice(0, 3).map((p, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <span className="text-red-400 shrink-0">✗</span>
                       <span className="text-gray-700">{p}</span>
@@ -176,40 +212,79 @@ function AnalyzerInner() {
                 </div>
               </LockedBlock>
 
-              {/* Visibilité perdue — VERROUILLÉ */}
+              {/* Visibilité perdue — verrouillé */}
               <LockedBlock label="Estimation de visibilité perdue">
                 <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
-                    <p className="text-2xl font-bold text-red-500">{result.missed?.clicks ?? 120}</p>
+                    <p className="text-2xl font-bold text-red-500">{result.missed.clicks}</p>
                     <p className="text-xs text-gray-500">clics perdus/mois</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-red-500">{result.missed?.clients ?? 18}</p>
+                    <p className="text-2xl font-bold text-red-500">{result.missed.clients}</p>
                     <p className="text-xs text-gray-500">clients manqués</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-red-500">~{result.missed?.revenue ?? 3600}€</p>
-                    <p className="text-xs text-gray-500">chiffre d'affaires perdu</p>
+                    <p className="text-2xl font-bold text-red-500">~{result.missed.revenue}€</p>
+                    <p className="text-xs text-gray-500">CA perdu</p>
                   </div>
                 </div>
               </LockedBlock>
 
-              {/* CTA */}
-              <div className="rounded-2xl bg-blue-600 p-6 text-center">
-                <p className="text-white font-bold text-xl mb-2">
-                  Débloquez les solutions
-                </p>
-                <p className="text-blue-200 text-sm mb-5">
-                  Plan d'action complet · Génération IA · Collecte d'avis · Suivi du score
-                </p>
-                <a
-                  href="/signup"
-                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition"
-                >
-                  Créer mon compte gratuitement — 7 jours offerts →
-                </a>
-                <p className="text-blue-300 text-xs mt-3">Sans carte bancaire · 29€/mois ensuite · Annulation en 1 clic</p>
+              {/* Concurrents — L1 */}
+              {result.competitors.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <p className="text-sm font-bold text-gray-700 mb-3">
+                    Pendant ce temps, vos concurrents à {result.city}...
+                  </p>
+                  <div className="space-y-3">
+                    {result.competitors.map((c, i) => (
+                      <div key={i} className="rounded-xl border border-gray-100 p-3 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
+                          {c.rating > 0 && (
+                            <p className="text-xs text-amber-500 mt-0.5">
+                              ★ {c.rating.toFixed(1)} · {c.reviewCount} avis
+                            </p>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span className="inline-block rounded-lg bg-green-50 text-green-700 text-xs font-bold px-2 py-1">
+                            {c.estimatedScore}/100
+                          </span>
+                          {c.estimatedScore - result.score > 20 && (
+                            <p className="text-xs text-red-500 font-semibold mt-1 whitespace-nowrap">
+                              ⚠ Vous perdez des clients
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    Ils apparaissent avant vous sur chaque recherche Google Maps.
+                  </p>
+                </div>
+              )}
+
+              {/* Volume estimé — L7 */}
+              <div className="rounded-xl bg-orange-50 border border-orange-100 px-4 py-3 text-sm text-orange-800">
+                À {result.city}, <strong>~{volumeEstimate} personnes</strong> cherchent un {result.category} chaque mois sur Google.
               </div>
+
+              {/* FounderSpotsCounter — L6 */}
+              <FounderSpotsCounter />
+
+              {/* TestimonialCard — L5 */}
+              {testimonial && <TestimonialCard testimonial={testimonial} />}
+
+              {/* EmailCaptureBlock — L2 (remplace CTA) */}
+              <EmailCaptureBlock
+                establishmentName={result.name}
+                score={result.score}
+                city={result.city}
+                category={result.category}
+                onCapture={handleEmailCapture}
+              />
 
             </div>
           )}
@@ -219,10 +294,10 @@ function AnalyzerInner() {
   )
 }
 
-export default function Analyzer() {
+export default function Analyzer(props: AnalyzerProps) {
   return (
     <Suspense fallback={null}>
-      <AnalyzerInner />
+      <AnalyzerInner {...props} />
     </Suspense>
   )
 }

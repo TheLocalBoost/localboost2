@@ -171,10 +171,15 @@ export default function LocalBoostDashboard() {
   const [score, setScore]           = useState<any>(null)
   const [priorities, setPriorities] = useState<string[]>([])
   const [loading, setLoading]       = useState(true)
+  const [onboarded, setOnboarded]   = useState(true)
 
   useEffect(() => {
+    // Vérifie si l'onboarding est complet
+    const supabase = (window as any).__supabaseBrowser
+    // On récupère onboarded via l'API setup qui retourne le profil complet
     fetch('/api/localboost/setup').then(r => r.json()).then(p => {
       setProfile(p?.google_place_id ? p : null)
+      setOnboarded(p?.onboarded !== false) // false = pas encore terminé
       setLoading(false)
       if (p?.google_place_id) {
         fetchScore().then(s => {
@@ -189,6 +194,19 @@ export default function LocalBoostDashboard() {
 
   return (
     <div>
+      {/* Bandeau onboarding incomplet — L9 */}
+      {!onboarded && (
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 mb-6 flex items-center justify-between gap-3">
+          <p className="text-sm text-amber-800">
+            Terminez votre configuration pour débloquer toutes les fonctionnalités.
+          </p>
+          <Link href="/localboost/setup"
+            className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition whitespace-nowrap">
+            Reprendre l'installation →
+          </Link>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>

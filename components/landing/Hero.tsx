@@ -37,9 +37,9 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
               {detectedCity ? (
-                <>Entrez votre entreprise{' '}
-                  <strong className="text-gray-800">à {detectedCity}</strong>. LocalBoost analyse votre présence Google
-                  et vous montre les actions prioritaires à réaliser.
+                <>Découvrez pourquoi vos concurrents de{' '}
+                  <strong className="text-gray-800">{detectedCity}</strong> apparaissent avant vous sur Google Maps —
+                  et les 3 actions pour les dépasser.
                 </>
               ) : (
                 <>Entrez votre entreprise. LocalBoost analyse votre présence Google

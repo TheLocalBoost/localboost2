@@ -28,6 +28,18 @@ function parseCSV(file) {
   }).filter(r => r.Email);
 }
 
+// Rejette : commence par un point, finit par un point, double-point, pas de TLD, etc.
+function isValidEmail(email) {
+  if (!email || typeof email !== 'string') return false
+  const e = email.trim().toLowerCase()
+  // local@domain.tld — local ne peut pas commencer/finir par un point ni contenir @@
+  const re = /^[a-z0-9][a-z0-9._%+\-]*[a-z0-9]@[a-z0-9][a-z0-9.\-]*\.[a-z]{2,}$/
+  if (!re.test(e)) return false
+  // Double-point dans la partie locale
+  if (e.split('@')[0].includes('..')) return false
+  return true
+}
+
 function isValidLead(c) {
   const nom = c.Nom || ''
   if (nom.length < 3 || nom.length > 80) return false          // trop court ou trop long
@@ -36,7 +48,7 @@ function isValidLead(c) {
   if (/\d{5,}/.test(nom)) return false                          // numéros de SIRET/tel
   if (/instagram|facebook|twitter|www\.|https?:/i.test(nom)) return false
   if (!c.Ville || c.Ville === 'France') return false            // sans ville réelle
-  if (!c.Email?.includes('@')) return false                     // email invalide
+  if (!isValidEmail(c.Email)) return false                      // email invalide
   return true
 }
 

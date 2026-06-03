@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
+import TestimonialCard from '@/components/shared/TestimonialCard'
+import { getTestimonial, testimonialsByCategory, type Testimonial } from '@/lib/testimonials'
 
 const FEATURES = [
   'Plan d\'action personnalisé mis à jour chaque semaine',
@@ -22,9 +26,13 @@ const TESTIMONIALS = [
 const SPOTS_LEFT = parseInt(process.env.NEXT_PUBLIC_FOUNDER_SPOTS_LEFT ?? '47', 10)
 
 function PricingContent() {
-  const supabase = createClient()
-  const [user, setUser]       = useState<{ email: string; id: string } | null>(null)
-  const [loading, setLoading] = useState(false)
+  const supabase     = createClient()
+  const searchParams = useSearchParams()
+  const city         = searchParams.get('city') ?? ''
+  const category     = searchParams.get('category') ?? ''
+
+  const [user, setUser]         = useState<{ email: string; id: string } | null>(null)
+  const [loading, setLoading]   = useState(false)
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
@@ -33,6 +41,14 @@ function PricingContent() {
       setChecking(false)
     })
   }, [])
+
+  // Témoignages : métier détecté en premier, puis 2 autres au hasard
+  const primaryTestimonial = getTestimonial(category)
+  const otherTestimonials  = Object.values(testimonialsByCategory)
+    .filter((t: Testimonial) => t !== primaryTestimonial)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2) as Testimonial[]
+  const allTestimonials = [primaryTestimonial, ...otherTestimonials]
 
   const handleCTA = async () => {
     if (!user) {
@@ -54,9 +70,7 @@ function PricingContent() {
 
   const ctaLabel = loading
     ? 'Chargement...'
-    : user
-      ? 'Activer mon accès →'
-      : 'Commencer →'
+    : user ? 'Activer mon accès →' : 'Commencer →'
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">
@@ -70,18 +84,21 @@ function PricingContent() {
 
           {checking ? null : user ? (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-                Vous y êtes presque
-              </h1>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Vous y êtes presque</h1>
               <p className="text-gray-500 text-sm">
                 Votre compte est créé. Activez votre accès pour débloquer votre plan d'action.
               </p>
             </>
+          ) : city ? (
+            <>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Débloquez votre plan d'action complet</h1>
+              <p className="text-gray-500 text-sm">
+                Rejoignez les artisans de <strong>{city}</strong> qui améliorent leur visibilité Google chaque semaine.
+              </p>
+            </>
           ) : (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-                Débloquez votre plan d'action complet
-              </h1>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Débloquez votre plan d'action complet</h1>
               <p className="text-gray-500 text-sm">
                 Rejoignez les artisans qui améliorent leur visibilité Google chaque semaine.
               </p>
@@ -89,14 +106,10 @@ function PricingContent() {
           )}
         </div>
 
-        {/* Compteur urgence */}
-        {SPOTS_LEFT > 0 && (
-          <div className="rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-center mb-6">
-            <p className="text-sm font-semibold text-yellow-800">
-              Offre fondateur — {SPOTS_LEFT} places restantes sur 50
-            </p>
-          </div>
-        )}
+        {/* Compteur temps réel — L6 */}
+        <div className="mb-6">
+          <FounderSpotsCounter />
+        </div>
 
         {/* Carte pricing */}
         <div className="rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-md mb-6">
@@ -145,18 +158,10 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Témoignages */}
+        {/* Témoignages dynamiques par métier — L5 */}
         <div className="space-y-3">
-          {TESTIMONIALS.map(t => (
-            <div key={t.name} className="bg-white rounded-xl border border-gray-100 p-4">
-              <div className="flex items-center gap-0.5 mb-2">
-                {Array.from({ length: t.stars }).map((_, i) => (
-                  <span key={i} className="text-amber-400 text-xs">★</span>
-                ))}
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed mb-2">{t.text}</p>
-              <p className="text-xs text-gray-400 font-semibold">{t.name} · {t.role}</p>
-            </div>
+          {allTestimonials.map(t => (
+            <TestimonialCard key={t.name} testimonial={t} />
           ))}
         </div>
 

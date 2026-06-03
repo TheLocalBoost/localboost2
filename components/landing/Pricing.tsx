@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
 
 const FEATURES = [
   'Priorités IA personnalisées chaque semaine',
@@ -103,14 +104,18 @@ export default function Pricing() {
             ))}
           </ul>
 
+          <div className="mb-4">
+            <FounderSpotsCounter />
+          </div>
+
           <a
-            href="/signup"
+            href="/pricing"
             className="block w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition text-center"
           >
-            Démarrer 7 jours gratuits →
+            Démarrer maintenant →
           </a>
           <p className="text-xs text-gray-400 text-center mt-3">
-            Sans carte bancaire · Aucun prélèvement pendant l'essai · Résiliation en 1 clic
+            Sans engagement · Résiliation en 1 clic
           </p>
         </div>
 

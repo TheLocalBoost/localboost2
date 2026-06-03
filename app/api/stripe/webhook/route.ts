@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
         updated_at:              new Date().toISOString(),
       }).eq('id', userId)
 
+      // Incrémenter le compteur de places fondateur prises
+      const { data: spotsRow } = await supabaseAdmin
+        .from('founder_config').select('value').eq('key', 'spots_taken').single()
+      if (spotsRow) {
+        await supabaseAdmin
+          .from('founder_config')
+          .update({ value: (spotsRow.value as number) + 1 })
+          .eq('key', 'spots_taken')
+      }
+
       // Email de bienvenue envoyé uniquement après paiement confirmé
       const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
       const email = userData?.user?.email
