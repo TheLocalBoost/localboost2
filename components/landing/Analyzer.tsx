@@ -6,6 +6,7 @@ import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
 import TestimonialCard from '@/components/shared/TestimonialCard'
 import { getTestimonial } from '@/lib/testimonials'
 import type { Competitor } from '@/app/api/analyse-public/route'
+import { track } from '@/lib/track'
 
 interface AnalyzerProps {
   onEmailCapture?: (email: string) => void
@@ -89,6 +90,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     setLoading(true)
     setResult(null)
     setError('')
+    track('analyzer_search', { name, city })
     try {
       const res  = await fetch('/api/analyse-public', {
         method:  'POST',
@@ -98,6 +100,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setResult(data as AnalysisResult)
+      track('analyzer_result', { score: data.score, city: data.city, category: data.category })
       onResult?.({ score: data.score, name: data.name, city: data.city, category: data.category })
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch {

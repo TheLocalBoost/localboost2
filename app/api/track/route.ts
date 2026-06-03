@@ -6,6 +6,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+export async function POST(req: NextRequest) {
+  const { event, properties } = await req.json()
+  if (!event) return NextResponse.json({ ok: false })
+  await supabase.from('analytics_events').insert({ event, properties: properties ?? {} })
+  return NextResponse.json({ ok: true })
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
   const leadId    = searchParams.get('lid')

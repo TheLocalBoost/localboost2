@@ -1,9 +1,59 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase-browser'
 
 const FLAG: Record<string, string> = {
   FR:'🇫🇷', BE:'🇧🇪', CH:'🇨🇭', LU:'🇱🇺', MA:'🇲🇦', SN:'🇸🇳', CI:'🇨🇮',
   CA:'🇨🇦', US:'🇺🇸', GB:'🇬🇧', DE:'🇩🇪', ES:'🇪🇸', IT:'🇮🇹', XX:'🌍',
+}
+
+function FunnelSection({ days }: { days: number }) {
+  const supabase = createClient()
+  const [counts, setCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    const since = new Date(Date.now() - days * 86400_000).toISOString()
+    supabase.from('analytics_events').select('event').gte('created_at', since)
+      .then(({ data }) => {
+        const map: Record<string, number> = {}
+        data?.forEach(r => { map[r.event] = (map[r.event] ?? 0) + 1 })
+        setCounts(map)
+      })
+  }, [days])
+
+  const g = (e: string) => counts[e] ?? 0
+  const pct = (a: number, b: number) => b > 0 ? `${Math.round(a / b * 100)}%` : '—'
+  const top = g('analyzer_search')
+
+  const steps = [
+    { label: '🔍 Analyses lancées',   value: g('analyzer_search'),  from: null },
+    { label: '📊 Résultats affichés', value: g('analyzer_result'),  from: top },
+    { label: '📧 Emails capturés',    value: g('email_captured'),   from: g('analyzer_result') },
+    { label: '💳 Clics pricing',      value: g('cta_click'),        from: g('email_captured') },
+  ]
+
+  if (top === 0) return null
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
+      <h2 className="font-semibold text-gray-900 mb-4 text-sm">🔬 Funnel /analyser</h2>
+      <div className="space-y-3">
+        {steps.map(({ label, value, from }) => (
+          <div key={label} className="flex items-center gap-3">
+            <div className="w-44 text-xs text-gray-600 shrink-0">{label}</div>
+            <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+              <div className="bg-blue-500 h-2.5 rounded-full transition-all"
+                style={{ width: top > 0 ? `${Math.round(value / top * 100)}%` : '0%' }} />
+            </div>
+            <div className="text-sm font-bold text-gray-900 w-8 text-right">{value}</div>
+            <div className="text-xs text-gray-400 w-10 text-right">
+              {from !== null ? pct(value, from as number) : ''}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function AnalyticsPage() {
@@ -60,6 +110,9 @@ export default function AnalyticsPage() {
             ))}
           </div>
         </div>
+
+        {/* Funnel analyzer — données temps réel depuis analytics_events */}
+        {authed && <FunnelSection days={days} />}
 
         {!data ? (
           <div className="text-center py-20 text-gray-400">Chargement...</div>

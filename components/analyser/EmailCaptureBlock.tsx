@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { track } from '@/lib/track'
 
 interface Props {
   establishmentName: string
@@ -29,6 +30,7 @@ export default function EmailCaptureBlock({ establishmentName, score, city, cate
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email, establishmentName, score, city, category }),
       })
+      track('email_captured', { score, category, city })
       setSent(true)
       onCapture?.(email)
       setTimeout(() => setShowCTA(true), 2000)
@@ -53,6 +55,7 @@ export default function EmailCaptureBlock({ establishmentName, score, city, cate
         </p>
         <a
           href={pricingUrl}
+          onClick={() => track('cta_click', { score, category, city, source: 'email_block' })}
           className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition"
         >
           Débloquer mon plan complet — 29€/mois →
