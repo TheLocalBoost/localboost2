@@ -10,15 +10,13 @@ interface Props {
 
 export default function Hero({ detectedCity, signupCount, animScore }: Props) {
   const router = useRouter()
-  const [query, setQuery] = useState('')
+  const [nom, setNom]     = useState('')
+  const [ville, setVille] = useState('')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parts = query.trim().split(',').map(s => s.trim())
-    const ville = parts.pop() ?? ''
-    const nom   = parts.join(',').trim()
-    if (!nom || !ville) return
-    router.push(`/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}`)
+    if (!nom.trim() || !ville.trim()) return
+    router.push(`/analyser?nom=${encodeURIComponent(nom.trim())}&ville=${encodeURIComponent(ville.trim())}`)
   }
 
   return (
@@ -49,21 +47,28 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
 
             {/* Formulaire de recherche */}
             <form id="hero-search" onSubmit={handleSubmit} className="flex flex-col gap-3 mb-4">
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder={detectedCity
-                    ? `Ex: Plomberie Dubois, ${detectedCity}`
-                    : 'Ex: Plomberie Martin, Lyon'}
+                  value={nom}
+                  onChange={e => setNom(e.target.value)}
+                  placeholder={detectedCity ? `Ex: Plomberie Dubois` : 'Nom de votre commerce'}
+                  required
                   className="flex-1 rounded-xl border border-gray-200 px-4 py-3.5 text-sm focus:border-blue-500 focus:outline-none bg-white shadow-sm"
+                />
+                <input
+                  type="text"
+                  value={ville}
+                  onChange={e => setVille(e.target.value)}
+                  placeholder={detectedCity || 'Ville'}
+                  required
+                  className="w-36 rounded-xl border border-gray-200 px-4 py-3.5 text-sm focus:border-blue-500 focus:outline-none bg-white shadow-sm"
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap"
+                  className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap"
                 >
-                  Voir mon score gratuit →
+                  Voir mon score →
                 </button>
               </div>
               <p className="text-xs text-gray-400">Aucune carte bancaire requise · Résultats en 60 secondes</p>

@@ -1,3 +1,5 @@
+'use client'
+
 export default function Footer() {
   return (
     <footer className="bg-white border-t border-gray-100 py-10 px-6">
@@ -16,19 +18,24 @@ export default function Footer() {
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">LocalBoost</p>
             <ul className="space-y-2">
-              <li><a href="#features" className="text-sm text-gray-500 hover:text-gray-900">Fonctionnalités</a></li>
-              <li><a href="#pricing" className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a></li>
-              <li><a href="#faq" className="text-sm text-gray-500 hover:text-gray-900">FAQ</a></li>
-              <li><a href="/#hero-search" className="text-sm text-gray-500 hover:text-gray-900">Analyser ma fiche</a></li>
+              <li>
+                <button
+                  onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="text-sm text-gray-500 hover:text-gray-900 text-left"
+                >
+                  Analyser ma fiche
+                </button>
+              </li>
+              <li><a href="/pricing" className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a></li>
+              <li><a href="/contact" className="text-sm text-gray-500 hover:text-gray-900">Contact</a></li>
             </ul>
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Légal & Contact</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Légal</p>
             <ul className="space-y-2">
               <li><a href="/cgv" className="text-sm text-gray-500 hover:text-gray-900">CGV</a></li>
               <li><a href="/mentions-legales" className="text-sm text-gray-500 hover:text-gray-900">Mentions légales</a></li>
-              <li><a href="/contact" className="text-sm text-gray-500 hover:text-gray-900">Nous contacter</a></li>
               <li><a href="mailto:contact@thelocalboost.fr" className="text-sm text-gray-500 hover:text-gray-900">contact@thelocalboost.fr</a></li>
             </ul>
           </div>
