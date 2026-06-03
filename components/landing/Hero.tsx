@@ -14,9 +14,11 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const q = query.trim()
-    if (!q) return
-    router.push(`/audit?q=${encodeURIComponent(q)}`)
+    const parts = query.trim().split(',').map(s => s.trim())
+    const ville = parts.pop() ?? ''
+    const nom   = parts.join(',').trim()
+    if (!nom || !ville) return
+    router.push(`/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}`)
   }
 
   return (
