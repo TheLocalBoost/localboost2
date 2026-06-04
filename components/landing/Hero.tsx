@@ -27,32 +27,32 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
           {/* Texte */}
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 mb-6">
-              ⚠️ Votre fiche Google perd des clients chaque semaine
+              Il n'existe pas de fiche Google parfaite sans effort hebdomadaire — ou sans délégation
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
-              Pendant que vous lisez ceci, vos concurrents captent{' '}
-              <span className="text-blue-600">vos clients sur Google Maps.</span>
+              Votre fiche Google Maps perd des clients.{' '}
+              <span className="text-blue-600">Découvrez combien — en 60 secondes.</span>
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              Chaque semaine, LocalBoost vous indique exactement quoi faire
-              pour apparaître plus souvent sur Google Maps —{' '}
-              <strong className="text-gray-800">et prépare le contenu à votre place.</strong>
+              Entrez le nom de votre commerce. En 60 secondes, vous voyez votre score de visibilité,
+              vos problèmes précis, et ce que vous perdez chaque mois.{' '}
+              <strong className="text-gray-800">Votre vraie fiche. Vos vrais chiffres.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
-              Moins de 5 minutes par semaine · Votre publication est prête · Vos priorités sont triées
+              Gratuit · Sans inscription · Données réelles depuis Google Maps
             </p>
 
-            {/* Formulaire de recherche */}
+            {/* Formulaire */}
             <form id="hero-search" onSubmit={handleSubmit} className="flex flex-col gap-3 mb-4">
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={nom}
                   onChange={e => setNom(e.target.value)}
-                  placeholder={detectedCity ? `Ex: Plomberie Dubois` : 'Nom de votre commerce'}
+                  placeholder={detectedCity ? 'Ex: Plomberie Dubois' : 'Nom de votre commerce'}
                   required
                   className="flex-1 rounded-xl border border-gray-200 px-4 py-3.5 text-sm focus:border-blue-500 focus:outline-none bg-white shadow-sm"
                 />
@@ -66,12 +66,14 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap"
+                  className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap shadow-lg"
                 >
-                  Voir mon score →
+                  Analyser ma fiche →
                 </button>
               </div>
-              <p className="text-xs text-gray-400">Aucune carte bancaire requise · Résultats en 60 secondes</p>
+              <p className="text-xs text-gray-400">
+                Aucune carte bancaire · Résultats en 60 secondes · Données issues de Google Maps
+              </p>
             </form>
 
             {signupCount > 0 && (
@@ -83,12 +85,12 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                     </div>
                   ))}
                 </div>
-                <span>Rejoint par {signupCount} artisans</span>
+                <span>{signupCount} artisans ont déjà analysé leur fiche</span>
               </div>
             )}
           </div>
 
-          {/* Visuel */}
+          {/* Visuel — SERP */}
           <div className="relative">
             <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
               <div className="bg-gray-100 px-4 py-3 flex items-center gap-2 border-b border-gray-200">
@@ -125,7 +127,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                   </div>
                 </div>
 
-                <div className="rounded-xl border-2 border-red-200 p-3 bg-red-50/50 relative">
+                <div className="rounded-xl border-2 border-red-200 p-3 bg-red-50/50">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-xs font-bold text-red-700">Plomberie Dupont ← vous</p>
@@ -135,14 +137,32 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                     <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">#4</span>
                   </div>
                   <div className="mt-2 text-xs text-red-600 font-medium">
-                    ↑ Mieux noté mais relégué — fiche inactive
+                    Mieux noté — mais relégué pour fiche inactive
+                  </div>
+                </div>
+              </div>
+
+              {/* Mini résultat analyzer */}
+              <div className="mx-4 mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3">
+                <p className="text-xs text-blue-700 font-semibold mb-1">Résultat de l'analyse — exemple réel</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-xl font-extrabold text-red-500">34</p>
+                    <p className="text-xs text-gray-400">/100</p>
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-red-600">~7 appels perdus/mois</span>
+                      <span className="text-red-600 font-bold">~315€ non réalisés</span>
+                    </div>
+                    <p className="text-xs text-gray-400">4 problèmes détectés sur cette fiche</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="absolute -bottom-3 -right-3 bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
-              LocalBoost remonte votre fiche ↑
+              Votre score vous attend ↑
             </div>
           </div>
 

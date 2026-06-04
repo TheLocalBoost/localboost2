@@ -1,24 +1,24 @@
 const STEPS = [
   {
     n: '1',
-    title: 'Vous configurez votre commerce en 3 minutes',
-    time: '3 min — une fois',
-    desc: 'Nom, ville, type d\'activité. LocalBoost comprend votre métier et génère du contenu adapté à votre secteur.',
-    example: '→ "Plombier à Lyon, spécialiste rénovation salle de bain"',
+    title: 'Configurez votre commerce en 3 minutes — une seule fois',
+    time: '3 min · une fois',
+    desc: 'Nom, ville, type d\'activité. LocalBoost comprend votre métier et prépare du contenu adapté à votre secteur, votre ville et la saison.',
+    detail: 'Exemple : "Plombier à Lyon, urgences fuites et rénovation salle de bain" — c\'est tout ce qu\'il faut.',
   },
   {
     n: '2',
-    title: 'Chaque lundi, votre contenu arrive dans votre boîte mail',
+    title: 'LocalBoost travaille pendant que vous travaillez',
     time: 'Automatique, chaque semaine',
-    desc: 'Un post Google Business rédigé par IA, des réponses prêtes pour vos avis, et votre score de visibilité de la semaine.',
-    example: '→ "Votre post du lundi : Intervention rapide ce week-end pour une fuite sous l\'évier..."',
+    desc: 'Post Google rédigé et prêt, réponses personnalisées pour vos nouveaux avis, priorités d\'action classées par impact — tout dans votre tableau de bord chaque lundi.',
+    detail: 'Pendant que vous êtes sur chantier, LocalBoost a déjà rédigé votre contenu de la semaine.',
   },
   {
     n: '3',
-    title: 'Vous publiez en 30 secondes depuis votre tableau de bord',
-    time: '30 sec / semaine',
-    desc: 'Votre contenu est prêt dans votre tableau de bord. Vous publiez en un clic, LocalBoost fait le reste.',
-    example: '→ Résultat : fiche active, score en hausse, clients qui appellent',
+    title: 'Vous publiez en 30 secondes. C\'est tout.',
+    time: '≈ 5 min / semaine',
+    desc: 'Vous copiez votre post sur Google Business, vous publiez les réponses aux avis préparées. C\'est le seul moment où vous intervenez.',
+    detail: 'Résultat : fiche active chaque semaine · position en hausse · clients qui appellent.',
   },
 ]
 
@@ -28,13 +28,15 @@ export default function HowItWorks() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Opérationnel en 3 minutes
+            Ce que LocalBoost fait à votre place
           </h2>
-          <p className="text-gray-500">Pas de technique. Pas de formation. Juste votre email du lundi.</p>
+          <p className="text-gray-500">
+            Vous faites votre métier. LocalBoost s'occupe de votre visibilité.
+          </p>
         </div>
 
         <div className="space-y-4">
-          {STEPS.map(({ n, title, time, desc, example }) => (
+          {STEPS.map(({ n, title, time, desc, detail }) => (
             <div key={n} className="flex gap-5 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg">
                 {n}
@@ -47,22 +49,34 @@ export default function HowItWorks() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-500 leading-relaxed mb-2">{desc}</p>
-                <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2 font-medium">{example}</p>
+                <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2 font-medium italic">{detail}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
-            className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white hover:bg-blue-700 transition"
-          >
-            Voir mon score gratuit →
-          </button>
-          <p className="text-xs text-gray-400 mt-2">Aucune carte bancaire requise · Résultats en 60 secondes</p>
+        {/* Récapitulatif temps */}
+        <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-500 mb-1">Sans LocalBoost</p>
+              <p className="text-2xl font-extrabold text-red-500">2h30/semaine</p>
+              <p className="text-xs text-gray-400 mt-1">de travail régulier</p>
+            </div>
+            <div className="text-3xl text-gray-300">→</div>
+            <div className="text-center flex-1">
+              <p className="text-sm text-gray-500 mb-1">Avec LocalBoost</p>
+              <p className="text-2xl font-extrabold text-blue-600">5 min/semaine</p>
+              <p className="text-xs text-gray-400 mt-1">pour publier, c'est tout</p>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 text-center mt-4 border-t border-gray-200 pt-3">
+            Votre fiche n'est jamais inactive — peu importe votre emploi du temps.
+          </p>
         </div>
+
       </div>
     </section>
+
   )
 }

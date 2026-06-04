@@ -3,28 +3,28 @@ import { useState } from 'react'
 
 const FAQS = [
   {
+    q: 'Pourquoi je ne peux pas gérer ma fiche Google moi-même ?',
+    a: 'Vous pouvez. Mais maintenir une fiche performante demande une discipline hebdomadaire sans faille : publier régulièrement, répondre à chaque avis, ajouter des photos récentes, mettre à jour vos horaires selon les saisons... En pratique, la plupart des artisans font une belle mise à jour, puis oublient pendant 4 à 6 mois. C\'est exactement à ce moment que votre fiche descend dans les résultats et que vos concurrents remontent. LocalBoost existe pour que ça n\'arrive jamais — indépendamment de votre emploi du temps.',
+  },
+  {
+    q: 'Combien de temps ça me prend vraiment avec LocalBoost ?',
+    a: 'Environ 5 minutes par semaine. Chaque lundi, vous recevez votre contenu prêt dans votre tableau de bord : un post rédigé, des réponses aux avis personnalisées, vos priorités d\'action. Vous publiez en copier-coller depuis votre téléphone. C\'est tout ce que LocalBoost vous demande.',
+  },
+  {
     q: 'Est-ce que LocalBoost publie automatiquement sur Google ?',
-    a: 'Non — Google Business ne permet pas la publication automatique via des outils externes. LocalBoost génère le contenu et vous le présente dans votre tableau de bord. Vous publiez en 30 secondes avec un simple copier-coller. C\'est le bon équilibre : automatisation sans perte de contrôle.',
+    a: 'Non — Google Business ne permet pas la publication automatique via des outils externes. LocalBoost génère le contenu et vous le présente dans votre tableau de bord. Vous publiez en 30 secondes avec un simple copier-coller. C\'est le bon équilibre : zéro effort de rédaction, vous gardez le contrôle.',
+  },
+  {
+    q: 'En quoi c\'est différent de faire ça moi-même avec ChatGPT ?',
+    a: 'ChatGPT génère du texte — vous devez encore penser aux sujets chaque semaine, rédiger le prompt, adapter au contexte de votre fiche, surveiller votre position, analyser vos avis, planifier les photos... C\'est 1h de travail quand vous y êtes attentif. LocalBoost fait tout ça automatiquement, spécifiquement pour votre fiche, chaque lundi, sans que vous y pensiez.',
   },
   {
     q: 'Est-ce adapté à mon type de commerce ?',
-    a: 'Oui. LocalBoost est conçu pour tous les indépendants français : artisans du bâtiment, coiffeurs, restaurateurs, fleuristes, garagistes, boulangers... Le contenu est personnalisé selon votre activité et votre ville.',
+    a: 'Oui. LocalBoost est conçu pour tous les indépendants français : artisans du bâtiment, coiffeurs, restaurateurs, fleuristes, garagistes, boulangers, dentistes... Le contenu est généré selon votre activité, votre ville et la saison.',
   },
   {
     q: 'Est-ce que je suis engagé si je m\'abonne ?',
-    a: 'Non. Vous pouvez annuler à tout moment depuis votre espace client en un clic. Aucun préavis, aucune question posée.',
-  },
-  {
-    q: 'Comment publier le contenu sur ma fiche Google ?',
-    a: 'LocalBoost génère votre contenu (posts, réponses aux avis, description) et vous le présente prêt à l\'emploi dans votre tableau de bord. Vous le copiez et le collez directement sur Google Business en moins de 30 secondes. Aucune connexion technique requise.',
-  },
-  {
-    q: 'Comment annuler ?',
-    a: 'En 1 clic depuis votre espace client. Aucun engagement, aucun frais d\'annulation. Vous restez actif jusqu\'à la fin de la période payée.',
-  },
-  {
-    q: 'En quoi LocalBoost améliore-t-il concrètement mon classement Google ?',
-    a: 'Google favorise les fiches actives : publications régulières, réponses aux avis, photos récentes. LocalBoost vous aide sur chacun de ces points chaque semaine. Les résultats sont visibles en 2 à 4 semaines sur votre score de visibilité.',
+    a: 'Non. Vous pouvez annuler à tout moment depuis votre espace client en un clic. Aucun préavis, aucune question posée. Vous restez actif jusqu\'à la fin de la période payée.',
   },
 ]
 

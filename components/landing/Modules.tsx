@@ -1,25 +1,29 @@
 const FEATURES = [
   {
     icon: '📍',
-    title: 'Un post Google rédigé par IA chaque semaine',
+    title: 'Un post Google rédigé chaque semaine',
+    without: 'Trouver une idée, rédiger, formater, publier — 30 min minimum',
     desc: 'Adapté à votre métier, votre ville et la saison. Prêt à publier en 1 clic depuis votre tableau de bord.',
-    exemple: '"Ce mois-ci, pose de carrelage à Bordeaux — résultat avant/après en photo. Devis gratuit sous 48h. 🔨"',
+    exemple: '"Pose de carrelage à Bordeaux — résultat avant/après en photo. Devis gratuit sous 48h."',
   },
   {
     icon: '⭐',
     title: 'Réponses aux avis prêtes à publier',
-    desc: 'Collez un avis reçu → obtenez 3 réponses personnalisées → publiez en 1 clic. Plus jamais d\'avis sans réponse.',
-    exemple: '"Merci beaucoup Mme Martin pour votre confiance ! C\'est une belle rénovation dont nous sommes fiers..."',
+    without: 'Relire l\'avis, trouver les bons mots, répondre — 15 min par avis',
+    desc: 'Chaque avis reçoit une réponse personnalisée, prête à copier-coller. Plus jamais d\'avis sans réponse.',
+    exemple: '"Merci beaucoup Mme Martin ! Ravi que la rénovation vous ait plu, à bientôt..."',
   },
   {
     icon: '📊',
-    title: 'Vos actions prioritaires chaque semaine',
-    desc: 'LocalBoost analyse votre fiche et vous dit exactement quoi faire en premier pour attirer plus de clients. Pas de jargon, juste des actions concrètes.',
+    title: 'Priorités d\'action chaque semaine',
+    without: 'Analyser sa fiche soi-même, comprendre quoi faire — 20 min hebdo',
+    desc: 'LocalBoost analyse votre fiche et vous dit exactement quoi faire en premier, avec l\'impact estimé.',
     exemple: '"Cette semaine : ajoutez 3 photos et répondez à 2 avis — impact estimé +12% de clics."',
   },
   {
     icon: '📧',
     title: 'Rapport hebdomadaire chaque lundi',
+    without: 'Aucun équivalent possible sans y passer du temps',
     desc: 'Score de la semaine, contenu prêt, actions prioritaires. Tout dans un email clair, rien à apprendre.',
     exemple: '"Objet : Votre semaine LocalBoost — Post prêt + 2 réponses avis + 3 actions prioritaires"',
   },
@@ -31,9 +35,11 @@ export default function Modules() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Ce que LocalBoost fait pour vous chaque semaine
+            Le travail qu'une bonne fiche exige — fait à votre place
           </h2>
-          <p className="text-gray-500">Concrètement. Pas de promesses vagues.</p>
+          <p className="text-gray-500">
+            Concrètement. Ce que vous feriez vous-même, versus ce que LocalBoost fait.
+          </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-5">
@@ -41,12 +47,38 @@ export default function Modules() {
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6">
               <div className="text-2xl mb-3">{f.icon}</div>
               <h3 className="font-bold text-gray-900 mb-2">{f.title}</h3>
+              <div className="flex items-start gap-2 mb-3 rounded-lg bg-red-50 px-3 py-2">
+                <span className="text-red-400 text-xs shrink-0 mt-0.5">✗</span>
+                <p className="text-xs text-red-600">Seul : {f.without}</p>
+              </div>
               <p className="text-sm text-gray-500 leading-relaxed mb-3">{f.desc}</p>
               <p className="text-xs text-blue-700 bg-blue-50 rounded-lg px-3 py-2.5 italic leading-relaxed">
-                Exemple : {f.exemple}
+                {f.exemple}
               </p>
             </div>
           ))}
+        </div>
+
+        {/* Résumé total */}
+        <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+            <div>
+              <p className="text-2xl font-extrabold text-red-500">~2h30</p>
+              <p className="text-xs text-gray-500 mt-1">si vous faites ça<br/>vous-même / semaine</p>
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-blue-600">~5 min</p>
+              <p className="text-xs text-gray-500 mt-1">avec LocalBoost<br/>pour tout publier</p>
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-gray-900">52×</p>
+              <p className="text-xs text-gray-500 mt-1">par an, sans exception<br/>fiche toujours active</p>
+            </div>
+            <div>
+              <p className="text-2xl font-extrabold text-green-600">29€</p>
+              <p className="text-xs text-gray-500 mt-1">par mois<br/>moins qu'un client perdu</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
