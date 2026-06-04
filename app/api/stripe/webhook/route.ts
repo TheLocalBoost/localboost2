@@ -99,9 +99,8 @@ export async function POST(req: NextRequest) {
 
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice
-      const subId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : invoice.subscription?.id
+      const sub = invoice.parent?.subscription_details?.subscription
+      const subId = typeof sub === 'string' ? sub : sub?.id
       if (subId) {
         await supabaseAdmin.from('profiles')
           .update({ subscription_status: 'past_due', updated_at: new Date().toISOString() })

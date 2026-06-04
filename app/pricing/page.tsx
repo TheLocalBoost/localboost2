@@ -161,7 +161,7 @@ function PricingContent() {
         {/* Témoignages dynamiques par métier — L5 */}
         <div className="space-y-3">
           {allTestimonials.map(t => (
-            <TestimonialCard key={t.name} testimonial={t} />
+            <TestimonialCard key={t.metier} testimonial={t} />
           ))}
         </div>
 
