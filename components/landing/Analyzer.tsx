@@ -28,17 +28,68 @@ interface AnalysisResult {
   priceLevel: number | null
   googleMapsUrl: string | null
   phoneIntl: string | null
-  missed: { clicks: number; clients: number; revenue: number }
   lostCalls: number
   lostRevenue: number
   competitors: Competitor[]
 }
 
+// Correction 1 — 6 paliers de score avec message correspondant au score réel
+function scoreInfo(score: number): {
+  color: string
+  badgeBg: string
+  label: string
+  message: string
+  sub: string
+} {
+  if (score >= 96) return {
+    color:   '#16a34a',
+    badgeBg: 'bg-green-100 text-green-700',
+    label:   'Fiche bien tenue',
+    message: 'Votre fiche est parmi les mieux tenues de votre secteur.',
+    sub:     'Continuez à la maintenir active pour rester en tête.',
+  }
+  if (score >= 86) return {
+    color:   '#16a34a',
+    badgeBg: 'bg-green-100 text-green-700',
+    label:   'Fiche correcte',
+    message: 'Votre fiche est en bonne forme.',
+    sub:     'Quelques points peuvent encore être améliorés.',
+  }
+  if (score >= 71) return {
+    color:   '#84cc16',
+    badgeBg: 'bg-lime-100 text-lime-700',
+    label:   'Bonne base, des manques importants',
+    message: 'Votre fiche est visible mais incomplète.',
+    sub:     'Quelques corrections suffiraient à remonter.',
+  }
+  if (score >= 51) return {
+    color:   '#d97706',
+    badgeBg: 'bg-amber-100 text-amber-700',
+    label:   'Fiche insuffisante',
+    message: 'Votre fiche a des lacunes qui vous font perdre des clients chaque semaine.',
+    sub:     '',
+  }
+  if (score >= 31) return {
+    color:   '#ea580c',
+    badgeBg: 'bg-orange-100 text-orange-700',
+    label:   'Fiche très incomplète',
+    message: "Votre fiche existe, mais il lui manque des informations essentielles.",
+    sub:     'Vos concurrents passent avant vous.',
+  }
+  return {
+    color:   '#dc2626',
+    badgeBg: 'bg-red-100 text-red-600',
+    label:   'Fiche quasiment invisible',
+    message: 'Sur 100 personnes qui cherchent votre métier, moins de 2 vous trouvent.',
+    sub:     '',
+  }
+}
+
 function ScoreRing({ score }: { score: number }) {
-  const r = 44, circ = 2 * Math.PI * r
-  const color  = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
-  const badge  = score >= 70 ? 'Bonne visibilité' : score >= 40 ? 'Fiche insuffisante' : 'Score critique'
-  const badgeBg = score >= 70 ? 'bg-green-100 text-green-700' : score >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'
+  const r    = 44
+  const circ = 2 * Math.PI * r
+  const { color, badgeBg, label, message, sub } = scoreInfo(score)
+
   return (
     <div className="flex items-center gap-4">
       <svg width="90" height="90" viewBox="0 0 90 90">
@@ -52,14 +103,10 @@ function ScoreRing({ score }: { score: number }) {
       </svg>
       <div>
         <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold mb-1 ${badgeBg}`}>
-          {badge}
+          {label}
         </span>
-        <p className="text-base font-bold text-gray-900 leading-tight">
-          Votre fiche est quasiment invisible
-        </p>
-        <p className="text-xs text-gray-400 mt-1">
-          Sur 100 personnes qui cherchent votre métier,<br />moins de 3 vous trouvent.
-        </p>
+        <p className="text-base font-bold text-gray-900 leading-tight">{message}</p>
+        {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
       </div>
     </div>
   )
@@ -67,16 +114,18 @@ function ScoreRing({ score }: { score: number }) {
 
 const STEPS = ['Recherche de votre fiche...', 'Analyse de votre présence...', 'Calcul du score...']
 
+// Bug 2 fix — recentReview ajouté avec libellé lisible
 const CRITERIA_LABELS: Record<string, string> = {
-  telephone:   'Numéro de téléphone',
-  horaires:    "Horaires d'ouverture",
-  site:        'Site web',
-  description: "Description de l'activité",
-  photos:      'Photos (min. 5)',
-  avis20:      'Avis Google (min. 20)',
-  note4:       'Note (min. 4.0/5)',
-  nom:         "Nom d'établissement",
-  adresse:     'Adresse',
+  telephone:    'Numéro de téléphone',
+  horaires:     "Horaires d'ouverture",
+  site:         'Site web',
+  description:  "Description de l'activité",
+  photos:       'Photos (min. 5)',
+  avis20:       'Avis Google (min. 20)',
+  note4:        'Note (min. 4.0/5)',
+  nom:          "Nom d'établissement",
+  adresse:      'Adresse',
+  recentReview: 'Avis récents (moins de 3 mois)',
 }
 
 function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
@@ -280,10 +329,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 5 — Impact total mensuel */}
+              {/* BLOC 5 — Total mensuel (Bug 1 corrigé : somme des problèmes, plafonnée par score) */}
               <div className="bg-white rounded-2xl border border-red-100 p-6">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Total mensuel estimé — votre secteur · votre position
+                  Total mensuel estimé — somme des problèmes détectés
                 </p>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="rounded-xl bg-red-50 py-4">
@@ -296,7 +345,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 mt-3 text-center">
-                  Basé sur le volume de recherche local estimé, votre position actuelle et la valeur moyenne d'un client dans votre secteur.
+                  Calculé à partir des problèmes détectés sur votre fiche et du panier moyen de votre secteur.
                 </p>
               </div>
 
@@ -308,7 +357,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 7 — Horaires */}
+              {/* BLOC 7 — Horaires réels Google */}
               {result.weekdayHours.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -327,7 +376,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 8 — Avis récents */}
+              {/* BLOC 8 — Avis réels Google */}
               {result.recentReviews.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
@@ -359,10 +408,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               {/* BLOC 9 — CTA LocalBoost */}
               <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
                 <p className="text-white font-bold text-lg mb-1">
-                  Une fiche parfaite, ça prend 2 à 3h par semaine.
+                  Une fiche bien tenue, ça prend 2 à 3h par semaine.
                 </p>
                 <p className="text-blue-200 text-sm mb-3">
-                  Réponses aux avis, publications régulières, demandes d'avis clients, mise à jour des horaires et description — chaque semaine, indéfiniment. C'est du temps que vous n'avez pas.
+                  Réponses aux avis, publications régulières, demandes d'avis clients, mise à jour des horaires — chaque semaine, indéfiniment. C'est du temps que vous n'avez pas.
                 </p>
                 <p className="text-white text-sm font-semibold mb-4">
                   LocalBoost le fait à votre place — vous gardez vos clients, pas vos week-ends.
