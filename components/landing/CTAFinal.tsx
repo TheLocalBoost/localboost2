@@ -21,10 +21,10 @@ export default function CTAFinal() {
           href="/analyser"
           className="inline-block rounded-xl bg-blue-600 text-white font-bold text-sm px-10 py-4 hover:bg-blue-700 transition shadow-lg mb-3"
         >
-          Analyser ma fiche gratuitement →
+          Commencer — premier mois offert →
         </a>
         <p className="text-gray-500 text-xs">
-          Sans inscription · Données réelles depuis Google Maps · Résultats en 60 secondes
+          Sans engagement · Résiliable à tout moment
         </p>
       </div>
     </section>

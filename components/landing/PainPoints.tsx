@@ -1,51 +1,89 @@
+import { Clock, Camera, CalendarX } from 'lucide-react'
+
+const PROBLEMS = [
+  {
+    Icon: Clock,
+    badge: 'Très fréquent',
+    badgeRed: true,
+    title: 'Horaires incorrects ou absents',
+    scenario: 'Un client cherche un plombier à 19h. Vos horaires affichent "fermé". Il appelle le concurrent.',
+    calls: '8 à 15 appels perdus par mois',
+    revenue: '400€ à 900€ non réalisés',
+  },
+  {
+    Icon: Camera,
+    badge: 'Fréquent',
+    badgeRed: false,
+    title: 'Aucune photo récente',
+    scenario: 'Sans photo récente, votre fiche inspire moins confiance que celle du voisin. Le client choisit l\'autre.',
+    calls: '5 à 10 appels perdus par mois',
+    revenue: '250€ à 600€ non réalisés',
+  },
+  {
+    Icon: CalendarX,
+    badge: 'Très fréquent',
+    badgeRed: true,
+    title: 'Aucun post depuis plus de 3 mois',
+    scenario: 'Google considère votre fiche comme abandonnée. Il la place en dessous de vos concurrents actifs.',
+    calls: '10 à 20 appels perdus par mois',
+    revenue: '500€ à 1 200€ non réalisés',
+  },
+]
+
 export default function PainPoints() {
   return (
-    <section className="py-14 px-6 bg-gray-50 border-y border-gray-100">
+    <section className="py-16 px-6 bg-gray-50 border-y border-gray-100">
       <div className="max-w-5xl mx-auto">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide text-center mb-2">
-          La vérité que personne ne vous dit
+          Ce que votre fiche Google vous coûte en ce moment
         </p>
-        <p className="text-center text-gray-600 font-semibold text-base mb-8">
-          Il n'existe pas de fiche Google parfaitement optimisée sans quelqu'un qui s'en occupe chaque semaine.
+        <p className="text-center text-gray-600 font-semibold text-base mb-10">
+          Il n'existe pas de fiche Google bien tenue sans quelqu'un qui s'en occupe chaque semaine.
         </p>
 
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-3 gap-5">
+          {PROBLEMS.map(({ Icon, badge, badgeRed, title, scenario, calls, revenue }) => (
+            <div key={title} className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+              <div className="flex items-start justify-between">
+                <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                  <Icon size={20} className="text-red-500" />
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${badgeRed ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                  {badge}
+                </span>
+              </div>
 
-          {/* Temps requis */}
-          <div className="rounded-2xl bg-amber-50 border border-amber-100 p-6">
-            <p className="text-4xl font-extrabold text-amber-500 mb-1">2 à 3h</p>
-            <p className="text-sm font-semibold text-amber-600 mb-3">par semaine, sans exception</p>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Publications Google, réponses aux avis, photos récentes, horaires à jour, Q&A — c'est le travail hebdomadaire qu'exige une fiche réellement optimisée. La plupart des artisans commencent bien, puis oublient. Et c'est là que les concurrents remontent.
-            </p>
-          </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm mb-2">{title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed italic">"{scenario}"</p>
+              </div>
 
-          {/* Argent perdu */}
-          <div className="rounded-2xl bg-red-50 border border-red-100 p-6">
-            <p className="text-4xl font-extrabold text-red-500 mb-1">150–450€</p>
-            <p className="text-sm font-semibold text-red-600 mb-3">perdus chaque mois</p>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Ce que vous coûte concrètement une fiche négligée. Des clients qui cherchent votre métier sur Google, ne vous trouvent pas, et appellent le concurrent au-dessus. Selon votre secteur, c'est 2 à 8 clients perdus par mois — chaque mois.
-            </p>
-          </div>
-
-          {/* Vérifier son propre cas */}
-          <div className="rounded-2xl bg-blue-600 p-6 flex flex-col justify-between">
-            <div>
-              <p className="text-white font-bold text-xl mb-2">Et vous, où en êtes-vous ?</p>
-              <p className="text-blue-100 text-sm leading-relaxed mb-5">
-                Ces chiffres ne sont pas génériques — ils varient selon votre fiche, votre position et votre secteur. En 60 secondes, voyez exactement ce que la vôtre vous coûte.
-              </p>
+              <div className="mt-auto space-y-1.5 pt-3 border-t border-gray-50">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                  <p className="text-xs font-semibold text-gray-700">{calls}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
+                  <p className="text-xs font-semibold text-gray-700">{revenue}</p>
+                </div>
+              </div>
             </div>
-            <a
-              href="/analyser"
-              className="block w-full rounded-xl bg-white py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 transition text-center"
-            >
-              Analyser ma fiche — gratuit →
-            </a>
-            <p className="text-blue-300 text-xs text-center mt-2">Sans inscription · Données réelles</p>
-          </div>
+          ))}
+        </div>
 
+        <p className="text-xs text-gray-400 text-center mt-5">
+          Estimations basées sur un panier moyen artisan de 150€ à 300€ et les données Google Business Profile.
+        </p>
+
+        <div className="mt-8 text-center">
+          <a
+            href="/analyser"
+            className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white hover:bg-blue-700 transition shadow-md"
+          >
+            Analyser ma fiche maintenant →
+          </a>
+          <p className="text-xs text-gray-400 mt-2">Résultat personnalisé · Données réelles</p>
         </div>
       </div>
     </section>

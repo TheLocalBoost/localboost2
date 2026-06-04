@@ -10,7 +10,7 @@ const STEPS = [
     n: '2',
     title: 'LocalBoost travaille pendant que vous travaillez',
     time: 'Automatique, chaque semaine',
-    desc: 'Post Google rédigé et prêt, réponses personnalisées pour vos nouveaux avis, priorités d\'action classées par impact — tout dans votre tableau de bord chaque lundi.',
+    desc: 'Post Google rédigé et prêt, réponses personnalisées pour vos nouveaux avis, actions concrètes pour recevoir plus d\'appels — tout dans votre tableau de bord chaque lundi.',
     detail: 'Pendant que vous êtes sur chantier, LocalBoost a déjà rédigé votre contenu de la semaine.',
   },
   {
@@ -18,7 +18,7 @@ const STEPS = [
     title: 'Vous publiez en 30 secondes. C\'est tout.',
     time: '≈ 5 min / semaine',
     desc: 'Vous copiez votre post sur Google Business, vous publiez les réponses aux avis préparées. C\'est le seul moment où vous intervenez.',
-    detail: 'Résultat : fiche active chaque semaine · position en hausse · clients qui appellent.',
+    detail: 'Résultat : fiche active chaque semaine · vous remontez sur Google · des clients qui appellent.',
   },
 ]
 
@@ -31,7 +31,7 @@ export default function HowItWorks() {
             Ce que LocalBoost fait à votre place
           </h2>
           <p className="text-gray-500">
-            Vous faites votre métier. LocalBoost s'occupe de votre visibilité.
+            Vous faites votre métier. LocalBoost s'occupe que des clients vous appellent.
           </p>
         </div>
 

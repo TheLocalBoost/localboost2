@@ -18,7 +18,7 @@ const FEATURES = [
     title: 'Priorités d\'action chaque semaine',
     without: 'Analyser sa fiche soi-même, comprendre quoi faire — 20 min hebdo',
     desc: 'LocalBoost analyse votre fiche et vous dit exactement quoi faire en premier, avec l\'impact estimé.',
-    exemple: '"Cette semaine : ajoutez 3 photos et répondez à 2 avis — impact estimé +12% de clics."',
+    exemple: '"Cette semaine : ajoutez 3 photos et répondez à 2 avis — pour recevoir plus d\'appels cette semaine."',
   },
   {
     icon: '📧',
@@ -61,22 +61,14 @@ export default function Modules() {
 
         {/* Résumé total */}
         <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 gap-6 text-center">
             <div>
-              <p className="text-2xl font-extrabold text-red-500">~2h30</p>
-              <p className="text-xs text-gray-500 mt-1">si vous faites ça<br/>vous-même / semaine</p>
+              <p className="text-3xl font-extrabold text-blue-600">~5 min</p>
+              <p className="text-xs text-gray-500 mt-1">par semaine de votre côté<br/>pour tout publier</p>
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-blue-600">~5 min</p>
-              <p className="text-xs text-gray-500 mt-1">avec LocalBoost<br/>pour tout publier</p>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-gray-900">52×</p>
-              <p className="text-xs text-gray-500 mt-1">par an, sans exception<br/>fiche toujours active</p>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-green-600">29€</p>
-              <p className="text-xs text-gray-500 mt-1">par mois<br/>moins qu'un client perdu</p>
+              <p className="text-3xl font-extrabold text-gray-900">52×</p>
+              <p className="text-xs text-gray-500 mt-1">par an, sans exception<br/>votre fiche reste active</p>
             </div>
           </div>
         </div>

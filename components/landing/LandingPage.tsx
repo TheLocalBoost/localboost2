@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react'
 import Navbar          from './Navbar'
 import Hero            from './Hero'
 import PainPoints      from './PainPoints'
+import HowItWorks      from './HowItWorks'
 import DashboardPreview from './DashboardPreview'
 import CTASection      from './CTASection'
-import HowItWorks      from './HowItWorks'
 import Modules         from './Modules'
 import Pricing         from './Pricing'
+import Stats           from './Stats'
 import FAQ             from './FAQ'
 import CTAFinal        from './CTAFinal'
 import Footer          from './Footer'
@@ -56,15 +57,17 @@ export default function LandingPage() {
 
       <PainPoints />
 
+      <HowItWorks />
+
       <DashboardPreview />
 
       <CTASection />
 
-      <HowItWorks />
-
       <Modules />
 
       <Pricing />
+
+      <Stats signupCount={signupCount} />
 
       <FAQ />
 

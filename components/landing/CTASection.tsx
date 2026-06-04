@@ -10,18 +10,18 @@ export default function CTASection() {
           Voyez votre situation réelle en 60 secondes.
         </h2>
         <p className="text-blue-100 text-lg mb-4 leading-relaxed">
-          Score de visibilité, problèmes détectés, appels perdus par mois, chiffre d'affaires non réalisé — ce sont les données de votre vraie fiche Google.
+          Comment vous apparaissez sur Google, problèmes détectés, appels perdus par mois, chiffre d'affaires non réalisé — ce sont les données de votre vraie fiche Google.
         </p>
         <p className="text-blue-200 text-sm mb-8">
-          La plupart des artisans qui analysent leur fiche découvrent qu'ils perdent entre 3 et 9 appels par mois sans le savoir.
+          La plupart des artisans découvrent entre 3 et 9 appels perdus par mois qu'ils ne soupçonnaient pas.
         </p>
         <a
           href="/analyser"
           className="inline-block rounded-xl bg-white text-blue-600 font-bold text-base px-8 py-4 hover:bg-blue-50 transition shadow-lg"
         >
-          Analyser ma fiche gratuitement →
+          Combien vous perdez en ce moment ? →
         </a>
-        <p className="text-blue-200 text-sm mt-4">Gratuit · Sans inscription · Données issues de Google Maps</p>
+        <p className="text-blue-200 text-sm mt-4">Aucune inscription nécessaire</p>
       </div>
     </section>
   )

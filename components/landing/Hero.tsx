@@ -27,7 +27,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
           {/* Texte */}
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 mb-6">
-              Il n'existe pas de fiche Google parfaite sans effort hebdomadaire — ou sans délégation
+              Il n'existe pas de fiche Google bien tenue sans effort hebdomadaire — ou sans délégation
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
@@ -36,13 +36,13 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              Entrez le nom de votre commerce. En 60 secondes, vous voyez votre score de visibilité,
+              Entrez le nom de votre commerce. En 60 secondes, vous voyez à quelle place vous apparaissez sur Google,
               vos problèmes précis, et ce que vous perdez chaque mois.{' '}
               <strong className="text-gray-800">Votre vraie fiche. Vos vrais chiffres.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
-              Gratuit · Sans inscription · Données réelles depuis Google Maps
+              Aucune inscription · Données issues de Google Maps en temps réel
             </p>
 
             {/* Formulaire */}
@@ -68,11 +68,11 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                   type="submit"
                   className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap shadow-lg"
                 >
-                  Analyser ma fiche →
+                  Voir ce que je perds — gratuit, 60 secondes →
                 </button>
               </div>
               <p className="text-xs text-gray-400">
-                Aucune carte bancaire · Résultats en 60 secondes · Données issues de Google Maps
+                Aucune carte bancaire requise · Données directement depuis votre fiche Google
               </p>
             </form>
 
