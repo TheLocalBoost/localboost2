@@ -5,13 +5,19 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SENT_FILE  = join(__dirname, "sent.csv");
-const STATS_FILE = join(__dirname, "variant_stats.json");
+const SENT_FILE    = join(__dirname, "sent.csv");
+const STATS_FILE   = join(__dirname, "variant_stats.json");
+const BOUNCED_FILE = join(__dirname, "bounced.csv");
 
 // ── CSV ──────────────────────────────────────────────────────────
 function loadSent() {
   if (!existsSync(SENT_FILE)) return new Set();
   return new Set(readFileSync(SENT_FILE, "utf-8").trim().split("\n").filter(Boolean));
+}
+
+function loadBounced() {
+  if (!existsSync(BOUNCED_FILE)) return new Set();
+  return new Set(readFileSync(BOUNCED_FILE, "utf-8").trim().split("\n").map(e => e.toLowerCase()).filter(Boolean));
 }
 function markSent(email) { appendFileSync(SENT_FILE, email + "\n", "utf-8"); }
 
@@ -33,8 +39,23 @@ function isValidEmail(email) {
   const re = /^[a-z0-9][a-z0-9._%+\-]*[a-z0-9]@[a-z0-9][a-z0-9.\-]*\.[a-z]{2,}$/;
   if (!re.test(e)) return false;
   if (e.split("@")[0].includes("..")) return false;
+  if (e.startsWith("www.") || e.startsWith("-")) return false;
+  const localPart = e.split("@")[0];
+  if (localPart.length <= 3) return false;
+  if (/^\d+$/.test(localPart)) return false;
+  // Locaux génériques — boîtes partagées, pas lues par le patron
+  const GENERIC = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|communication|pro|presse|rh|facturation|reservation|commande|vente|achats|logistique|sav)$/i;
+  if (GENERIC.test(localPart)) return false;
+  // Local contient une extension de domaine — URL collée comme email
+  if (/\.(com|fr|net|org|eu|io|co)$/.test(localPart)) return false;
+  // Local = nom de ville française
+  const VILLES = /^(paris|lyon|marseille|toulouse|nantes|bordeaux|lille|nice|rennes|grenoble|strasbourg|montpellier|tours|nimes|vichy|dijon|angers|brest|metz|caen|reims|nancy|pau|rouen|toulon|clermont|amiens|limoges|boulogne|macon|albi|laval|beziers|dax|blois|tulle|colmar|thionville)$/i;
+  if (VILLES.test(localPart)) return false;
   return true;
 }
+
+// Noms scrappés (offres d'emploi, posts, etc.)
+const SCRAPED_NAMES = /^(offre|offres|poste de|recherche|annonce|page |résult)/i;
 
 function isValidLead(c) {
   const nom = c.Nom || "";
@@ -43,6 +64,8 @@ function isValidLead(c) {
   if (/[<>{}\[\]@#]/.test(nom)) return false;
   if (/\d{5,}/.test(nom)) return false;
   if (/instagram|facebook|twitter|www\.|https?:/i.test(nom)) return false;
+  if (SCRAPED_NAMES.test(nom)) return false;
+  if (/#/.test(nom)) return false;
   const FAUX_VILLES = ['france','île-de-france','occitanie','auvergne','bretagne','normandie',
     'nouvelle-aquitaine','bourgogne','centre-val de loire','grand est','hauts-de-france',
     'pays de la loire','provence-alpes','paca','corse','réunion','martinique','guadeloupe','guyane','mayotte'];
@@ -440,8 +463,7 @@ function buildEmail(c, stats) {
   const vid      = selectVariant(stats);
   const variant  = VARIANTS[vid](nom, ville, secteur);
 
-  const auditUrl   = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}&utm_source=outreach&utm_medium=email&utm_campaign=v${vid}`;
-  const trackUrl   = `https://thelocalboost.fr/api/track?vid=${vid}&url=${encodeURIComponent(auditUrl)}`;
+  const auditUrl = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}&utm_source=outreach&utm_medium=email&utm_campaign=v${vid}`;
   const paragraphs = variant.body.split("\n\n").map(p =>
     `<p style="font-size:15px;line-height:1.7;color:#1a1a1a;margin:0 0 16px;">${p.replace(/\n/g, "<br>")}</p>`
   ).join("\n");
@@ -465,7 +487,7 @@ function buildEmail(c, stats) {
           <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0;">
             <tr>
               <td align="center">
-                <a href="${trackUrl}"
+                <a href="${auditUrl}"
                    style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;font-size:16px;padding:16px 36px;border-radius:8px;text-decoration:none;">
                   Voir mon score Google →
                 </a>
@@ -497,7 +519,7 @@ function buildEmail(c, stats) {
 
 // ── Envoi ────────────────────────────────────────────────────────
 const delay      = ms => new Promise(r => setTimeout(r, ms));
-const humanDelay = () => delay(15_000 + Math.random() * 15_000); // 15–30s (~180/h)
+const humanDelay = () => delay(2_000 + Math.random() * 2_000); // 2–4s burst
 
 async function sendEmail(c, stats) {
   const nom = c.Nom || "votre établissement";
@@ -508,7 +530,7 @@ async function sendEmail(c, stats) {
       to:          [{ email: c.Email, name: nom }],
       subject,
       htmlContent: html,
-      tracking:    { openTracking: false, clickTracking: false },
+      tracking:    { openTracking: false, clickTracking: true },
     }, {
       headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" }
     });
@@ -522,9 +544,10 @@ async function sendEmail(c, stats) {
 
 // ── Main ─────────────────────────────────────────────────────────
 const alreadySent  = loadSent();
+const bounced      = loadBounced();
 const allContacts  = parseCSV(CSV_FILE);
 const validContacts = allContacts.filter(isValidLead);
-const contacts     = validContacts.filter(c => !alreadySent.has(c.Email.toLowerCase()));
+const contacts     = validContacts.filter(c => !alreadySent.has(c.Email.toLowerCase()) && !bounced.has(c.Email.toLowerCase()));
 console.log(`✅ ${allContacts.length} total → ${validContacts.length} valides → ${contacts.length} à envoyer (${alreadySent.size} déjà envoyés)`);
 
 const LIMIT = parseInt(process.argv[2]) || contacts.length;

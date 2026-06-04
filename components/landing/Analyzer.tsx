@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { track } from '@/lib/track'
-import type { Competitor } from '@/app/api/analyse-public/route'
+import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
 interface AnalyzerProps {
   onEmailCapture?: (email: string) => void
@@ -18,15 +18,26 @@ interface AnalysisResult {
   reviews: number
   rating: number
   photos: number
-  problems: string[]
+  problems: ProblemItem[]
+  criteria: Record<string, boolean>
+  businessStatus: string
+  isClosed: boolean
+  openNow: boolean | null
+  weekdayHours: string[]
+  recentReviews: { author: string; rating: number; text: string; time: string }[]
+  priceLevel: number | null
+  googleMapsUrl: string | null
+  phoneIntl: string | null
   missed: { clicks: number; clients: number; revenue: number }
+  lostCalls: number
+  lostRevenue: number
   competitors: Competitor[]
 }
 
 function ScoreRing({ score }: { score: number }) {
   const r = 44, circ = 2 * Math.PI * r
-  const color = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
-  const badge = score >= 70 ? 'Bonne visibilité' : score >= 40 ? 'Fiche insuffisante' : 'Score critique'
+  const color  = score >= 70 ? '#16a34a' : score >= 40 ? '#d97706' : '#dc2626'
+  const badge  = score >= 70 ? 'Bonne visibilité' : score >= 40 ? 'Fiche insuffisante' : 'Score critique'
   const badgeBg = score >= 70 ? 'bg-green-100 text-green-700' : score >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600'
   return (
     <div className="flex items-center gap-4">
@@ -55,6 +66,18 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 const STEPS = ['Recherche de votre fiche...', 'Analyse de votre présence...', 'Calcul du score...']
+
+const CRITERIA_LABELS: Record<string, string> = {
+  telephone:   'Numéro de téléphone',
+  horaires:    "Horaires d'ouverture",
+  site:        'Site web',
+  description: "Description de l'activité",
+  photos:      'Photos (min. 5)',
+  avis20:      'Avis Google (min. 20)',
+  note4:       'Note (min. 4.0/5)',
+  nom:         "Nom d'établissement",
+  adresse:     'Adresse',
+}
 
 function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const searchParams          = useSearchParams()
@@ -108,17 +131,20 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     if (form.name && form.city) runAnalysis(form.name, form.city)
   }
 
-  const clientsLost = result ? Math.max(3, Math.round((100 - result.score) * 0.12)) : 0
-  const pricingUrl  = result
+  const pricingUrl = result
     ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}`
     : '/pricing'
+
+  const avgCompetitorScore = result?.competitors.length
+    ? Math.round(result.competitors.reduce((a, c) => a + c.estimatedScore, 0) / result.competitors.length)
+    : null
 
   return (
     <section id="analyzer" className="py-20 px-6 bg-gray-50">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200 px-4 py-1.5 text-sm font-medium text-blue-700 mb-4">
-            🔍 Gratuit · Résultat en 30 secondes · Sans inscription
+            Gratuit · Résultat en 30 secondes · Sans inscription
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Analysez votre fiche Google gratuitement
@@ -146,7 +172,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
             disabled={loading}
             className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 transition whitespace-nowrap"
           >
-            {loading ? `⏳ ${STEPS[step]}` : 'Analyser →'}
+            {loading ? `${STEPS[step]}` : 'Analyser →'}
           </button>
         </form>
 
@@ -158,50 +184,197 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
 
         <div id="analyzer-result">
           {result && (
-            <div className="space-y-3">
+            <div className="space-y-4">
 
-              {/* BLOC 1 — Verdict */}
+              {/* BLOC 1 — Score + comparaison concurrents */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <p className="text-xs text-gray-400 mb-4">{result.name} · {result.address}</p>
-                <ScoreRing score={result.score} />
+                <div className="flex items-center justify-between">
+                  <ScoreRing score={result.score} />
+                  {avgCompetitorScore !== null && (
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400 mb-1">Concurrents proches</p>
+                      <p className="text-2xl font-bold text-gray-500">{avgCompetitorScore}<span className="text-sm font-normal text-gray-400">/100</span></p>
+                      <p className={`text-xs font-semibold mt-1 ${result.score >= avgCompetitorScore ? 'text-green-600' : 'text-red-500'}`}>
+                        {result.score >= avgCompetitorScore
+                          ? `+${result.score - avgCompetitorScore} pts d'avance`
+                          : `${avgCompetitorScore - result.score} pts de retard`}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* BLOC 2 — Douleur chiffrée */}
-              <div className="bg-white rounded-2xl border border-red-100 p-6 text-center">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Ce mois-ci
-                </p>
-                <p className="text-6xl font-extrabold text-red-500 mb-2">~{clientsLost}</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  clients ont appelé un concurrent à votre place.
-                </p>
-              </div>
+              {/* BLOC 2 — Problèmes avec impact individuel */}
+              {result.problems.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                    {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} — impact mensuel estimé
+                  </p>
+                  <div className="space-y-3">
+                    {result.problems.map((pb, i) => (
+                      <div key={i} className="rounded-xl bg-red-50 border border-red-100 p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
+                          <p className="text-sm text-gray-800 leading-snug">{pb.text}</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                            ~{pb.calls} appel{pb.calls > 1 ? 's' : ''} perdu{pb.calls > 1 ? 's' : ''}/mois
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                            ~{pb.revenue}€ non réalisé/mois
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              {/* BLOC 3 — Verrous */}
+              {/* BLOC 3 — Audit checklist */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                  {result.problems.length} problèmes détectés sur votre fiche
+                  Audit complet de votre fiche
                 </p>
                 <div className="space-y-2">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-                      <span className="text-gray-300 text-lg shrink-0">🔒</span>
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full" />
+                  {result.criteria && Object.entries(result.criteria).map(([key, ok]) => (
+                    <div key={key} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${ok ? 'bg-green-50' : 'bg-red-50 border border-red-100'}`}>
+                      <span className={`text-sm font-bold shrink-0 ${ok ? 'text-green-500' : 'text-red-500'}`}>{ok ? '✓' : '✗'}</span>
+                      <span className={`text-sm flex-1 ${ok ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
+                        {CRITERIA_LABELS[key] ?? key}
+                      </span>
+                      {key === 'avis20' && (
+                        <span className="text-xs text-gray-400">{result.reviews} avis</span>
+                      )}
+                      {key === 'photos' && (
+                        <span className="text-xs text-gray-400">{result.photos} photos</span>
+                      )}
+                      {key === 'note4' && (
+                        <span className="text-xs text-gray-400">{result.rating > 0 ? `${result.rating}★` : '—'}</span>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* BLOC 4 — CTA unique */}
-              <div className="rounded-2xl bg-blue-600 p-6 text-center">
+              {/* BLOC 4 — Concurrents */}
+              {result.competitors.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
+                  <div className="space-y-3">
+                    {result.competitors.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}
+                          </p>
+                        </div>
+                        <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
+                          {c.estimatedScore}/100
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* BLOC 5 — Impact total mensuel */}
+              <div className="bg-white rounded-2xl border border-red-100 p-6">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                  Total mensuel estimé — votre secteur · votre position
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="rounded-xl bg-red-50 py-4">
+                    <p className="text-3xl font-extrabold text-red-500">~{result.lostCalls}</p>
+                    <p className="text-xs text-gray-500 mt-1">appels perdus/mois</p>
+                  </div>
+                  <div className="rounded-xl bg-red-50 py-4">
+                    <p className="text-3xl font-extrabold text-red-500">~{result.lostRevenue}€</p>
+                    <p className="text-xs text-gray-500 mt-1">CA non réalisé/mois</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-3 text-center">
+                  Basé sur le volume de recherche local estimé, votre position actuelle et la valeur moyenne d'un client dans votre secteur.
+                </p>
+              </div>
+
+              {/* BLOC 6 — Alerte fiche fermée */}
+              {result.isClosed && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                  <p className="text-sm font-bold text-red-700 mb-1">Fiche marquée comme fermée</p>
+                  <p className="text-xs text-red-600">Google affiche votre établissement comme fermé{result.businessStatus === 'CLOSED_PERMANENTLY' ? ' définitivement' : ' temporairement'}. Les clients ne vous appelleront pas.</p>
+                </div>
+              )}
+
+              {/* BLOC 7 — Horaires */}
+              {result.weekdayHours.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Horaires affichés sur Google</p>
+                    {result.openNow !== null && (
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${result.openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                        {result.openNow ? '● Ouvert' : '● Fermé'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    {result.weekdayHours.map((h, i) => (
+                      <p key={i} className="text-xs text-gray-600">{h}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* BLOC 8 — Avis récents */}
+              {result.recentReviews.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                    Derniers avis Google
+                  </p>
+                  <div className="space-y-4">
+                    {result.recentReviews.map((r, i) => (
+                      <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium text-gray-900">{r.author}</p>
+                          <div className="flex items-center gap-1">
+                            <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                            <span className="text-xs text-gray-400 ml-1">{r.time}</span>
+                          </div>
+                        </div>
+                        {r.text && <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{r.text}</p>}
+                      </div>
+                    ))}
+                  </div>
+                  {result.googleMapsUrl && (
+                    <a href={result.googleMapsUrl} target="_blank" rel="noopener"
+                      className="mt-3 block text-xs text-blue-500 hover:underline">
+                      Voir tous les avis sur Google Maps →
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* BLOC 9 — CTA LocalBoost */}
+              <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
+                <p className="text-white font-bold text-lg mb-1">
+                  Une fiche parfaite, ça prend 2 à 3h par semaine.
+                </p>
+                <p className="text-blue-200 text-sm mb-3">
+                  Réponses aux avis, publications régulières, demandes d'avis clients, mise à jour des horaires et description — chaque semaine, indéfiniment. C'est du temps que vous n'avez pas.
+                </p>
+                <p className="text-white text-sm font-semibold mb-4">
+                  LocalBoost le fait à votre place — vous gardez vos clients, pas vos week-ends.
+                </p>
                 <a
                   href={pricingUrl}
                   onClick={() => track('cta_click', { score: result.score, category: result.category, city: result.city })}
-                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3"
+                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-2 text-center"
                 >
-                  Débloquer mon plan d'action — 29€/mois →
+                  Laisser LocalBoost s'en occuper — 29€/mois →
                 </a>
-                <p className="text-blue-300 text-xs">Résiliable à tout moment</p>
+                <p className="text-blue-300 text-xs text-center">Sans engagement · Résiliable à tout moment</p>
               </div>
 
             </div>

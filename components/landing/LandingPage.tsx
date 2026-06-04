@@ -11,6 +11,7 @@ import Pricing         from './Pricing'
 import FAQ             from './FAQ'
 import CTAFinal        from './CTAFinal'
 import Footer          from './Footer'
+import SeoLinks        from './SeoLinks'
 
 export default function LandingPage() {
   const [detectedCity, setDetectedCity] = useState('')
@@ -68,6 +69,8 @@ export default function LandingPage() {
       <FAQ />
 
       <CTAFinal />
+
+      <SeoLinks />
 
       <Footer />
     </div>
