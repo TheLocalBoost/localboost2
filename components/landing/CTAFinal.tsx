@@ -21,7 +21,7 @@ export default function CTAFinal() {
           href="/analyser"
           className="inline-block rounded-xl bg-blue-600 text-white font-bold text-sm px-10 py-4 hover:bg-blue-700 transition shadow-lg mb-3"
         >
-          Commencer — premier mois offert →
+          Analyser ma fiche gratuitement →
         </a>
         <p className="text-gray-500 text-xs">
           Sans engagement · Résiliable à tout moment
