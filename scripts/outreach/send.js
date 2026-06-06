@@ -136,6 +136,30 @@ function saveSend(vid, stats) {
   writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2));
 }
 
+// Charge les vrais clics depuis Supabase et les fusionne dans stats
+async function syncClicksFromSupabase(stats) {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return stats;
+  try {
+    const res = await fetch(`${url}/rest/v1/email_clicks?select=variant_id`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }
+    });
+    if (!res.ok) return stats;
+    const rows = await res.json();
+    // Reset clicks dans stats, recompter depuis Supabase
+    const clickCounts = {};
+    rows.forEach(r => { clickCounts[r.variant_id] = (clickCounts[r.variant_id] || 0) + 1; });
+    for (const [vid, count] of Object.entries(clickCounts)) {
+      if (!stats[vid]) stats[vid] = { sends: 0, clicks: 0 };
+      stats[vid].clicks = count;
+    }
+    const total = Object.values(clickCounts).reduce((a, b) => a + b, 0);
+    if (total > 0) console.log(`  📊 ${total} clics réels chargés depuis Supabase\n`);
+  } catch {}
+  return stats;
+}
+
 function randomNormal() {
   let u, v;
   do { u = Math.random(); } while (u === 0);
@@ -677,7 +701,8 @@ console.log(`✅ ${allContacts.length} total → ${validContacts.length} valides
 const LIMIT = parseInt(process.argv[2]) || contacts.length;
 
 async function main() {
-  const stats = loadStats();
+  let stats = loadStats();
+  stats = await syncClicksFromSupabase(stats);
   const batch = contacts.slice(0, LIMIT);
   console.log(`\n📧 Envoi de ${batch.length} emails — Thompson sampling actif (${VARIANTS.length} variantes)\n`);
   for (let i = 0; i < batch.length; i++) {
