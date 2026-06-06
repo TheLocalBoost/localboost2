@@ -4,6 +4,42 @@ import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+// ── Rotation comptes Brevo ────────────────────────────────────────
+// Ajouter dans .env : BREVO_API_KEY_1, BREVO_API_KEY_2, etc.
+// + BREVO_SENDER_EMAIL_1, BREVO_SENDER_EMAIL_2, etc.
+// Chaque compte = 300 emails/jour gratuits
+const BREVO_ACCOUNTS = [1, 2, 3, 4]
+  .map(i => ({
+    key:   process.env[`BREVO_API_KEY_${i}`],
+    email: process.env[`BREVO_SENDER_EMAIL_${i}`],
+    name:  process.env[`BREVO_SENDER_NAME_${i}`],
+  }))
+  .filter(a => a.key);
+
+// Fallback : BREVO_API_KEY / SENDER_EMAIL / SENDER_NAME (ancienne config)
+if (!BREVO_ACCOUNTS.length) {
+  BREVO_ACCOUNTS.push({
+    key:   process.env.BREVO_API_KEY,
+    email: process.env.SENDER_EMAIL,
+    name:  process.env.SENDER_NAME,
+  });
+}
+
+let accountIdx = 0;
+const currentAccount = () => BREVO_ACCOUNTS[accountIdx];
+
+function rotateAccount() {
+  accountIdx++;
+  if (accountIdx >= BREVO_ACCOUNTS.length) {
+    console.error(`\n❌ Tous les comptes Brevo (${BREVO_ACCOUNTS.length}) ont atteint leur limite du jour.`);
+    process.exit(1);
+  }
+  const acc = currentAccount();
+  console.log(`\n🔄 Rotation → compte ${accountIdx + 1}/${BREVO_ACCOUNTS.length} (${acc.email})\n`);
+}
+
+console.log(`\n📬 ${BREVO_ACCOUNTS.length} compte(s) Brevo chargé(s) : ${BREVO_ACCOUNTS.map(a => a.email).join(", ")}\n`);
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SENT_FILE    = join(__dirname, "sent.csv");
 const STATS_FILE   = join(__dirname, "variant_stats.json");
@@ -521,24 +557,37 @@ function buildEmail(c, stats) {
 const delay      = ms => new Promise(r => setTimeout(r, ms));
 const humanDelay = () => delay(2_000 + Math.random() * 2_000); // 2–4s burst
 
-async function sendEmail(c, stats) {
+async function sendEmail(c, stats, attempt = 0) {
+  if (attempt >= BREVO_ACCOUNTS.length) {
+    console.error(`❌ ${c.Email} — tous les comptes épuisés`);
+    return;
+  }
   const nom = c.Nom || "votre établissement";
   const { subject, html, vid } = buildEmail(c, stats);
+  const acc = currentAccount();
   try {
     await axios.post("https://api.brevo.com/v3/smtp/email", {
-      sender:      { name: process.env.SENDER_NAME, email: process.env.SENDER_EMAIL },
+      sender:      { name: acc.name, email: acc.email },
       to:          [{ email: c.Email, name: nom }],
       subject,
       htmlContent: html,
       tracking:    { openTracking: false, clickTracking: true },
     }, {
-      headers: { "api-key": process.env.BREVO_API_KEY, "Content-Type": "application/json" }
+      headers: { "api-key": acc.key, "Content-Type": "application/json" }
     });
     markSent(c.Email.toLowerCase());
     saveSend(vid, stats);
-    console.log(`✅ v${vid} ${c.Email.padEnd(42)} ${nom.slice(0, 28)}`);
+    console.log(`✅ [cpt${accountIdx + 1}] v${vid} ${c.Email.padEnd(38)} ${nom.slice(0, 28)}`);
   } catch (err) {
-    console.error(`❌ ${c.Email}`, err.response?.data?.message || err.message);
+    const status = err.response?.status;
+    const msg    = err.response?.data?.message || err.message;
+    if (status === 429 || (status === 400 && /limit|quota|daily/i.test(msg))) {
+      console.warn(`⚠️  Compte ${accountIdx + 1} limite atteinte — rotation`);
+      rotateAccount();
+      await sendEmail(c, stats, attempt + 1);
+    } else {
+      console.error(`❌ ${c.Email}`, msg);
+    }
   }
 }
 
