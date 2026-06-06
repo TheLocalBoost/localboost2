@@ -135,15 +135,38 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [step, setStep]       = useState(0)
   const [result, setResult]   = useState<AnalysisResult | null>(null)
   const [error, setError]     = useState('')
+  const [emailScore, setEmailScore] = useState<number | null>(null)
+  const [ctaClicked, setCtaClicked] = useState(false)
 
   useEffect(() => {
-    const nom   = searchParams.get('nom')
-    const ville = searchParams.get('ville')
+    const nom     = searchParams.get('nom')
+    const ville   = searchParams.get('ville')
+    const score   = searchParams.get('score')
+    const secteur = searchParams.get('secteur')
+    const source  = searchParams.get('utm_source')
+
+    if (score) setEmailScore(parseInt(score))
+
     if (nom && ville) {
       setForm({ name: nom, city: ville })
+      if (source === 'brevo') track('email_click_landed', { nom, ville, score, secteur })
       runAnalysis(nom, ville)
     }
   }, [])
+
+  // Niveau 5 — tracker non-converti : arrivé depuis email, résultat vu, pas de CTA cliqué après 20s
+  useEffect(() => {
+    if (!result || ctaClicked) return
+    if (searchParams.get('utm_source') !== 'brevo') return
+    const t = setTimeout(() => {
+      track('email_no_convert', {
+        score:   result.score,
+        city:    result.city,
+        category: result.category,
+      })
+    }, 20_000)
+    return () => clearTimeout(t)
+  }, [result, ctaClicked])
 
   useEffect(() => {
     if (!loading) return
@@ -228,6 +251,20 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
         {error && (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-6 text-sm text-amber-800">
             {error}
+          </div>
+        )}
+
+        {/* Teaser score email — visible pendant le chargement */}
+        {loading && emailScore !== null && (
+          <div className="rounded-xl bg-orange-50 border border-orange-200 p-4 mb-4 flex items-center gap-4">
+            <div className="text-center shrink-0">
+              <p className="text-3xl font-black text-orange-600 leading-none">{emailScore}</p>
+              <p className="text-xs text-gray-400">/100</p>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">Score estimé détecté dans votre email</p>
+              <p className="text-xs text-gray-500">Calcul du score réel en cours…</p>
+            </div>
           </div>
         )}
 
@@ -418,7 +455,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </p>
                 <a
                   href={pricingUrl}
-                  onClick={() => track('cta_click', { score: result.score, category: result.category, city: result.city })}
+                  onClick={() => { setCtaClicked(true); track('cta_click', { score: result.score, category: result.category, city: result.city, source: searchParams.get('utm_source') ?? 'direct' }) }}
                   className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-2 text-center"
                 >
                   Laisser LocalBoost s'en occuper — 29€/mois →

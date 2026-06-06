@@ -11,18 +11,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOG_FILE  = join(__dirname, "harvest_all.log");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// Secteurs à fort rendement — artisans avec présence sociale + Gmail exposé
 const SECTORS = [
-  "coiffeur", "boulanger", "plombier", "electricien",
-  "fleuriste", "restaurant", "garagiste", "carreleur",
-  "peintre", "serrurier", "pharmacie", "opticien",
+  "coiffeur", "barbier", "plombier", "garagiste",
+  "restaurant", "boulanger", "fleuriste", "serrurier",
 ];
 
+// Grandes villes uniquement — masse critique de Facebook/Instagram/LeBonCoin
 const CITIES = [
-  "Lyon", "Marseille", "Toulouse", "Nantes", "Bordeaux",
-  "Lille", "Nice", "Rennes", "Strasbourg", "Montpellier",
-  "Grenoble", "Dijon", "Angers", "Brest", "Caen",
-  "Reims", "Pau", "Rouen", "Tours", "Limoges",
-  "Paris 15", "Paris 11", "Paris 18", "Paris 13",
+  "Lyon", "Marseille", "Toulouse", "Bordeaux", "Lille",
+  "Nice", "Paris", "Rennes", "Strasbourg", "Montpellier",
+  "Grenoble", "Nantes", "Rouen", "Perpignan", "Toulon",
 ];
 
 function log(msg) {
@@ -64,8 +63,8 @@ async function run() {
         { cwd: join(__dirname, "../.."), encoding: "utf-8", timeout: 120_000 }
       );
 
-      // Compter les leads trouvés dans la sortie
-      const match = output.match(/(\d+) leads? →/);
+      // Compter les leads trouvés dans la sortie  ("📊  N appels · N leads")
+      const match = output.match(/·\s*(\d+)\s*leads?/);
       const found = match ? parseInt(match[1]) : 0;
       totalLeads += found;
       totalRuns++;
@@ -80,7 +79,7 @@ async function run() {
 
       await sleep(2000);
     } catch (e) {
-      const msg = e.stdout || e.stderr || e.message || "";
+      const msg = (e.stdout || "") + (e.stderr || "") + (e.message || "");
 
       if (msg.includes("épuisé") || msg.includes("invalide") || msg.includes("401")) {
         log("💀 Crédits SerpAPI épuisés — arrêt.");

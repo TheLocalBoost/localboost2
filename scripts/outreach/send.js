@@ -57,8 +57,11 @@ function loadBounced() {
 }
 function markSent(email) { appendFileSync(SENT_FILE, email + "\n", "utf-8"); }
 
-const CSV_FILE = join(__dirname, "leads_clean2.csv");
-if (!existsSync(CSV_FILE)) { console.error("❌ leads_clean2.csv introuvable."); process.exit(1); }
+const CSV_FILE = existsSync(join(__dirname, "leads_ready.csv"))
+  ? join(__dirname, "leads_ready.csv")
+  : join(__dirname, "leads_clean2.csv");
+if (!existsSync(CSV_FILE)) { console.error("❌ leads_ready.csv / leads_clean2.csv introuvable."); process.exit(1); }
+console.log(`📂 Source : ${CSV_FILE}`);
 
 function parseCSV(file) {
   const lines   = readFileSync(file, "utf-8").replace(/^﻿/, "").trim().split("\n");
@@ -90,23 +93,33 @@ function isValidEmail(email) {
   return true;
 }
 
-// Noms scrappés (offres d'emploi, posts, etc.)
-const SCRAPED_NAMES = /^(offre|offres|poste de|recherche|annonce|page |résult)/i;
+// Noms scrappés, génériques ou non-établissements
+const SCRAPED_NAMES = /^(offre|offres|poste de|recherche|annonce|page |résult|nous rech|contact |electrici|plombier |coiffeur |barbier |fleuriste |boulanger |serrurier |garagiste |restaurant |peintre |carreleur |opticien |pharmacie )/i;
+const GENERIC_NAMES = /^(contact|info|bonjour|salut|mon|ma |le |la |les |un |une |des )$/i;
 
 function isValidLead(c) {
-  const nom = c.Nom || "";
-  if (nom.length < 3 || nom.length > 80) return false;
-  if (nom.split(" ").length > 7) return false;
+  const nom = (c.Nom || "").trim();
+  if (nom.length < 4 || nom.length > 60) return false;
+  // Trop de mots = snippet scrappé
+  if (nom.split(" ").length > 6) return false;
   if (/[<>{}\[\]@#]/.test(nom)) return false;
   if (/\d{5,}/.test(nom)) return false;
   if (/instagram|facebook|twitter|www\.|https?:/i.test(nom)) return false;
   if (SCRAPED_NAMES.test(nom)) return false;
   if (/#/.test(nom)) return false;
+  // Nom = juste un mot générique de secteur (ex: "Contact", "Electricien")
+  if (GENERIC_NAMES.test(nom)) return false;
+  // Nom commence par un verbe d'action scrappé
+  if (/^(nous |vous |je |votre |notre |pour |avec |chez )/i.test(nom)) return false;
+  // Nom = ville seule ou département
+  if (/^\d{2,3}$/.test(nom)) return false;
+  // Nom contient une ville seule (ex: "Électricien à Tours")
+  if (/ à | en | sur | de /i.test(nom) && nom.split(" ").length <= 4) return false;
   const FAUX_VILLES = ['france','île-de-france','occitanie','auvergne','bretagne','normandie',
     'nouvelle-aquitaine','bourgogne','centre-val de loire','grand est','hauts-de-france',
     'pays de la loire','provence-alpes','paca','corse','réunion','martinique','guadeloupe','guyane','mayotte'];
   if (!c.Ville || FAUX_VILLES.includes(c.Ville.toLowerCase())) return false;
-  if (/^\d{2,3}$/.test(c.Ville.trim())) return false; // départements numériques
+  if (/^\d{2,3}$/.test(c.Ville.trim())) return false;
   if (!isValidEmail(c.Email)) return false;
   return true;
 }
@@ -491,16 +504,73 @@ Brian`,
   }),
 ];
 
+// ── Preheader par secteur ─────────────────────────────────────────
+function buildPreheader(secteur, score, appelsPerdus) {
+  if (score && appelsPerdus) {
+    return `Score estimé : ${score}/100 · ~${appelsPerdus} appels perdus/mois · Vérifiez en 30 secondes`;
+  }
+  const map = {
+    plombier:    "Un client vous a cherché cette nuit — votre fiche l'a-t-elle convaincu ?",
+    serrurier:   "En urgence, les gens appellent le premier résultat Google. C'est vous ?",
+    electricien: "Votre fiche Google travaille pendant que vous dormez — ou pas.",
+    coiffeur:    "Samedi matin, un client cherche un coiffeur à côté. Il voit votre fiche.",
+    barbier:     "Un client cherche un barbier — votre fiche lui donne-t-elle envie d'appeler ?",
+    restaurant:  "Vendredi soir, les gens choisissent leur restaurant sur Google Maps.",
+    boulanger:   "Le matin, les gens cherchent une boulangerie ouverte. Vous apparaissez ?",
+    fleuriste:   "Pour la fête des mères, les clients cherchent un fleuriste local sur Google.",
+    garagiste:   "Panne sur la route — le client appelle le premier garagiste bien noté.",
+    pharmacie:   "Votre pharmacie est-elle bien positionnée sur Google Maps ?",
+    opticien:    "Votre fiche Google est votre première vitrine pour les nouveaux clients.",
+    peintre:     "Les artisans bien référencés sur Google reçoivent 3× plus de devis.",
+    carreleur:   "Les clients comparent 3 artisans sur Google avant d'appeler.",
+  };
+  return map[secteur] || "Votre fiche Google perd peut-être des clients chaque semaine.";
+}
+
+// ── Bloc score (injecté juste avant le CTA) ───────────────────────
+function buildScoreBlock(score, appelsPerdus, secteur) {
+  if (!score) return "";
+  const color  = score >= 70 ? "#d97706" : score >= 50 ? "#ea580c" : "#dc2626";
+  const label  = score >= 70 ? "Fiche insuffisante" : score >= 50 ? "Fiche très incomplète" : "Fiche quasiment invisible";
+  const appels = appelsPerdus || 7;
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+    <tr>
+      <td style="background:#fef9f0;border:1px solid #fed7aa;border-radius:10px;padding:16px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="vertical-align:middle;width:70px;">
+              <p style="font-size:32px;font-weight:900;color:${color};margin:0;line-height:1;">${score}</p>
+              <p style="font-size:11px;color:#9ca3af;margin:0;">/100</p>
+            </td>
+            <td style="vertical-align:middle;padding-left:14px;border-left:2px solid #fed7aa;">
+              <p style="font-size:13px;font-weight:700;color:#1a1a1a;margin:0 0 4px;">${label}</p>
+              <p style="font-size:12px;color:#92400e;margin:0;">~${appels} appels perdus/mois sur votre secteur</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`;
+}
+
 // ── Construction email ────────────────────────────────────────────
 function buildEmail(c, stats) {
-  const nom      = c.Nom   || "votre établissement";
-  const ville    = c.Ville && c.Ville !== "France" ? c.Ville : "votre ville";
-  const secteur  = (c.Secteur || "commerce").toLowerCase();
-  const vid      = selectVariant(stats);
-  const variant  = VARIANTS[vid](nom, ville, secteur);
+  const nom          = c.Nom   || "votre établissement";
+  const ville        = c.Ville && c.Ville !== "France" ? c.Ville : "votre ville";
+  const secteur      = (c.Secteur || "commerce").toLowerCase();
+  const score        = parseInt(c.Score) || null;
+  const appelsPerdus = parseInt(c.AppelsPerdus) || null;
+  const vid          = selectVariant(stats);
+  const variant      = VARIANTS[vid](nom, ville, secteur);
 
-  const auditUrl = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}&utm_source=outreach&utm_medium=email&utm_campaign=v${vid}`;
-  const paragraphs = variant.body.split("\n\n").map(p =>
+  const scoreParam   = score        ? `&score=${score}`                           : "";
+  const secteurParam = c.Secteur    ? `&secteur=${encodeURIComponent(secteur)}`   : "";
+  const auditUrl     = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}${scoreParam}${secteurParam}&utm_source=brevo&utm_medium=email&utm_campaign=v${vid}`;
+
+  const preheader    = buildPreheader(secteur, score, appelsPerdus);
+  const scoreBlock   = buildScoreBlock(score, appelsPerdus, secteur);
+  const paragraphs   = variant.body.split("\n\n").map(p =>
     `<p style="font-size:15px;line-height:1.7;color:#1a1a1a;margin:0 0 16px;">${p.replace(/\n/g, "<br>")}</p>`
   ).join("\n");
 
@@ -508,18 +578,23 @@ function buildEmail(c, stats) {
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">
+<!-- Preheader caché -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f9fafb;">
+  ${preheader}&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌
+</div>
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f9fafb;">
   <tr><td align="center" style="padding:32px 16px;">
     <table width="560" cellpadding="0" cellspacing="0" border="0"
            style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
       <tr>
         <td align="center" style="padding:28px 24px 20px;">
-          <img src="https://www.thelocalboost.fr/logo.png.png" alt="LocalBoost" width="140" style="display:block;" />
+          <img src="https://www.thelocalboost.fr/logo.png" alt="LocalBoost" width="140" style="display:block;" />
         </td>
       </tr>
       <tr>
         <td style="padding:0 32px 32px;">
           ${paragraphs}
+          ${scoreBlock}
           <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0;">
             <tr>
               <td align="center">

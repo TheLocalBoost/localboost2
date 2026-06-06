@@ -22,8 +22,8 @@ const SERPER_KEYS = [1,2,3,4,5,6,7]
   .map(i => process.env[`SERPER_KEY_${i}`])
   .filter(Boolean);
 
-let useSerpAPI  = false; // Serper.dev en moteur principal
-let serperIdx   = 0;
+let useSerpAPI = false;
+let serperIdx  = SERPER_KEYS.length - 1; // démarre sur la clé 6 (seule non épuisée)
 
 if (!SERPER_KEYS.length) {
   console.error("❌ Aucune clé SERPER_KEY_1..7 dans .env");
@@ -64,10 +64,9 @@ async function serperCall(q, extra = {}) {
     });
     if (!res.ok) {
       const body = await res.text();
-      // 402 = quota, 429 = rate limit, 400 avec "credits" = quota aussi
       if (res.status === 402 || res.status === 429 ||
           (res.status === 400 && body.toLowerCase().includes("credit"))) {
-        console.warn(`  ⚠️  Clé Serper ${serperIdx + 1} épuisée → suivante`);
+        console.warn(`  ⚠️  Clé Serper ${serperIdx + 1} épuisée (${res.status}) → suivante`);
         serperIdx++;
         continue;
       }
@@ -217,11 +216,29 @@ async function findEmailForBusiness(businessName, city) {
 
 function buildFallbackQueries(sector, city) {
   return [
+    // Réseaux sociaux
     `site:facebook.com "${sector}" "${city}" "@gmail.com"`,
-    `site:facebook.com/pages "${sector}" "${city}" gmail`,
     `site:instagram.com "${sector}" "${city}" "@gmail.com"`,
-    `"${sector}" "${city}" "réservation" "@gmail.com"`,
-    `"${sector}" "${city}" "contactez" "@gmail.com"`,
+
+    // Pages Jaunes — annuaire le plus complet pour artisans FR
+    `site:pagesjaunes.fr "${sector}" "${city}"`,
+    `"${sector}" "${city}" site:pagesjaunes.fr "@gmail.com"`,
+
+    // Le Bon Coin — artisans cherchant clients / emploi
+    `site:leboncoin.fr "${sector}" "${city}" "@gmail.com"`,
+    `site:leboncoin.fr "artisan" "${sector}" "${city}" gmail`,
+
+    // Google Maps / fiches locales
+    `"${sector}" "${city}" "Google Maps" "@gmail.com"`,
+
+    // Sites perso & portfolios (hors réseaux sociaux)
+    `"${sector}" "${city}" "@gmail.com" -site:facebook.com -site:instagram.com`,
+
+    // Annuaires pro français
+    `"${sector}" "${city}" "@gmail.com" (site:societe.com OR site:kompass.com OR site:hoodspot.fr)`,
+
+    // Pages de contact directes
+    `"${sector}" "${city}" "nous contacter" OR "prendre rendez-vous" "@gmail.com"`,
   ];
 }
 
