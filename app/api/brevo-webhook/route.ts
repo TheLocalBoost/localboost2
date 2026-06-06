@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // Brevo envoie un tableau d'events ou un event unique
 export async function POST(req: NextRequest) {
-  // Vérification secret optionnelle
-  const secret = process.env.BREVO_WEBHOOK_SECRET
-  if (secret) {
-    const sig = req.headers.get('x-brevo-signature') ?? req.headers.get('x-sib-signature')
-    if (sig !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) return NextResponse.json({ error: 'Config' }, { status: 500 })
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
 
   const body = await req.json()
   const events = Array.isArray(body) ? body : [body]
