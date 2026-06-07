@@ -505,9 +505,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     {ctaContent.hook}
                   </p>
                   {ctaContent.metric && (
-                    <p className="text-amber-300 text-sm font-bold mb-3">
-                      {ctaContent.metric}
-                    </p>
+                    <div className="mb-3">
+                      <p className="text-amber-300 text-sm font-bold">{ctaContent.metric}</p>
+                      <p className="text-blue-300 text-xs mt-0.5">Estimation basée sur votre secteur et les données de votre fiche.</p>
+                    </div>
                   )}
                   <p className="text-blue-200 text-sm mb-5 leading-relaxed">
                     {ctaContent.sub}
