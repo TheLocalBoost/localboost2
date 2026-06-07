@@ -1,20 +1,47 @@
 // merge_serpapi.mjs — Merge tous les serpapi_*.csv → leads_new.csv prêt pour send.js
-// Usage : node merge_serpapi.mjs [--dry-run]
+// Usage : node merge_serpapi.mjs [--dry-run] [--verify]
 //
 // Ce script :
 //   1. Lit tous les serpapi_*.csv du répertoire
 //   2. Infère le secteur depuis le nom de fichier
 //   3. Applique les filtres email + nom + bounced + déjà envoyés
 //   4. Déduplique
-//   5. Sort par secteur/ville
+//   5. [--verify] Vérifie les emails domaines custom via Disify (MX check)
 //   6. Écrit leads_new.csv au format attendu par send.js
 
 import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs";
+import { resolveMx } from "dns/promises";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+const VERIFY = process.argv.includes("--verify");
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DRY_RUN   = process.argv.includes("--dry-run");
+
+// ── Domaines toujours valides — pas besoin de vérifier ───────────────────────
+const SAFE_DOMAINS = new Set([
+  "gmail.com","yahoo.fr","yahoo.com","hotmail.fr","hotmail.com","outlook.fr",
+  "outlook.com","live.fr","live.com","orange.fr","sfr.fr","sfr.net",
+  "laposte.net","free.fr","wanadoo.fr","icloud.com","me.com","protonmail.com",
+  "proton.me","gmx.fr","gmx.com","ymail.com","bbox.fr","numericable.fr",
+]);
+
+// Vérifie via MX DNS que le domaine reçoit des emails (pour domaines custom)
+const mxCache = new Map();
+async function hasMX(domain) {
+  if (SAFE_DOMAINS.has(domain)) return true;
+  if (mxCache.has(domain)) return mxCache.get(domain);
+  try {
+    const records = await resolveMx(domain);
+    const ok = records && records.length > 0;
+    mxCache.set(domain, ok);
+    return ok;
+  } catch {
+    mxCache.set(domain, false);
+    return false;
+  }
+}
 
 // ── Charger sent + bounced ───────────────────────────────────────────────────
 function loadSet(filename) {
@@ -120,28 +147,59 @@ const allFiles = readdirSync(__dirname)
   .sort();
 
 console.log(`\n📂 ${allFiles.length} fichiers serpapi trouvés`);
+if (VERIFY) console.log("🔍 Mode --verify actif : vérification MX pour domaines custom\n");
 
 const seen   = new Set();
 const leads  = [];
 let rawTotal = 0;
 
-// Stats de rejet
-const stats = { email: 0, nom: 0, sent: 0, bounced: 0, dup: 0 };
+const stats = { email: 0, nom: 0, sent: 0, bounced: 0, dup: 0, noMX: 0 };
 
+// Phase 1 — filtres synchrones
+const candidates = [];
 for (const filename of allFiles) {
   const rows = parseSerpapi(join(__dirname, filename), filename);
   rawTotal += rows.length;
 
   for (const { nom, email, ville, secteur } of rows) {
     const emailLow = email.toLowerCase().trim();
-    if (!isValidEmail(email))              { stats.email++;   continue; }
-    if (!isValidLead(nom, ville))          { stats.nom++;     continue; }
-    if (alreadySent.has(emailLow))         { stats.sent++;    continue; }
-    if (bounced.has(emailLow))             { stats.bounced++; continue; }
-    if (seen.has(emailLow))                { stats.dup++;     continue; }
+    if (!isValidEmail(email))      { stats.email++;   continue; }
+    if (!isValidLead(nom, ville))  { stats.nom++;     continue; }
+    if (alreadySent.has(emailLow)) { stats.sent++;    continue; }
+    if (bounced.has(emailLow))     { stats.bounced++; continue; }
+    if (seen.has(emailLow))        { stats.dup++;     continue; }
     seen.add(emailLow);
-    leads.push({ nom: normalizeName(nom), email: emailLow, ville, secteur });
+    candidates.push({ nom: normalizeName(nom), email: emailLow, ville, secteur });
   }
+}
+
+// Phase 2 — vérification MX (uniquement avec --verify, et seulement domaines custom)
+if (VERIFY) {
+  const customDomains = [...new Set(
+    candidates
+      .map(r => r.email.split("@")[1])
+      .filter(d => d && !SAFE_DOMAINS.has(d))
+  )];
+  if (customDomains.length) {
+    process.stdout.write(`\n🔎 Vérification MX : ${customDomains.length} domaine(s) custom...`);
+    // Vérifier en parallèle par batch de 20
+    for (let i = 0; i < customDomains.length; i += 20) {
+      await Promise.all(customDomains.slice(i, i + 20).map(d => hasMX(d)));
+      process.stdout.write(`\r🔎 MX vérifié : ${Math.min(i + 20, customDomains.length)}/${customDomains.length}   `);
+    }
+    console.log();
+  }
+}
+
+for (const r of candidates) {
+  if (VERIFY) {
+    const domain = r.email.split("@")[1];
+    if (!SAFE_DOMAINS.has(domain) && !mxCache.get(domain)) {
+      stats.noMX++;
+      continue;
+    }
+  }
+  leads.push(r);
 }
 
 console.log(`\n📊 ${rawTotal} leads bruts dans les CSV serpapi`);
@@ -150,6 +208,7 @@ console.log(`   ✗ nom invalide      : ${stats.nom}`);
 console.log(`   ✗ déjà envoyé       : ${stats.sent}`);
 console.log(`   ✗ bounced           : ${stats.bounced}`);
 console.log(`   ✗ doublon interne   : ${stats.dup}`);
+if (VERIFY) console.log(`   ✗ domaine sans MX   : ${stats.noMX}`);
 console.log(`\n✅ Leads exploitables  : ${leads.length}`);
 
 // Répartition par secteur
