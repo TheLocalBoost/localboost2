@@ -64,10 +64,13 @@ export async function GET(req: NextRequest) {
   }
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  // Tracking /api/track opérationnel depuis le 06/06/2026 — on exclut les envois antérieurs
+  const TRACKING_START = '2026-06-06T00:00:00.000Z'
 
   const [
     { count: total },
-    { count: sent },
+    { count: sentTracked },   // envoyés avec nouveau tracking seulement
+    { count: sentAll },       // tous envois (pour bounces)
     { count: withEmail },
     { count: bounces },
     { count: waitlistCount },
@@ -80,18 +83,24 @@ export async function GET(req: NextRequest) {
     { data: availableSectorsRaw },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
+    // Envois avec tracking : depuis le 06/06 uniquement
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('sent', true).gte('sent_at', TRACKING_START),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('sent', true),
     supabase.from('leads').select('*', { count: 'exact', head: true }).not('email', 'is', null),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('email_status', 'bounced'),
     supabase.from('waitlist').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('subscription_status').or('subscription_status.eq.active,subscription_status.eq.trialing'),
-    supabase.from('leads').select('subject_variant, secteur').eq('sent', true),
-    supabase.from('email_clicks').select('variant_id'),
-    supabase.from('leads').select('nom, email, secteur, ville, sent_at').eq('sent', true).order('sent_at', { ascending: false }).limit(10),
-    supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').order('clicked_at', { ascending: false }).limit(10),
+    // Variantes et secteurs : uniquement depuis le tracking
+    supabase.from('leads').select('subject_variant, secteur').eq('sent', true).gte('sent_at', TRACKING_START),
+    // Clics : tous (tous ont le tracking URL dans le lien)
+    supabase.from('email_clicks').select('variant_id').gte('clicked_at', TRACKING_START),
+    supabase.from('leads').select('nom, email, secteur, ville, sent_at').eq('sent', true).gte('sent_at', TRACKING_START).order('sent_at', { ascending: false }).limit(10),
+    supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').gte('clicked_at', TRACKING_START).order('clicked_at', { ascending: false }).limit(10),
     supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo),
     supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid'),
   ])
+
+  const sent = sentTracked ?? 0
 
   // ── Secteurs (envoyés) ──────────────────────────────────────────────────────
   const sectorCounts: Record<string, number> = {}
@@ -173,11 +182,12 @@ export async function GET(req: NextRequest) {
   })) ?? []
 
   return NextResponse.json({
-    totalLeads: total || 0,
-    sent:       sent  || 0,
-    withEmail:  withEmail || 0,
-    bounces:    bounces || 0,
-    remaining:  (total || 0) - (sent || 0),
+    totalLeads:  total || 0,
+    sent,                          // avec tracking uniquement (depuis 06/06)
+    sentAllTime: sentAll || 0,     // tous envois depuis le début
+    withEmail:   withEmail || 0,
+    bounces:     bounces || 0,
+    remaining:   (total || 0) - (sentAll || 0),
     totalClicks,
     ctrGlobal,
     waitlistCount: waitlistCount || 0,

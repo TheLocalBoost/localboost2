@@ -3,7 +3,8 @@
 import { useState } from 'react'
 
 interface Stats {
-  sent: number
+  sent: number           // avec tracking (depuis 06/06)
+  sentAllTime: number    // tous envois depuis le début
   remaining: number
   totalLeads: number
   bounces: number
@@ -109,7 +110,7 @@ export default function AdminPage() {
         {s && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {[
-              { label: 'Emails envoyés',    value: s.sent.toLocaleString('fr'),        sub: `${s.remaining.toLocaleString('fr')} restants`,      color: 'text-blue-600'   },
+              { label: 'Envoyés (trackés)',  value: s.sent.toLocaleString('fr'),        sub: `${s.sentAllTime.toLocaleString('fr')} au total · ${s.remaining.toLocaleString('fr')} restants`, color: 'text-blue-600' },
               { label: 'Clics trackés',     value: s.totalClicks.toString(),            sub: `CTR ${s.ctrGlobal}%`,                               color: 'text-green-600'  },
               { label: 'Bounces',           value: s.bounces.toString(),               sub: `${bounceRate}% du total`,                           color: 'text-red-500'    },
               { label: 'MRR',               value: `${s.mrr}€/mois`,                  sub: `${s.activeSubscribers} actifs · ${s.trialingSubscribers} essai`, color: 'text-purple-600' },
@@ -132,7 +133,7 @@ export default function AdminPage() {
               <h2 className="text-sm font-semibold text-gray-900 mb-4">Entonnoir</h2>
               {[
                 { label: 'Leads total',    n: s.totalLeads,    ref: s.totalLeads,    color: 'bg-gray-300'  },
-                { label: 'Envoyés',        n: s.sent,          ref: s.totalLeads,    color: 'bg-blue-400'  },
+                { label: 'Envoyés trackés (06/06+)', n: s.sent, ref: s.totalLeads, color: 'bg-blue-400' },
                 { label: 'Clics',          n: s.totalClicks,   ref: s.sent,          color: 'bg-green-500' },
                 { label: 'Waitlist',       n: s.waitlistCount, ref: s.totalClicks,   color: 'bg-amber-400' },
                 { label: 'Abonnés actifs', n: s.activeSubscribers, ref: s.waitlistCount, color: 'bg-purple-500' },
