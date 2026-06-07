@@ -211,6 +211,62 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     ? Math.round(result.competitors.reduce((a, c) => a + c.estimatedScore, 0) / result.competitors.length)
     : null
 
+  // CTA dynamique selon score + données réelles
+  const ctaContent = result ? (() => {
+    const { score, lostCalls, lostRevenue, reviews, competitors, problems, criteria, city } = result
+    const topComp    = competitors.find(c => c.estimatedScore > score) ?? null
+    const topProblem = problems[0] ?? null
+    const showLoss   = lostCalls >= 3
+
+    const MISSING_LABEL: Record<string, string> = {
+      horaires:     'vos horaires ne sont pas renseignés',
+      photos:       'vous manquez de photos récentes',
+      description:  'votre description est absente',
+      avis20:       "vous avez peu d'avis Google",
+      note4:        'votre note est en dessous de 4.0',
+      recentReview: 'aucun avis récent depuis 3 mois',
+      site:         'aucun site web lié à votre fiche',
+      telephone:    'votre téléphone est absent',
+    }
+    const firstMissing = Object.entries(criteria).find(([k, v]) => !v && !['nom','adresse'].includes(k))
+    const missingLabel = firstMissing ? (MISSING_LABEL[firstMissing[0]] ?? 'quelques points limitent votre visibilité') : null
+
+    if (score < 50) {
+      return {
+        hook: topComp
+          ? `${topComp.name} apparaît avant vous sur Google Maps. Chaque semaine, des clients vous cherchent et les trouvent eux à votre place.`
+          : `Votre fiche est quasiment invisible à ${city}. Des clients vous cherchent et ne vous trouvent pas.`,
+        metric: showLoss ? `~${lostRevenue}€ non réalisés ce mois-ci.` : null,
+        sub: 'LocalBoost reconstruit votre présence Google semaine après semaine — sans que vous ayez à y penser.',
+        btn: 'Récupérer ces clients — 29€/mois →',
+      }
+    }
+
+    if (score < 75) {
+      const hookComp = topComp
+        ? `${topComp.name} apparaît avant vous. Ils ont ${topComp.reviewCount} avis — vous en avez ${reviews}.`
+        : (topProblem?.text ?? `Votre fiche a des lacunes qui vous font perdre des appels chaque semaine.`)
+      const btnLabel = topComp
+        ? `Passer devant ${topComp.name.split(' ')[0]} — 29€/mois →`
+        : 'Corriger ça maintenant — 29€/mois →'
+      return {
+        hook: hookComp,
+        metric: showLoss ? `~${lostCalls} appel${lostCalls > 1 ? 's' : ''} perdu${lostCalls > 1 ? 's' : ''}/mois — ~${lostRevenue}€ non réalisés.` : null,
+        sub: 'LocalBoost publie chaque semaine, répond aux avis, et maintient votre fiche active à votre place.',
+        btn: btnLabel,
+      }
+    }
+
+    return {
+      hook: missingLabel
+        ? `Votre fiche est visible. Mais ${missingLabel} — ce qui vous coûte des clics chaque semaine.`
+        : 'Votre fiche est en bonne forme. Quelques points peuvent encore être améliorés.',
+      metric: showLoss ? `~${lostCalls} appel${lostCalls > 1 ? 's' : ''} perdu${lostCalls > 1 ? 's' : ''}/mois à cause de ça.` : null,
+      sub: 'LocalBoost maintient votre avance — publications régulières, réponses aux avis, mises à jour hebdomadaires.',
+      btn: 'Maintenir cette avance — 29€/mois →',
+    }
+  })() : null
+
   return (
     <section id="analyzer" className="py-20 px-6 bg-gray-50">
       <div className="max-w-xl mx-auto">
@@ -442,26 +498,38 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 9 — CTA LocalBoost */}
-              <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-                <p className="text-white font-bold text-lg mb-1">
-                  Une fiche bien tenue, ça prend 2 à 3h par semaine.
-                </p>
-                <p className="text-blue-200 text-sm mb-3">
-                  Réponses aux avis, publications régulières, demandes d'avis clients, mise à jour des horaires — chaque semaine, indéfiniment. C'est du temps que vous n'avez pas.
-                </p>
-                <p className="text-white text-sm font-semibold mb-4">
-                  LocalBoost le fait à votre place — vous gardez vos clients, pas vos week-ends.
-                </p>
-                <a
-                  href={pricingUrl}
-                  onClick={() => { setCtaClicked(true); track('cta_click', { score: result.score, category: result.category, city: result.city, source: searchParams.get('utm_source') ?? 'direct' }) }}
-                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-2 text-center"
-                >
-                  Laisser LocalBoost s'en occuper — 29€/mois →
-                </a>
-                <p className="text-blue-300 text-xs text-center">Sans engagement · Résiliable à tout moment</p>
-              </div>
+              {/* BLOC 9 — CTA dynamique selon score */}
+              {ctaContent && (
+                <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
+                  <p className="text-white font-bold text-base leading-snug mb-2">
+                    {ctaContent.hook}
+                  </p>
+                  {ctaContent.metric && (
+                    <p className="text-amber-300 text-sm font-bold mb-3">
+                      {ctaContent.metric}
+                    </p>
+                  )}
+                  <p className="text-blue-200 text-sm mb-5 leading-relaxed">
+                    {ctaContent.sub}
+                  </p>
+                  <a
+                    href={pricingUrl}
+                    onClick={() => {
+                      setCtaClicked(true)
+                      track('cta_click', {
+                        score: result.score,
+                        category: result.category,
+                        city: result.city,
+                        source: searchParams.get('utm_source') ?? 'direct',
+                      })
+                    }}
+                    className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-2 text-center"
+                  >
+                    {ctaContent.btn}
+                  </a>
+                  <p className="text-blue-300 text-xs text-center">Sans engagement · Résiliable à tout moment</p>
+                </div>
+              )}
 
             </div>
           )}
