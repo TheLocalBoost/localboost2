@@ -23,17 +23,47 @@ const GOOGLE_CX     = process.env.GOOGLE_CX;
 const BRAVE_KEY     = process.env.BRAVE_API_KEY;
 const SERPER_KEYS   = Array.from({ length: 12 }, (_, i) => process.env[`SERPER_KEY_${i+1}`]).filter(Boolean);
 
+// ── État Serper persistant entre les process (reset chaque jour) ──
+// Permet de sauter immédiatement les clés déjà épuisées aujourd'hui.
+const SERPER_STATE_FILE = join(__dirname, ".serper_state.json");
+const TODAY = new Date().toISOString().slice(0, 10);
+
+function loadSerperState() {
+  try {
+    if (existsSync(SERPER_STATE_FILE)) {
+      const s = JSON.parse(readFileSync(SERPER_STATE_FILE, "utf-8"));
+      if (s.date === TODAY) return s;
+    }
+  } catch {}
+  return { date: TODAY, idx: 0, exhausted: false };
+}
+
+function saveSerperState(state) {
+  try { writeFileSync(SERPER_STATE_FILE, JSON.stringify(state), "utf-8"); } catch {}
+}
+
+const serperState = loadSerperState();
+
 let useSerpAPI  = !!SERPAPI_KEY;
-let serperIdx   = 0;
-let googleQuota = true;   // false quand 429 Google Custom Search
-let braveQuota  = true;   // false quand 429 Brave
+let serperIdx   = serperState.idx;          // reprend là où le dernier process s'est arrêté
+let googleQuota = true;
+let braveQuota  = true;
+
+// Si Serper est complètement épuisé aujourd'hui, on skip directement à Google/Brave
+const serperFullyExhausted = serperState.exhausted;
 
 const engines = [];
-if (SERPER_KEYS.length) engines.push("Serper");
+if (!serperFullyExhausted && SERPER_KEYS.length) engines.push(`Serper (dès clé ${serperIdx + 1})`);
 if (GOOGLE_KEY && GOOGLE_CX) engines.push("Google Custom Search");
 if (BRAVE_KEY)  engines.push("Brave");
-if (!engines.length) { console.error("❌ Aucune clé de recherche dans .env"); process.exit(1); }
-console.log(`🔑 Moteurs : ${engines.join(" → ")}  (${SERPER_KEYS.length} clé(s) Serper)`);
+if (!engines.length && serperFullyExhausted) {
+  if (!GOOGLE_KEY && !BRAVE_KEY) {
+    console.error("❌ Serper épuisé pour aujourd'hui + aucune clé Google CSE/Brave disponible.");
+    process.exit(1);
+  }
+}
+const engineList = engines.length ? engines : ["Google CSE / Brave"];
+console.log(`🔑 Moteurs : ${engineList.join(" → ")}`);
 
 // ── Appels API ────────────────────────────────────────────────────
 
@@ -50,6 +80,8 @@ async function serpapiCall(params) {
 }
 
 async function serperCall(q) {
+  // Skip complet si toutes les clés sont connues épuisées aujourd'hui
+  if (serperFullyExhausted) throw new Error("__SERPER_EXHAUSTED__");
   while (serperIdx < SERPER_KEYS.length) {
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -61,13 +93,20 @@ async function serperCall(q) {
       if (res.status === 402 || res.status === 429 ||
           (res.status === 400 && body.toLowerCase().includes("credit"))) {
         console.warn(`  ⚠️  Clé Serper ${serperIdx + 1} épuisée → suivante`);
-        serperIdx++; continue;
+        serperIdx++;
+        // Persiste l'index pour le prochain process
+        saveSerperState({ date: TODAY, idx: serperIdx, exhausted: serperIdx >= SERPER_KEYS.length });
+        continue;
       }
       throw new Error(`Serper ${res.status}: ${body.slice(0, 80)}`);
     }
     const d = await res.json();
+    // Mise à jour de l'état (clé courante fonctionne)
+    saveSerperState({ date: TODAY, idx: serperIdx, exhausted: false });
     return (d.organic || []).map(r => ({ title: r.title||"", snippet: r.snippet||"", link: r.link||"" }));
   }
+  // Toutes les clés épuisées — persiste l'état final
+  saveSerperState({ date: TODAY, idx: serperIdx, exhausted: true });
   throw new Error("__SERPER_EXHAUSTED__");
 }
 

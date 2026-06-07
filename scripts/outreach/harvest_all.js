@@ -1,9 +1,10 @@
 // harvest_all.js — tourne sur toutes les combinaisons secteur/ville jusqu'à épuisement SerpAPI
 // Usage : node harvest_all.js
+// Passe les combinaisons déjà scrapées (fichier serpapi_secteur_ville_*.csv existant)
 
 import "dotenv/config";
 import { execSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync, appendFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -12,17 +13,35 @@ const LOG_FILE  = join(__dirname, "harvest_all.log");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Secteurs à fort rendement — artisans avec présence sociale + Gmail exposé
+// Priorité : manques identifiés (electricien/carreleur/peintre/opticien pas en grandes villes)
 const SECTORS = [
-  "coiffeur", "barbier", "plombier", "garagiste",
-  "restaurant", "boulanger", "fleuriste", "serrurier",
+  // Existants + fort panier
+  "electricien", "plombier", "garagiste", "serrurier",
+  // Fort volume Gmail
+  "coiffeur", "barbier", "restaurant", "boulanger", "fleuriste",
+  // Petites villes pas encore couvertes
+  "carreleur", "peintre", "opticien",
+  // Nouveaux secteurs
+  "dentiste", "menuisier", "maçon", "jardinier",
 ];
 
-// Grandes villes uniquement — masse critique de Facebook/Instagram/LeBonCoin
+// Toutes villes : grandes + moyennes
 const CITIES = [
-  "Lyon", "Marseille", "Toulouse", "Bordeaux", "Lille",
-  "Nice", "Paris", "Rennes", "Strasbourg", "Montpellier",
-  "Grenoble", "Nantes", "Rouen", "Perpignan", "Toulon",
+  // 15 grandes (déjà partiellement scrapées)
+  "Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux",
+  "Lille", "Nice", "Nantes", "Strasbourg", "Montpellier",
+  "Grenoble", "Rennes", "Rouen", "Perpignan", "Toulon",
+  // Moyennes villes (gap identifié)
+  "Angers", "Brest", "Caen", "Dijon", "Limoges",
+  "Metz", "Pau", "Tours", "Reims", "Nancy",
+  "Saint-Étienne", "Le Havre", "Clermont-Ferrand", "Amiens", "Aix-en-Provence",
 ];
+
+// Détecte les combinaisons déjà scrapées pour ne pas les refaire
+function alreadyScraped(sector, city) {
+  const prefix = `serpapi_${sector}_${city}_`;
+  return readdirSync(__dirname).some(f => f.startsWith(prefix) && f.endsWith(".csv"));
+}
 
 function log(msg) {
   const line = `[${new Date().toISOString().slice(0, 19)}] ${msg}`;
@@ -41,21 +60,28 @@ function shuffle(arr) {
 }
 
 async function run() {
+  // Construire la liste des paires non encore scrapées
+  const allPairs = [];
+  for (const city of CITIES) {
+    for (const sector of SECTORS) {
+      allPairs.push({ sector, city });
+    }
+  }
+  const pending = allPairs.filter(({ sector, city }) => !alreadyScraped(sector, city));
+  const skipped = allPairs.length - pending.length;
+
   log("🚀 HARVEST ALL — démarrage jusqu'à épuisement des crédits SerpAPI");
-  log(`   ${SECTORS.length} secteurs × ${CITIES.length} villes = ${SECTORS.length * CITIES.length} combinaisons max\n`);
+  log(`   ${SECTORS.length} secteurs × ${CITIES.length} villes = ${allPairs.length} combinaisons`);
+  log(`   ${skipped} déjà scrapées → ${pending.length} à faire\n`);
 
   let totalRuns = 0;
   let totalLeads = 0;
 
-  const pairs = [];
-  for (const city of shuffle(CITIES)) {
-    for (const sector of shuffle(SECTORS)) {
-      pairs.push({ sector, city });
-    }
-  }
+  const pairs = shuffle(pending);
 
-  for (const { sector, city } of pairs) {
-    log(`\n▶  ${sector} @ ${city}`);
+  for (let i = 0; i < pairs.length; i++) {
+    const { sector, city } = pairs[i];
+    log(`\n▶  [${i+1}/${pairs.length}] ${sector} @ ${city}`);
 
     try {
       const output = execSync(
@@ -93,6 +119,7 @@ async function run() {
 
   log(`\n✅ TERMINÉ — ${totalRuns} runs · ${totalLeads} leads au total`);
   log(`   Fichiers CSV dans scripts/outreach/serpapi_*.csv`);
+  log(`\n   Prochain : node scripts/outreach/merge_serpapi.mjs → leads_new.csv`);
 }
 
 run().catch(e => { console.error("❌", e.message); process.exit(1); });

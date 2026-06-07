@@ -2,109 +2,55 @@
 
 import { useState } from 'react'
 
-interface VariantCTR {
-  id: number; sends: number; clicks: number; ctr: number; subjectLabel: string; hookIdx: number
-}
-interface RecentClick {
-  variant_id: number; clicked_at: string; lead: { nom: string; email: string; secteur: string } | null
-}
 interface Stats {
-  total: number; sent: number; remaining: number; withEmail: number
-  totalClicks: number; ctrGlobal: string
-  waitlistCount: number; activeSubscribers: number; trialingSubscribers: number; estimatedMRR: number
+  sent: number
+  remaining: number
+  totalLeads: number
+  bounces: number
+  totalClicks: number
+  ctrGlobal: string
+  waitlistCount: number
+  activeSubscribers: number
+  trialingSubscribers: number
+  mrr: number
   bySector: [string, number][]
   availableSectors: [string, number][]
-  byVariantCTR: VariantCTR[]
-  recentSends: { nom: string; email: string; secteur: string; ville: string; sent_at: string; subject_variant: string }[]
-  recentClicks: RecentClick[]
+  byVariantCTR: { id: number; subject: string; sends: number; clicks: number; ctr: number }[]
+  recentClicks: { variant_id: number; clicked_at: string; nom: string | null; secteur: string | null }[]
+  recentSends: { nom: string; email: string; secteur: string; ville: string; sent_at: string }[]
   dailySends: { date: string; count: number }[]
-  todayQuota: number
 }
 
-const DAILY_LIMIT = 350
+interface Analytics {
+  totalViews: number
+  emailClicks: { total: number }
+  eventCounts: Record<string, number>
+  topSources: [string, number][]
+  topPages: [string, number][]
+}
 
 export default function AdminPage() {
-  const [key, setKey]       = useState('')
-  const [authed, setAuthed] = useState(false)
-  const [stats, setStats]   = useState<Stats | null>(null)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
-  const [sending, setSending]   = useState(false)
-  const [sendProgress, setSendProgress] = useState(0)
-  const [limit, setLimit]       = useState(50)
-  const [secteurFilter, setSecteurFilter] = useState('')
-  const [testEmail, setTestEmail] = useState('')
-  const [sendResult, setSendResult] = useState<any>(null)
-  const [preview, setPreview]   = useState<{ available: number; sectors: [string,number][]; cities: [string,number][] } | null>(null)
-  const [previewLoading, setPreviewLoading] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [cronRunning, setCronRunning] = useState(false)
-  const [cronResult, setCronResult]   = useState<any>(null)
+  const [key, setKey]             = useState('')
+  const [authed, setAuthed]       = useState(false)
+  const [stats, setStats]         = useState<Stats | null>(null)
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
+  const [cronRunning, setCronRunning]       = useState(false)
+  const [cronResult, setCronResult]         = useState<any>(null)
   const [reviewsRunning, setReviewsRunning] = useState(false)
   const [reviewsResult, setReviewsResult]   = useState<any>(null)
-  const [analyticsData, setAnalyticsData]   = useState<any>(null)
 
-  async function fetchStats(k = key) {
+  async function fetchAll(k = key) {
     setLoading(true); setError('')
-    const [statsRes, analyticsRes] = await Promise.all([
-      fetch('/api/admin/stats',     { headers: { 'x-admin-key': k } }),
-      fetch('/api/admin/analytics?days=30', { headers: { 'x-admin-key': k } }),
+    const [sRes, aRes] = await Promise.all([
+      fetch('/api/admin/stats',            { headers: { 'x-admin-key': k } }),
+      fetch('/api/admin/analytics?days=30',{ headers: { 'x-admin-key': k } }),
     ])
-    if (statsRes.status === 401) { setError('Clé invalide'); setLoading(false); return }
-    setStats(await statsRes.json())
-    setAnalyticsData(await analyticsRes.json())
+    if (sRes.status === 401) { setError('Clé invalide'); setLoading(false); return }
+    setStats(await sRes.json())
+    setAnalytics(await aRes.json())
     setAuthed(true); setLoading(false)
-  }
-
-  async function loadPreview() {
-    setPreviewLoading(true); setPreview(null); setSendResult(null)
-    const res = await fetch('/api/admin/preview', {
-      method: 'POST',
-      headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit, secteur: secteurFilter || undefined }),
-    })
-    setPreview(await res.json()); setPreviewLoading(false); setShowConfirm(true)
-  }
-
-  async function sendBatch() {
-    setShowConfirm(false); setSending(true); setSendResult(null); setSendProgress(0)
-
-    // Si test email : un seul appel
-    if (testEmail) {
-      const res = await fetch('/api/admin/send', {
-        method: 'POST',
-        headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 1, secteur: secteurFilter || undefined, testEmail }),
-      })
-      setSendResult(await res.json()); setSending(false); setSendProgress(100)
-      setTimeout(() => setSendProgress(0), 2000)
-      return
-    }
-
-    // Campagne réelle : batches de 5 pour rester sous le timeout Vercel Hobby (10s)
-    const CHUNK = 5
-    let totalSent = 0
-    let allErrors: string[] = []
-    const remaining = limit
-
-    for (let sent = 0; sent < remaining; sent += CHUNK) {
-      const chunkSize = Math.min(CHUNK, remaining - sent)
-      const res = await fetch('/api/admin/send', {
-        method: 'POST',
-        headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: chunkSize, secteur: secteurFilter || undefined }),
-      })
-      const data = await res.json()
-      if (data.sent === 0 && !data.errors) break // plus de leads
-      totalSent += data.sent ?? 0
-      if (data.errors) allErrors = [...allErrors, ...data.errors]
-      setSendProgress(Math.round(((sent + chunkSize) / remaining) * 100))
-    }
-
-    setSendResult({ sent: totalSent, errors: allErrors.length ? allErrors : undefined })
-    setSending(false); setSendProgress(100)
-    setTimeout(() => setSendProgress(0), 2000)
-    fetchStats()
   }
 
   async function triggerCron() {
@@ -119,40 +65,30 @@ export default function AdminPage() {
     setReviewsResult(await res.json()); setReviewsRunning(false)
   }
 
+  // ── Login ─────────────────────────────────────────────────────────────────
   if (!authed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full max-w-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <span className="text-xl">🚀</span>
-            <h1 className="text-lg font-bold text-gray-900">LocalBoost Admin</h1>
-          </div>
-          <input
-            type="password"
-            placeholder="Clé admin"
-            value={key}
+          <h1 className="text-lg font-bold text-gray-900 mb-6">LocalBoost Admin</h1>
+          <input type="password" placeholder="Clé admin" value={key}
             onChange={e => setKey(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && fetchStats()}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            onKeyDown={e => e.key === 'Enter' && fetchAll()}
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 mb-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-          <button
-            onClick={() => fetchStats()}
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? 'Vérification...' : 'Accéder →'}
+          {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
+          <button onClick={() => fetchAll()} disabled={loading}
+            className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 disabled:opacity-50">
+            {loading ? 'Chargement...' : 'Accéder →'}
           </button>
         </div>
       </div>
     )
   }
 
-  const s = stats
-  const sentPct  = s ? Math.round((s.sent / Math.max(s.total, 1)) * 100) : 0
-  const clickPct = s ? Math.round((s.totalClicks / Math.max(s.sent, 1)) * 100) : 0
-  const maxDay   = s ? Math.max(...s.dailySends.map(d => d.count), 1) : 1
-  const quotaPct = Math.round((s?.todayQuota ?? 0) / DAILY_LIMIT * 100)
+  const s   = stats
+  const maxDay = s ? Math.max(...s.dailySends.map(d => d.count), 1) : 1
+  const bounceRate = s && s.sent > 0 ? ((s.bounces / s.sent) * 100).toFixed(1) : '0.0'
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -160,327 +96,146 @@ export default function AdminPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">🚀 Outreach Admin</h1>
-          <div className="flex gap-3">
-            <button onClick={() => fetchStats()} className="text-sm text-blue-600 hover:underline">📊 Rafraîchir analytics</button>
-            <button onClick={() => fetchStats()} className="text-sm text-green-600 hover:underline">↻ Rafraîchir</button>
-            <button onClick={() => { setAuthed(false); setStats(null) }} className="text-sm text-gray-400 hover:text-gray-600">Déconnexion</button>
+          <h1 className="text-xl font-bold text-gray-900">LocalBoost — Admin</h1>
+          <div className="flex gap-3 text-sm">
+            <button onClick={() => fetchAll()} className="text-blue-600 hover:underline">↻ Rafraîchir</button>
+            <a href="/admin/analytics" className="text-gray-500 hover:text-gray-800">Analytics</a>
+            <a href="/admin/contacts"  className="text-gray-500 hover:text-gray-800">Messages</a>
+            <button onClick={() => { setAuthed(false); setStats(null) }} className="text-gray-400 hover:text-gray-600">Déconnexion</button>
           </div>
         </div>
 
-        {/* KPIs */}
+        {/* ── KPIs ────────────────────────────────────────────────────────── */}
         {s && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {[
-              { label: 'Total leads',   value: s.total.toLocaleString(),          color: 'text-gray-900',   sub: `dont ${s.withEmail.toLocaleString()} avec email` },
-              { label: 'Envoyés',       value: s.sent.toLocaleString(),           color: 'text-blue-600',   sub: `${s.remaining.toLocaleString()} restants` },
-              { label: 'Clics',         value: s.totalClicks.toLocaleString(),    color: 'text-green-600',  sub: undefined },
-              { label: 'CTR global',    value: `${s.ctrGlobal}%`,                color: 'text-amber-600',  sub: undefined },
-              { label: `${s.activeSubscribers} abonnés · ${s.trialingSubscribers} essai`,
-                value: `${s.estimatedMRR}€/mois`,                                color: 'text-purple-600', sub: undefined },
+              { label: 'Emails envoyés',    value: s.sent.toLocaleString('fr'),        sub: `${s.remaining.toLocaleString('fr')} restants`,      color: 'text-blue-600'   },
+              { label: 'Clics trackés',     value: s.totalClicks.toString(),            sub: `CTR ${s.ctrGlobal}%`,                               color: 'text-green-600'  },
+              { label: 'Bounces',           value: s.bounces.toString(),               sub: `${bounceRate}% du total`,                           color: 'text-red-500'    },
+              { label: 'MRR',               value: `${s.mrr}€/mois`,                  sub: `${s.activeSubscribers} actifs · ${s.trialingSubscribers} essai`, color: 'text-purple-600' },
             ].map((k, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 text-center shadow-sm">
+              <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                 <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
                 <p className="text-xs text-gray-500 mt-1">{k.label}</p>
-                {k.sub && <p className="text-xs text-gray-400 mt-0.5">{k.sub}</p>}
+                <p className="text-xs text-gray-400 mt-0.5">{k.sub}</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* Funnel + Quota */}
+        {/* ── Entonnoir + Activité ─────────────────────────────────────────── */}
         {s && (
-          <div className="grid sm:grid-cols-3 gap-4 mb-6">
-            {/* Funnel */}
-            <div className="sm:col-span-2 bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-4 text-sm">Entonnoir de conversion</h2>
+          <div className="grid sm:grid-cols-2 gap-4 mb-5">
+
+            {/* Entonnoir */}
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-900 mb-4">Entonnoir</h2>
               {[
-                { label: 'Leads total',    count: s.total,       pct: 100,     color: 'bg-gray-200'  },
-                { label: 'Emails envoyés', count: s.sent,        pct: sentPct, color: 'bg-blue-400'  },
-                { label: 'Clics reçus',   count: s.totalClicks, pct: clickPct,color: 'bg-green-500' },
-                { label: 'Inscrits waitlist', count: s.waitlistCount, pct: Math.round(s.waitlistCount / Math.max(s.totalClicks, 1) * clickPct), color: 'bg-amber-400' },
-              ].map((f, i) => (
-                <div key={i} className="mb-3">
-                  <div className="flex justify-between text-xs text-gray-600 mb-1">
-                    <span>{f.label}</span>
-                    <span className="font-semibold">{f.count.toLocaleString()} <span className="text-gray-400">({f.pct}%)</span></span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div className={`h-2 rounded-full ${f.color}`} style={{ width: `${f.pct}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Quota + Waitlist */}
-            <div className="flex flex-col gap-3">
-              <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm flex-1">
-                <h2 className="font-semibold text-gray-900 mb-3 text-sm">Quota Google Places</h2>
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-2xl font-bold text-gray-900">{s.todayQuota}</span>
-                  <span className="text-gray-400 text-sm mb-0.5">/ {DAILY_LIMIT}</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className={`h-2 rounded-full ${quotaPct > 80 ? 'bg-red-500' : quotaPct > 50 ? 'bg-amber-400' : 'bg-green-500'}`} style={{ width: `${Math.min(quotaPct, 100)}%` }} />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">{DAILY_LIMIT - (s.todayQuota)} restants aujourd'hui</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-                <p className="text-xs text-gray-500">Waitlist inscrits</p>
-                <p className="text-2xl font-bold text-amber-600">{s.waitlistCount}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Activité 7j */}
-        {s && (
-          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
-            <h2 className="font-semibold text-gray-900 mb-4 text-sm">Activité — 7 derniers jours</h2>
-            <div className="flex items-end gap-2 h-20">
-              {s.dailySends.map((d, i) => {
-                const h = Math.max(Math.round((d.count / maxDay) * 100), d.count > 0 ? 8 : 0)
+                { label: 'Leads total',    n: s.totalLeads,    ref: s.totalLeads,    color: 'bg-gray-300'  },
+                { label: 'Envoyés',        n: s.sent,          ref: s.totalLeads,    color: 'bg-blue-400'  },
+                { label: 'Clics',          n: s.totalClicks,   ref: s.sent,          color: 'bg-green-500' },
+                { label: 'Waitlist',       n: s.waitlistCount, ref: s.totalClicks,   color: 'bg-amber-400' },
+                { label: 'Abonnés actifs', n: s.activeSubscribers, ref: s.waitlistCount, color: 'bg-purple-500' },
+              ].map((row, i) => {
+                const pct = row.ref > 0 ? Math.round((row.n / row.ref) * 100) : 0
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs font-semibold text-gray-700">{d.count || ''}</span>
-                    <div className="w-full flex items-end" style={{ height: '56px' }}>
-                      <div className="w-full rounded-t bg-green-500 opacity-80" style={{ height: `${h}%` }} />
+                  <div key={i} className="mb-3 last:mb-0">
+                    <div className="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>{row.label}</span>
+                      <span className="font-semibold">{row.n.toLocaleString('fr')}
+                        {i > 0 && <span className="text-gray-400 ml-1">({pct}%)</span>}
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-400">
-                      {new Date(d.date).toLocaleDateString('fr-FR', { weekday: 'short' })}
-                    </span>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div className={`h-1.5 rounded-full ${row.color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                    </div>
                   </div>
                 )
               })}
             </div>
-          </div>
-        )}
 
-        {/* Modale de confirmation */}
-        {showConfirm && preview && (
-          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Confirmer l'envoi</h3>
-              <p className="text-sm text-gray-500 mb-5">Vérifiez les détails avant de lancer.</p>
-
-              <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Emails à envoyer</span>
-                  <span className="font-bold text-gray-900">{Math.min(preview.available, limit).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Leads disponibles total</span>
-                  <span className="text-gray-500">{preview.available.toLocaleString()}</span>
-                </div>
-                {secteurFilter && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Secteur ciblé</span>
-                    <span className="font-semibold capitalize text-blue-600">{secteurFilter}</span>
-                  </div>
-                )}
-                {preview.sectors.length > 0 && (
-                  <div className="text-sm">
-                    <span className="text-gray-600">Secteurs : </span>
-                    <span className="text-gray-700">{preview.sectors.map(([s, c]) => `${s} (${c})`).join(', ')}</span>
-                  </div>
-                )}
-                {preview.cities.length > 0 && (
-                  <div className="text-sm">
-                    <span className="text-gray-600">Villes : </span>
-                    <span className="text-gray-700">{preview.cities.map(([c]) => c).join(', ')}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setShowConfirm(false); setPreview(null) }}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={sendBatch}
-                  className="flex-1 py-2.5 rounded-xl bg-green-600 text-sm font-semibold text-white hover:bg-green-700"
-                >
-                  Envoyer {Math.min(preview.available, limit).toLocaleString()} emails →
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Envoyer + Secteurs */}
-        <div className="grid sm:grid-cols-2 gap-4 mb-6">
-          {/* Batch */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-4 text-sm">Envoyer un batch</h2>
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500 w-20">Secteur</label>
-                <select
-                  value={secteurFilter}
-                  onChange={e => { setSecteurFilter(e.target.value); setPreview(null); setSendResult(null) }}
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Tous les secteurs</option>
-                  {(s?.availableSectors ?? s?.bySector ?? []).map(([sec, count]) => (
-                    <option key={sec} value={sec}>{sec} ({count})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500 w-20">Quantité</label>
-                <input
-                  type="number" value={limit}
-                  onChange={e => { setLimit(Number(e.target.value)); setPreview(null); setSendResult(null) }}
-                  min={1} max={10000}
-                  className="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <span className="text-xs text-gray-400">max 10 000</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-500 w-20">Test email</label>
-                <input
-                  type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)}
-                  placeholder="preview@email.com"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
-            </div>
-
-            {/* Barre de progression */}
-            {sending && (
-              <div className="mb-3">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Envoi en cours...</span>
-                  <span>{sendProgress}%</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full transition-all duration-300" style={{ width: `${sendProgress}%` }} />
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2">
-              {testEmail && (
-                <button
-                  onClick={sendBatch} disabled={sending}
-                  className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50"
-                >
-                  {sending ? 'Envoi...' : `Envoyer aperçu à ${testEmail.split('@')[0]}@... →`}
-                </button>
-              )}
-              <button
-                onClick={loadPreview} disabled={sending || previewLoading}
-                className="w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
-              >
-                {previewLoading ? 'Vérification...' : sending ? 'Envoi en cours...' : `🚀 Lancer la campagne — ${limit} emails →`}
-              </button>
-            </div>
-
-            {sendResult && (
-              <div className={`mt-3 p-3 rounded-lg text-sm ${sendResult.errors?.length ? 'bg-orange-50 text-orange-700' : 'bg-green-50 text-green-700'}`}>
-                {sendResult.test
-                  ? <p className="font-semibold">✅ Email test envoyé — variante #{sendResult.preview?.variantId}</p>
-                  : <p className="font-semibold">✅ {sendResult.sent} emails envoyés</p>
-                }
-                {sendResult.top_variants?.map((v: any, i: number) => (
-                  <p key={i} className="text-xs mt-0.5">#{v.variant} → {v.sent} envois · CTR {v.ctr}</p>
-                ))}
-                {sendResult.errors?.map((e: string, i: number) => (
-                  <p key={i} className="text-xs mt-1 text-red-500">{e}</p>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Par secteur */}
-          {s?.bySector && (
+            {/* Activité 7j */}
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-4 text-sm">Leads par secteur</h2>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {s.bySector.map(([sector, count]) => {
-                  const pct = Math.round((count / s.sent) * 100)
+              <h2 className="text-sm font-semibold text-gray-900 mb-4">Envois — 7 derniers jours</h2>
+              <div className="flex items-end gap-1.5 h-24">
+                {s.dailySends.map((d, i) => {
+                  const h = Math.max(Math.round((d.count / maxDay) * 100), d.count > 0 ? 6 : 0)
                   return (
-                    <div key={sector}>
-                      <div className="flex justify-between text-xs text-gray-600 mb-0.5">
-                        <span className="capitalize">{sector}</span>
-                        <span className="font-semibold">{count.toLocaleString()}</span>
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-xs font-semibold text-gray-700 h-4">{d.count || ''}</span>
+                      <div className="w-full flex items-end" style={{ height: '56px' }}>
+                        <div className="w-full rounded-t bg-blue-500 opacity-80" style={{ height: `${h}%` }} />
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
-                      </div>
+                      <span className="text-xs text-gray-400">
+                        {new Date(d.date).toLocaleDateString('fr-FR', { weekday: 'short' })}
+                      </span>
                     </div>
                   )
                 })}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Thompson Sampling leaderboard */}
-        {s?.byVariantCTR && s.byVariantCTR.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
+        {/* ── Variantes (20) ──────────────────────────────────────────────── */}
+        {s && s.byVariantCTR.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900 text-sm">🧠 Thompson Sampling — Top variantes</h2>
-              <span className="text-xs text-gray-400">100 variantes actives · apprentissage automatique</span>
+              <h2 className="text-sm font-semibold text-gray-900">Thompson Sampling — 20 variantes</h2>
+              <span className="text-xs text-gray-400">apprentissage automatique sur clics réels</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-left text-xs text-gray-400 border-b">
-                    <th className="pb-2 font-medium">#</th>
+                  <tr className="text-left text-gray-400 border-b">
+                    <th className="pb-2 font-medium w-6">#</th>
                     <th className="pb-2 font-medium">Sujet</th>
-                    <th className="pb-2 font-medium">Accroche</th>
-                    <th className="pb-2 font-medium text-right">Envois</th>
-                    <th className="pb-2 font-medium text-right">Clics</th>
-                    <th className="pb-2 font-medium text-right">CTR</th>
-                    <th className="pb-2 w-24"></th>
+                    <th className="pb-2 font-medium text-right w-16">Envois</th>
+                    <th className="pb-2 font-medium text-right w-12">Clics</th>
+                    <th className="pb-2 font-medium text-right w-14">CTR</th>
+                    <th className="pb-2 w-20"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {s.byVariantCTR.map((v, i) => (
                     <tr key={v.id} className="border-b last:border-0">
-                      <td className="py-2 text-gray-400 text-xs">
-                        {i === 0 && v.sends >= 3 ? '🏆' : `${v.id}`}
-                      </td>
-                      <td className="py-2 text-gray-700 text-xs max-w-[160px] truncate">{v.subjectLabel}</td>
-                      <td className="py-2 text-gray-400 text-xs">Accroche {v.hookIdx + 1}</td>
-                      <td className="py-2 text-right text-gray-600 text-xs">{v.sends}</td>
-                      <td className="py-2 text-right text-gray-600 text-xs">{v.clicks}</td>
-                      <td className={`py-2 text-right font-bold text-xs ${v.ctr > 10 ? 'text-green-600' : v.ctr > 5 ? 'text-amber-600' : 'text-gray-400'}`}>
-                        {v.sends >= 3 ? `${v.ctr}%` : '—'}
+                      <td className="py-2 text-gray-400">{i === 0 && v.sends >= 10 ? '🏆' : `${v.id}`}</td>
+                      <td className="py-2 text-gray-700 max-w-[260px] truncate">{v.subject}</td>
+                      <td className="py-2 text-right text-gray-600">{v.sends}</td>
+                      <td className="py-2 text-right text-gray-600">{v.clicks}</td>
+                      <td className={`py-2 text-right font-bold ${v.ctr > 2 ? 'text-green-600' : v.ctr > 0 ? 'text-amber-600' : 'text-gray-300'}`}>
+                        {v.sends >= 5 ? `${v.ctr}%` : '—'}
                       </td>
                       <td className="py-2 pl-2">
                         <div className="w-full bg-gray-100 rounded-full h-1.5">
-                          <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${Math.min(v.ctr * 5, 100)}%` }} />
+                          <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${Math.min(v.ctr * 20, 100)}%` }} />
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p className="text-xs text-gray-400 mt-3">CTR affiché uniquement après 3 envois. Le système favorise automatiquement les meilleures variantes.</p>
+              <p className="text-xs text-gray-400 mt-2">CTR affiché après 5 envois minimum.</p>
             </div>
           </div>
         )}
 
-        {/* Clics récents + Envois récents */}
-        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        {/* ── Clics récents + Envois récents ──────────────────────────────── */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-5">
+
           {/* Clics récents */}
-          {s?.recentClicks && s.recentClicks.length > 0 && (
+          {s && s.recentClicks.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-4 text-sm">🖱️ Derniers clics</h2>
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Derniers clics</h2>
               <div className="space-y-2">
                 {s.recentClicks.map((c, i) => (
                   <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{c.lead?.nom ?? 'Inconnu'}</p>
-                      <p className="text-xs text-gray-400">{c.lead?.secteur ?? ''} · variante #{c.variant_id}</p>
+                      <p className="text-sm font-medium text-gray-800">{c.nom ?? '—'}</p>
+                      <p className="text-xs text-gray-400">{c.secteur ?? ''} · variante #{c.variant_id}</p>
                     </div>
-                    <span className="text-xs text-gray-400">
-                      {new Date(c.clicked_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    <span className="text-xs text-gray-400 shrink-0 ml-2">
+                      {new Date(c.clicked_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
                     </span>
                   </div>
                 ))}
@@ -489,18 +244,18 @@ export default function AdminPage() {
           )}
 
           {/* Envois récents */}
-          {s?.recentSends && s.recentSends.length > 0 && (
+          {s && s.recentSends.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-              <h2 className="font-semibold text-gray-900 mb-4 text-sm">📤 Derniers envois</h2>
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Derniers envois</h2>
               <div className="space-y-2">
                 {s.recentSends.map((r, i) => (
                   <div key={i} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                     <div>
                       <p className="text-sm font-medium text-gray-800 truncate max-w-[180px]">{r.nom}</p>
-                      <p className="text-xs text-gray-400">{r.secteur} · {r.ville} · v{r.subject_variant}</p>
+                      <p className="text-xs text-gray-400">{r.secteur} · {r.ville}</p>
                     </div>
-                    <span className="text-xs text-gray-400">
-                      {new Date(r.sent_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    <span className="text-xs text-gray-400 shrink-0 ml-2">
+                      {new Date(r.sent_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}
                     </span>
                   </div>
                 ))}
@@ -509,19 +264,55 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Analytics site */}
-        {analyticsData && (
-          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-6">
-            <h2 className="font-semibold text-gray-900 mb-4 text-sm">📊 Analytics site — 30 derniers jours</h2>
+        {/* ── Leads par secteur ────────────────────────────────────────────── */}
+        {s && (
+          <div className="grid sm:grid-cols-2 gap-4 mb-5">
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Envoyés par secteur</h2>
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {s.bySector.map(([sec, n]) => (
+                  <div key={sec}>
+                    <div className="flex justify-between text-xs text-gray-600 mb-0.5">
+                      <span className="capitalize">{sec}</span>
+                      <span className="font-semibold">{n.toLocaleString('fr')}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${Math.round(n / Math.max(s.sent, 1) * 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Disponibles par secteur</h2>
+              <div className="space-y-2 max-h-52 overflow-y-auto">
+                {s.availableSectors.length === 0
+                  ? <p className="text-xs text-gray-400">Aucun lead disponible dans Supabase.</p>
+                  : s.availableSectors.map(([sec, n]) => (
+                    <div key={sec} className="flex justify-between text-xs">
+                      <span className="capitalize text-gray-600">{sec}</span>
+                      <span className="font-semibold text-gray-900">{n}</span>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Analytics site ───────────────────────────────────────────────── */}
+        {analytics && (
+          <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm mb-5">
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">Analytics — 30 jours</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {[
-                { label: 'Pages vues',    value: analyticsData.totalViews,                          color: 'text-blue-600'  },
-                { label: 'Clics emails',  value: analyticsData.emailClicks?.total ?? 0,             color: 'text-green-600' },
-                { label: 'Analyseur',     value: analyticsData.eventCounts?.['analyzer_search'] ?? 0, color: 'text-amber-600' },
-                { label: 'Signups',       value: analyticsData.eventCounts?.['signup'] ?? 0,         color: 'text-purple-600'},
+                { label: 'Pages vues',   value: analytics.totalViews,                            color: 'text-blue-600'   },
+                { label: 'Clics emails', value: analytics.emailClicks?.total ?? 0,               color: 'text-green-600'  },
+                { label: 'Analyses',     value: analytics.eventCounts?.['analyzer_search'] ?? 0, color: 'text-amber-600'  },
+                { label: 'Signups',      value: analytics.eventCounts?.['signup'] ?? 0,          color: 'text-purple-600' },
               ].map((k, i) => (
                 <div key={i} className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
+                  <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{k.label}</p>
                 </div>
               ))}
@@ -529,22 +320,22 @@ export default function AdminPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Sources</p>
-                <div className="space-y-1.5">
-                  {analyticsData.topSources?.map(([src, count]: [string, number]) => (
-                    <div key={src} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600 truncate max-w-[140px]">{src || 'direct'}</span>
-                      <span className="font-semibold text-gray-900">{count}</span>
+                <div className="space-y-1">
+                  {analytics.topSources?.slice(0, 6).map(([src, n]) => (
+                    <div key={src} className="flex justify-between text-xs">
+                      <span className="text-gray-500 truncate max-w-[140px]">{src || 'direct'}</span>
+                      <span className="font-semibold text-gray-800">{n}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Top pages</p>
-                <div className="space-y-1.5">
-                  {analyticsData.topPages?.slice(0, 6).map(([path, count]: [string, number]) => (
-                    <div key={path} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600 truncate max-w-[140px]">{path || '/'}</span>
-                      <span className="font-semibold text-gray-900">{count}</span>
+                <div className="space-y-1">
+                  {analytics.topPages?.slice(0, 6).map(([path, n]) => (
+                    <div key={path} className="flex justify-between text-xs">
+                      <span className="text-gray-500 truncate max-w-[140px]">{path || '/'}</span>
+                      <span className="font-semibold text-gray-800">{n}</span>
                     </div>
                   ))}
                 </div>
@@ -553,29 +344,37 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Outils automatiques */}
+        {/* ── Pipeline outreach ────────────────────────────────────────────── */}
+        <div className="bg-gray-900 rounded-xl p-5 text-white mb-5">
+          <h2 className="text-sm font-semibold mb-3 text-gray-200">Pipeline outreach local</h2>
+          <div className="font-mono text-xs space-y-1 text-gray-400">
+            <p><span className="text-green-400">1.</span> node scripts/outreach/harvest_all.js</p>
+            <p><span className="text-green-400">2.</span> node scripts/outreach/merge_serpapi.mjs</p>
+            <p><span className="text-green-400">3.</span> cp scripts/outreach/leads_new.csv scripts/outreach/leads_ready.csv</p>
+            <p><span className="text-green-400">4.</span> node scripts/outreach/send.js <span className="text-amber-400">200</span></p>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">Serper quotas reset chaque nuit à minuit UTC.</p>
+        </div>
+
+        {/* ── Crons ────────────────────────────────────────────────────────── */}
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-1 text-sm">📧 Email hebdomadaire</h2>
-            <p className="text-xs text-gray-400 mb-3">Chaque lundi 8h. Post Google + score pour chaque abonné actif.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Email hebdomadaire abonnés</h2>
+            <p className="text-xs text-gray-400 mb-3">Lundi 8h — post Google + score pour chaque abonné actif.</p>
             <button onClick={triggerCron} disabled={cronRunning}
               className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-gray-800 disabled:opacity-50">
               {cronRunning ? 'En cours...' : 'Lancer maintenant'}
             </button>
-            {cronResult && (
-              <p className="mt-2 text-sm text-green-700">{cronResult.sent} envoyés · {cronResult.skipped} ignorés</p>
-            )}
+            {cronResult && <p className="mt-2 text-xs text-green-700">{cronResult.sent} envoyés · {cronResult.skipped} ignorés</p>}
           </div>
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-1 text-sm">⭐ Alertes avis</h2>
-            <p className="text-xs text-gray-400 mb-3">1×/jour. Détecte les nouveaux avis et envoie 3 réponses générées.</p>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Alertes avis</h2>
+            <p className="text-xs text-gray-400 mb-3">Détecte les nouveaux avis Google et envoie 3 réponses suggérées.</p>
             <button onClick={triggerReviews} disabled={reviewsRunning}
               className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 disabled:opacity-50">
               {reviewsRunning ? 'Vérification...' : 'Vérifier maintenant'}
             </button>
-            {reviewsResult && (
-              <p className="mt-2 text-sm text-green-700">{reviewsResult.checked} vérifiées · {reviewsResult.sent} alertes</p>
-            )}
+            {reviewsResult && <p className="mt-2 text-xs text-green-700">{reviewsResult.checked} vérifiées · {reviewsResult.sent} alertes</p>}
           </div>
         </div>
 

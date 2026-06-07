@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
     { count: total },
     { count: sent },
     { count: withEmail },
+    { count: bounces },
     { count: waitlistCount },
     { data: subscriberData },
     { data: variantRaw },
@@ -76,20 +77,19 @@ export async function GET(req: NextRequest) {
     { data: recentSends },
     { data: recentClicksRaw },
     { data: dailyRaw },
-    { data: quotaRaw },
     { data: availableSectorsRaw },
   ] = await Promise.all([
     supabase.from('leads').select('*', { count: 'exact', head: true }),
     supabase.from('leads').select('*', { count: 'exact', head: true }).eq('sent', true),
     supabase.from('leads').select('*', { count: 'exact', head: true }).not('email', 'is', null),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).eq('email_status', 'bounced'),
     supabase.from('waitlist').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('subscription_status').or('subscription_status.eq.active,subscription_status.eq.trialing'),
     supabase.from('leads').select('subject_variant, secteur').eq('sent', true),
     supabase.from('email_clicks').select('variant_id'),
-    supabase.from('leads').select('nom, email, secteur, ville, sent_at, subject_variant').eq('sent', true).order('sent_at', { ascending: false }).limit(10),
+    supabase.from('leads').select('nom, email, secteur, ville, sent_at').eq('sent', true).order('sent_at', { ascending: false }).limit(10),
     supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').order('clicked_at', { ascending: false }).limit(10),
     supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo),
-    supabase.from('api_quota').select('count, date').order('date', { ascending: false }).limit(7),
     supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid'),
   ])
 
@@ -131,15 +131,15 @@ export async function GET(req: NextRequest) {
       const sends  = sendsByVariant[id] || 0
       const clicks = clicksByVariant[id] || 0
       const ctr    = sends > 0 ? (clicks / sends) * 100 : 0
-      return { id, sends, clicks, ctr: parseFloat(ctr.toFixed(1)), subjectLabel: SUBJECT_LABELS[id] ?? `Variante ${id}`, hookIdx: id }
+      return { id, sends, clicks, ctr: parseFloat(ctr.toFixed(1)), subject: SUBJECT_LABELS[id] ?? `Variante ${id}` }
     })
+    .filter(v => v.id < 20) // 20 variantes actives (send.js)
     .sort((a, b) => {
-      if (b.sends < 3 && a.sends < 3) return b.sends - a.sends
-      if (b.sends < 3) return -1
-      if (a.sends < 3) return 1
+      if (b.sends < 5 && a.sends < 5) return b.sends - a.sends
+      if (b.sends < 5) return -1
+      if (a.sends < 5) return 1
       return b.ctr - a.ctr
     })
-    .slice(0, 20)
 
   // ── Abonnés ─────────────────────────────────────────────────────────────────
   const activeSubscribers  = subscriberData?.filter(p => p.subscription_status === 'active').length ?? 0
@@ -160,37 +160,35 @@ export async function GET(req: NextRequest) {
   // ── Clics récents ───────────────────────────────────────────────────────────
   const leadIds = [...new Set(recentClicksRaw?.map(c => c.lead_id).filter(Boolean) ?? [])]
   const { data: clickLeads } = leadIds.length
-    ? await supabase.from('leads').select('id, nom, email, secteur').in('id', leadIds)
+    ? await supabase.from('leads').select('id, nom, secteur').in('id', leadIds)
     : { data: [] }
   const leadById: Record<number, any> = {}
-  clickLeads?.forEach(l => { leadById[l.id] = l })
+  clickLeads?.forEach((l: any) => { leadById[l.id] = l })
 
   const recentClicks = recentClicksRaw?.map(c => ({
     variant_id: c.variant_id,
     clicked_at: c.clicked_at,
-    lead: leadById[c.lead_id] ?? null,
+    nom:     leadById[c.lead_id]?.nom     ?? null,
+    secteur: leadById[c.lead_id]?.secteur ?? null,
   })) ?? []
 
-  // ── Quota API ───────────────────────────────────────────────────────────────
-  const todayQuota = quotaRaw?.[0]?.count ?? 0
-
   return NextResponse.json({
-    total:     total || 0,
-    sent:      sent  || 0,
-    withEmail: withEmail || 0,
-    remaining: (total || 0) - (sent || 0),
+    totalLeads: total || 0,
+    sent:       sent  || 0,
+    withEmail:  withEmail || 0,
+    bounces:    bounces || 0,
+    remaining:  (total || 0) - (sent || 0),
     totalClicks,
     ctrGlobal,
     waitlistCount: waitlistCount || 0,
     activeSubscribers,
     trialingSubscribers,
-    estimatedMRR: activeSubscribers * 59,
+    mrr: activeSubscribers * 29,
     bySector,
     availableSectors,
     byVariantCTR,
-    recentSends,
+    recentSends: recentSends ?? [],
     recentClicks,
     dailySends,
-    todayQuota,
   })
 }
