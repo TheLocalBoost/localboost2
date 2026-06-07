@@ -1,44 +1,38 @@
-// harvest_all.js — tourne sur toutes les combinaisons secteur/ville jusqu'à épuisement SerpAPI
-// Usage : node harvest_all.js
-// Passe les combinaisons déjà scrapées (fichier serpapi_secteur_ville_*.csv existant)
+// harvest_all.js — deux sources en parallèle :
+//   1. scrape_serpapi.js  → emails depuis réseaux sociaux / Google (Serper/CSE/Brave)
+//   2. scrape_places.mjs  → emails depuis sites web, filtrés sur fiches Google non optimisées
+// Usage : node harvest_all.js [--places-only] [--serper-only]
 
 import "dotenv/config";
 import { execSync } from "child_process";
-import { existsSync, readFileSync, writeFileSync, appendFileSync, readdirSync } from "fs";
+import { existsSync, appendFileSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const LOG_FILE  = join(__dirname, "harvest_all.log");
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+const __dirname    = dirname(fileURLToPath(import.meta.url));
+const LOG_FILE     = join(__dirname, "harvest_all.log");
+const sleep        = ms => new Promise(r => setTimeout(r, ms));
+const PLACES_ONLY  = process.argv.includes("--places-only");
+const SERPER_ONLY  = process.argv.includes("--serper-only");
+const SCORE_MAX    = 85; // fiches avec score < 85 = cibles LocalBoost
 
-// Secteurs à fort rendement — artisans avec présence sociale + Gmail exposé
-// Priorité : manques identifiés (electricien/carreleur/peintre/opticien pas en grandes villes)
 const SECTORS = [
-  // Existants + fort panier
   "electricien", "plombier", "garagiste", "serrurier",
-  // Fort volume Gmail
   "coiffeur", "barbier", "restaurant", "boulanger", "fleuriste",
-  // Petites villes pas encore couvertes
   "carreleur", "peintre", "opticien",
-  // Nouveaux secteurs
-  "dentiste", "menuisier", "maçon", "jardinier",
+  "dentiste", "menuisier", "jardinier",
 ];
 
-// Toutes villes : grandes + moyennes
 const CITIES = [
-  // 15 grandes (déjà partiellement scrapées)
   "Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux",
   "Lille", "Nice", "Nantes", "Strasbourg", "Montpellier",
   "Grenoble", "Rennes", "Rouen", "Perpignan", "Toulon",
-  // Moyennes villes (gap identifié)
   "Angers", "Brest", "Caen", "Dijon", "Limoges",
   "Metz", "Pau", "Tours", "Reims", "Nancy",
   "Saint-Étienne", "Le Havre", "Clermont-Ferrand", "Amiens", "Aix-en-Provence",
 ];
 
-// Détecte les combinaisons déjà scrapées pour ne pas les refaire
-function alreadyScraped(sector, city) {
+function alreadyScrapedSync(sector, city) {
   const prefix = `serpapi_${sector}_${city}_`;
   return readdirSync(__dirname).some(f => f.startsWith(prefix) && f.endsWith(".csv"));
 }
@@ -49,7 +43,6 @@ function log(msg) {
   appendFileSync(LOG_FILE, line + "\n", "utf-8");
 }
 
-// Shuffle pour varier les combinaisons
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -59,67 +52,101 @@ function shuffle(arr) {
   return a;
 }
 
-async function run() {
-  // Construire la liste des paires non encore scrapées
-  const allPairs = [];
-  for (const city of CITIES) {
-    for (const sector of SECTORS) {
-      allPairs.push({ sector, city });
-    }
-  }
-  const pending = allPairs.filter(({ sector, city }) => !alreadyScraped(sector, city));
-  const skipped = allPairs.length - pending.length;
-
-  log("🚀 HARVEST ALL — démarrage jusqu'à épuisement des crédits SerpAPI");
-  log(`   ${SECTORS.length} secteurs × ${CITIES.length} villes = ${allPairs.length} combinaisons`);
-  log(`   ${skipped} déjà scrapées → ${pending.length} à faire\n`);
-
-  let totalRuns = 0;
-  let totalLeads = 0;
-
-  const pairs = shuffle(pending);
+async function runSerper(pairs) {
+  log("\n📡 SOURCE 1 — Serper / Google CSE / Brave (emails réseaux sociaux)");
+  let totalRuns = 0, totalLeads = 0;
 
   for (let i = 0; i < pairs.length; i++) {
     const { sector, city } = pairs[i];
-    log(`\n▶  [${i+1}/${pairs.length}] ${sector} @ ${city}`);
+    log(`\n▶  [${i + 1}/${pairs.length}] ${sector} @ ${city}`);
 
     try {
       const output = execSync(
         `node scripts/outreach/scrape_serpapi.js "${sector}" "${city}" 2`,
         { cwd: join(__dirname, "../.."), encoding: "utf-8", timeout: 120_000 }
       );
-
-      // Compter les leads trouvés dans la sortie  ("📊  N appels · N leads")
       const match = output.match(/·\s*(\d+)\s*leads?/);
       const found = match ? parseInt(match[1]) : 0;
-      totalLeads += found;
-      totalRuns++;
-
+      totalLeads += found; totalRuns++;
       log(`   ✅ ${found} leads  (total : ${totalLeads})`);
-
-      // Détection épuisement dans la sortie
       if (output.includes("ALL_ENGINES_EXHAUSTED") || output.includes("invalide")) {
-        log("💀 Tous les moteurs épuisés — arrêt.");
-        break;
+        log("💀 Moteurs épuisés — arrêt Serper."); return { totalRuns, totalLeads, exhausted: true };
       }
-
       await sleep(2000);
     } catch (e) {
       const msg = (e.stdout || "") + (e.stderr || "") + (e.message || "");
-
       if (msg.includes("ALL_ENGINES_EXHAUSTED") || msg.includes("invalide") || msg.includes("401")) {
-        log("💀 Tous les moteurs épuisés — arrêt.");
-        break;
+        log("💀 Moteurs épuisés — arrêt Serper."); return { totalRuns, totalLeads, exhausted: true };
       }
-
       log(`   ⚠️  Erreur: ${msg.slice(0, 80)}`);
       await sleep(3000);
     }
   }
+  return { totalRuns, totalLeads, exhausted: false };
+}
 
-  log(`\n✅ TERMINÉ — ${totalRuns} runs · ${totalLeads} leads au total`);
-  log(`   Fichiers CSV dans scripts/outreach/serpapi_*.csv`);
-  log(`\n   Prochain : node scripts/outreach/merge_serpapi.mjs → leads_new.csv`);
+async function runPlaces(pairs) {
+  if (!process.env.GOOGLE_PLACES_API_KEY) {
+    log("\n⚠️  GOOGLE_PLACES_API_KEY absente — source Places ignorée.");
+    return { totalRuns: 0, totalLeads: 0 };
+  }
+
+  log(`\n🗺️  SOURCE 2 — Google Places + sites web (score < ${SCORE_MAX})`);
+  let totalRuns = 0, totalLeads = 0;
+
+  for (let i = 0; i < pairs.length; i++) {
+    const { sector, city } = pairs[i];
+    log(`\n▶  [${i + 1}/${pairs.length}] ${sector} @ ${city}`);
+
+    try {
+      const output = execSync(
+        `node scripts/outreach/scrape_places.mjs "${sector}" "${city}" --score-max=${SCORE_MAX}`,
+        { cwd: join(__dirname, "../.."), encoding: "utf-8", timeout: 300_000 }
+      );
+      const match = output.match(/(\d+) leads retenus/);
+      const found = match ? parseInt(match[1]) : 0;
+      totalLeads += found; totalRuns++;
+      log(`   ✅ ${found} leads  (total : ${totalLeads})`);
+      await sleep(1000);
+    } catch (e) {
+      log(`   ⚠️  Erreur Places: ${(e.message || "").slice(0, 80)}`);
+      await sleep(2000);
+    }
+  }
+  return { totalRuns, totalLeads };
+}
+
+async function run() {
+  const allPairs = [];
+  for (const city of CITIES) {
+    for (const sector of SECTORS) {
+      allPairs.push({ sector, city });
+    }
+  }
+
+  const pendingSerper = allPairs.filter(({ sector, city }) => !alreadyScrapedSync(sector, city));
+  // Places tourne toujours sur toutes les combos (filtre par score, pas par CSV existant)
+  const pendingPlaces = shuffle([...allPairs]);
+
+  log("🚀 HARVEST ALL");
+  log(`   ${SECTORS.length} secteurs × ${CITIES.length} villes = ${allPairs.length} combinaisons`);
+  if (!PLACES_ONLY) log(`   Serper : ${pendingSerper.length} à faire (${allPairs.length - pendingSerper.length} déjà scrapées)`);
+  if (!SERPER_ONLY) log(`   Places : ${pendingPlaces.length} combinaisons (filtre score < ${SCORE_MAX})`);
+
+  // ── Source 1 : Serper ─────────────────────────────────────────────────────
+  if (!PLACES_ONLY && pendingSerper.length) {
+    const { totalRuns, totalLeads } = await runSerper(shuffle(pendingSerper));
+    log(`\n   Serper terminé — ${totalRuns} runs · ${totalLeads} leads`);
+  }
+
+  // ── Source 2 : Places + sites web ────────────────────────────────────────
+  if (!SERPER_ONLY) {
+    const { totalRuns, totalLeads } = await runPlaces(pendingPlaces);
+    log(`\n   Places terminé — ${totalRuns} runs · ${totalLeads} leads`);
+  }
+
+  log(`\n✅ TERMINÉ`);
+  log(`   Prochain : node scripts/outreach/merge_serpapi.mjs → leads_new.csv`);
 }
 
 run().catch(e => { console.error("❌", e.message); process.exit(1); });
