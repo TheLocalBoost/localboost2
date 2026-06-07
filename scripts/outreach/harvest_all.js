@@ -72,8 +72,8 @@ async function run() {
       log(`   ✅ ${found} leads  (total : ${totalLeads})`);
 
       // Détection épuisement dans la sortie
-      if (output.includes("épuisé") || output.includes("invalide")) {
-        log("💀 Crédits SerpAPI épuisés — arrêt.");
+      if (output.includes("ALL_ENGINES_EXHAUSTED") || output.includes("invalide")) {
+        log("💀 Tous les moteurs épuisés — arrêt.");
         break;
       }
 
@@ -81,8 +81,8 @@ async function run() {
     } catch (e) {
       const msg = (e.stdout || "") + (e.stderr || "") + (e.message || "");
 
-      if (msg.includes("épuisé") || msg.includes("invalide") || msg.includes("401")) {
-        log("💀 Crédits SerpAPI épuisés — arrêt.");
+      if (msg.includes("ALL_ENGINES_EXHAUSTED") || msg.includes("invalide") || msg.includes("401")) {
+        log("💀 Tous les moteurs épuisés — arrêt.");
         break;
       }
 

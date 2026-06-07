@@ -17,20 +17,23 @@ const MAX_PAGES = Math.min(parseInt(PAGES_STR) || 1, 3);
 
 // ── Clés API ─────────────────────────────────────────────────────
 
-const SERPAPI_KEY = process.env.SERPAPI_KEY;
-const SERPER_KEYS = [1,2,3,4,5,6,7]
-  .map(i => process.env[`SERPER_KEY_${i}`])
-  .filter(Boolean);
+const SERPAPI_KEY   = process.env.SERPAPI_KEY;
+const GOOGLE_KEY    = process.env.GOOGLE_API_KEY || process.env.GOOGLE_PLACES_API_KEY;
+const GOOGLE_CX     = process.env.GOOGLE_CX;
+const BRAVE_KEY     = process.env.BRAVE_API_KEY;
+const SERPER_KEYS   = Array.from({ length: 12 }, (_, i) => process.env[`SERPER_KEY_${i+1}`]).filter(Boolean);
 
-let useSerpAPI = false;
-let serperIdx  = SERPER_KEYS.length - 1; // démarre sur la clé 6 (seule non épuisée)
+let useSerpAPI  = !!SERPAPI_KEY;
+let serperIdx   = 0;
+let googleQuota = true;   // false quand 429 Google Custom Search
+let braveQuota  = true;   // false quand 429 Brave
 
-if (!SERPER_KEYS.length) {
-  console.error("❌ Aucune clé SERPER_KEY_1..7 dans .env");
-  process.exit(1);
-}
-
-console.log(`🔑 Serper.dev  (${SERPER_KEYS.length} clé(s))`);
+const engines = [];
+if (SERPER_KEYS.length) engines.push("Serper");
+if (GOOGLE_KEY && GOOGLE_CX) engines.push("Google Custom Search");
+if (BRAVE_KEY)  engines.push("Brave");
+if (!engines.length) { console.error("❌ Aucune clé de recherche dans .env"); process.exit(1); }
+console.log(`🔑 Moteurs : ${engines.join(" → ")}  (${SERPER_KEYS.length} clé(s) Serper)`);
 
 // ── Appels API ────────────────────────────────────────────────────
 
@@ -40,76 +43,120 @@ async function serpapiCall(params) {
     .forEach(([k, v]) => url.searchParams.set(k, v));
   const res = await fetch(url.href);
   if (res.status === 401 || res.status === 403 || res.status === 429) {
-    useSerpAPI = false;
-    throw new Error("__SERPAPI_EXHAUSTED__");
+    useSerpAPI = false; throw new Error("__SERPAPI_EXHAUSTED__");
   }
   if (!res.ok) throw new Error(`SerpAPI ${res.status}`);
   return res.json();
 }
 
-function serperKey() {
-  if (serperIdx >= SERPER_KEYS.length) {
-    console.error("❌ Toutes les clés Serper épuisées");
-    process.exit(1);
-  }
-  return SERPER_KEYS[serperIdx];
-}
-
-async function serperCall(q, extra = {}) {
+async function serperCall(q) {
   while (serperIdx < SERPER_KEYS.length) {
     const res = await fetch("https://google.serper.dev/search", {
-      method:  "POST",
-      headers: { "X-API-KEY": serperKey(), "Content-Type": "application/json" },
-      body:    JSON.stringify({ q, gl: "fr", hl: "fr", num: 10, ...extra }),
+      method: "POST",
+      headers: { "X-API-KEY": SERPER_KEYS[serperIdx], "Content-Type": "application/json" },
+      body: JSON.stringify({ q, gl: "fr", hl: "fr", num: 10 }),
     });
     if (!res.ok) {
       const body = await res.text();
       if (res.status === 402 || res.status === 429 ||
           (res.status === 400 && body.toLowerCase().includes("credit"))) {
-        console.warn(`  ⚠️  Clé Serper ${serperIdx + 1} épuisée (${res.status}) → suivante`);
-        serperIdx++;
-        continue;
+        console.warn(`  ⚠️  Clé Serper ${serperIdx + 1} épuisée → suivante`);
+        serperIdx++; continue;
       }
       throw new Error(`Serper ${res.status}: ${body.slice(0, 80)}`);
     }
-    return res.json();
+    const d = await res.json();
+    return (d.organic || []).map(r => ({ title: r.title||"", snippet: r.snippet||"", link: r.link||"" }));
   }
-  console.error("❌ Toutes les clés Serper épuisées"); process.exit(1);
+  throw new Error("__SERPER_EXHAUSTED__");
 }
 
-// Recherche organique unifiée → retourne un tableau {title, snippet, link}
+async function googleSearchCall(q, start = 0) {
+  if (!googleQuota || !GOOGLE_KEY || !GOOGLE_CX) throw new Error("__GOOGLE_UNAVAILABLE__");
+  const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_KEY}&cx=${GOOGLE_CX}&q=${encodeURIComponent(q)}&num=10&start=${start + 1}&gl=fr&hl=fr`;
+  const res = await fetch(url);
+  if (res.status === 429 || res.status === 403) { googleQuota = false; throw new Error("__GOOGLE_QUOTA__"); }
+  if (!res.ok) throw new Error(`Google CSE ${res.status}`);
+  const d = await res.json();
+  return (d.items || []).map(r => ({ title: r.title||"", snippet: r.snippet||"", link: r.link||"" }));
+}
+
+async function braveSearchCall(q, offset = 0) {
+  if (!braveQuota || !BRAVE_KEY) throw new Error("__BRAVE_UNAVAILABLE__");
+  const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=10&offset=${offset}&country=fr&search_lang=fr`;
+  const res = await fetch(url, {
+    headers: { "Accept": "application/json", "Accept-Encoding": "gzip", "X-Subscription-Token": BRAVE_KEY },
+  });
+  if (res.status === 429 || res.status === 422) { braveQuota = false; throw new Error("__BRAVE_QUOTA__"); }
+  if (!res.ok) throw new Error(`Brave ${res.status}`);
+  const d = await res.json();
+  return (d.web?.results || []).map(r => ({ title: r.title||"", snippet: r.description||"", link: r.url||"" }));
+}
+
+// Recherche organique unifiée — cascade : SerpAPI → Serper → Google CSE → Brave
 async function searchOrganic(q, start = 0) {
+  // 1. SerpAPI
   if (useSerpAPI) {
     try {
       const d = await serpapiCall({ engine: "google", q, num: 10, start });
       return [
         ...(Array.isArray(d.organic_results) ? d.organic_results : []),
         ...(Array.isArray(d.local_results)   ? d.local_results   : []),
-      ].map(r => ({ title: r.title || "", snippet: r.snippet || "", link: r.link || "" }));
+      ].map(r => ({ title: r.title||"", snippet: r.snippet||"", link: r.link||"" }));
     } catch (e) {
       if (!e.message.includes("__SERPAPI_EXHAUSTED__")) throw e;
-      console.warn("  ↩️  Bascule Serper.dev");
+      console.warn("  ↩️  SerpAPI épuisé → Serper");
     }
   }
-  const d = await serperCall(q);
-  return (d.organic || []).map(r => ({
-    title: r.title || "", snippet: r.snippet || "", link: r.link || "",
-  }));
+  // 2. Serper
+  if (SERPER_KEYS.length && serperIdx < SERPER_KEYS.length) {
+    try { return await serperCall(q); }
+    catch (e) {
+      if (e.message.includes("__SERPER_EXHAUSTED__")) console.warn("  ↩️  Serper épuisé → Google CSE");
+      else throw e;
+    }
+  }
+  // 3. Google Custom Search
+  if (googleQuota && GOOGLE_KEY && GOOGLE_CX) {
+    try { return await googleSearchCall(q, start); }
+    catch (e) {
+      if (e.message.includes("__GOOGLE")) console.warn("  ↩️  Google CSE épuisé → Brave");
+      else throw e;
+    }
+  }
+  // 4. Brave
+  if (braveQuota && BRAVE_KEY) {
+    return await braveSearchCall(q, start);
+  }
+  throw new Error("__ALL_ENGINES_EXHAUSTED__");
 }
 
-// Recherche locale Maps → SerpAPI uniquement (Serper.dev ne supporte pas tbm=lcl)
+// Recherche locale Maps — Google Places Text Search (direct, pas de quota Serper)
 async function searchLocal(q) {
-  if (!useSerpAPI) return [];
-  try {
-    const d = await serpapiCall({ engine: "google_maps", q, type: "search" });
-    return Array.isArray(d.local_results) ? d.local_results : [];
-  } catch (e) {
-    if (e.message.includes("__SERPAPI_EXHAUSTED__")) {
-      console.warn("  ↩️  SerpAPI épuisé — Maps ignoré, uniquement scrape organique");
-      return [];
-    }
-    throw e;
+  if (GOOGLE_KEY) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(q)}&language=fr&region=fr&key=${GOOGLE_KEY}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const d = await res.json();
+        return (d.results || []).map(r => ({
+          title:   r.name || "",
+          address: r.formatted_address || "",
+          website: r.website || "",
+        }));
+      }
+    } catch {}
   }
+  if (useSerpAPI) {
+    try {
+      const d = await serpapiCall({ engine: "google_maps", q, type: "search" });
+      return Array.isArray(d.local_results) ? d.local_results : [];
+    } catch (e) {
+      if (e.message.includes("__SERPAPI_EXHAUSTED__")) return [];
+      throw e;
+    }
+  }
+  return [];
 }
 
 // ── Validation ────────────────────────────────────────────────────
