@@ -49,18 +49,18 @@ export default function EmailCaptureBlock({ establishmentName, score, city, cate
             ✓ Votre plan arrive dans quelques minutes. Vérifiez votre boîte mail.
           </p>
         )}
-        <p className="text-white font-bold text-xl mb-2">Débloquez les solutions</p>
+        <p className="text-white font-bold text-xl mb-2">Créez votre compte gratuit</p>
         <p className="text-blue-200 text-sm mb-5">
-          Plan d'action complet · Génération IA · Collecte d'avis · Suivi du score
+          Score sauvegardé · 1 action IA débloquée · Aucune carte bancaire
         </p>
         <a
-          href={pricingUrl}
+          href={`/signup?nom=${encodeURIComponent(establishmentName)}&ville=${encodeURIComponent(city)}`}
           onClick={() => track('cta_click', { score, category, city, source: 'email_block' })}
           className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition"
         >
-          Débloquer mon plan complet — 29€/mois →
+          Créer mon compte gratuit →
         </a>
-        <p className="text-blue-300 text-xs mt-3">Sans carte bancaire · Annulation en 1 clic</p>
+        <p className="text-blue-300 text-xs mt-3">Passez Pro à 29€/mois quand vous êtes convaincu</p>
       </div>
     )
   }

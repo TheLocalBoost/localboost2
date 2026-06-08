@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { track } from '@/lib/track'
+import EmailCaptureBlock from '@/components/analyser/EmailCaptureBlock'
 import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
 interface AnalyzerProps {
@@ -461,7 +462,18 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 9 — CTA */}
+              {/* BLOC 9 — Capture email (visiteurs organiques) ou CTA direct (outreach) */}
+              {searchParams.get('utm_source') !== 'brevo' && (
+                <EmailCaptureBlock
+                  establishmentName={result.name}
+                  score={result.score}
+                  city={result.city}
+                  category={result.category}
+                  onCapture={email => onEmailCapture?.(email)}
+                />
+              )}
+
+              {/* BLOC 10 — CTA compte gratuit */}
               <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
                 <p className="text-white font-bold text-base mb-1">
                   Créez votre compte gratuit pour voir le plan d'action complet.
