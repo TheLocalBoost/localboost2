@@ -85,7 +85,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                     </div>
                   ))}
                 </div>
-                <span>{signupCount} artisans ont déjà analysé leur fiche</span>
+                <span>{signupCount > 1 ? `${signupCount} artisans ont` : `${signupCount} artisan a`} déjà analysé sa fiche</span>
               </div>
             )}
           </div>
