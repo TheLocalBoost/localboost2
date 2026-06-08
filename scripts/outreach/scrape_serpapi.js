@@ -206,20 +206,51 @@ function extractEmails(text) {
   return [...new Set((text.match(re) || []).map(e => e.toLowerCase()))];
 }
 
+const SAFE_DOMAINS_SET = new Set([
+  "gmail.com","yahoo.fr","yahoo.com","hotmail.fr","hotmail.com",
+  "outlook.fr","outlook.com","live.fr","live.com","msn.com",
+  "orange.fr","sfr.fr","sfr.net","laposte.net","free.fr",
+  "wanadoo.fr","neuf.fr","bbox.fr","icloud.com","me.com","mac.com",
+  "protonmail.com","proton.me","pm.me","gmx.fr","gmx.com","ymail.com",
+]);
+
+const GENERIC_WORDS_LIST = [
+  "contact","info","admin","webmaster","support","hello","service","mairie",
+  "secretariat","commercial","direction","recrutement","no-reply","noreply",
+  "comptabilite","gestionnaire","accueil","reception","pro","rh","facturation",
+  "reservation","commande","vente","sav","bonjour","equipe","team","boutique",
+  "news","newsletter","devis","presse","communication","achat","logistique",
+  "magasin","coiffure","carrelage","electricite","plomberie","boulangerie",
+  "fleuriste","jardinerie","menuiserie","peinture","serrurerie","garage",
+];
+const GENERIC_EXACT_RE   = new RegExp(`^(${GENERIC_WORDS_LIST.join("|")})$`, "i");
+const GENERIC_PREFIX_RE  = new RegExp(`^(${GENERIC_WORDS_LIST.join("|")})[.\\-_]`, "i");
+
+const VILLES_RE = /^(paris|lyon|marseille|toulouse|nantes|bordeaux|lille|nice|rennes|grenoble|strasbourg|montpellier|tours|nimes|dijon|angers|brest|metz|caen|reims|nancy|pau|rouen|toulon|clermont|amiens|limoges|albi|laval|beziers|dax|blois|colmar)$/i;
+
+const BAD_DOMAINS_RE = /\.(ac-[a-z]+\.fr|gouv\.fr|edu\.fr)$|^(boulanger|fnac|darty|leroy-merlin|son-video|darty)\.com$/;
+
+const BLOCKED_DOMAINS_RE = [
+  /\.ac-[a-z]+\.fr$/, /\.edu\.fr$/, /\.gouv\.fr$/,
+  /^(mairie|commune|ville|region|departement)\./,
+];
+
 function isValidEmail(email) {
-  const [local, domain] = email.split("@");
+  const e = email.trim().toLowerCase();
+  const [local, domain] = e.split("@");
   if (!local || !domain) return false;
-  if (email.includes("..")) return false;
-  if (/\.(com|fr)\.(com|fr)$/.test(email)) return false;
+  if (e.includes("..")) return false;
+  if (/\.(com|fr)\.(com|fr)$/.test(e)) return false;
   if (local.length <= 3) return false;
   if (/^\d+$/.test(local)) return false;
+  if (local.startsWith("www.") || local.startsWith("-")) return false;
   if (/\.(com|fr|net|org|eu)$/.test(local)) return false;
-  const GENERIC = /^(contact|info|admin|support|service|mairie|secretariat|commercial|direction|recrutement|noreply|no-reply|comptabilite|accueil|reception|rh|facturation|reservation|vente|sav|boutique|newsletter|devis|presse|communication|logistique|magasin)$/i;
-  if (GENERIC.test(local)) return false;
-  const VILLES = /^(paris|lyon|marseille|toulouse|nantes|bordeaux|lille|nice|rennes|grenoble|strasbourg|montpellier|tours|nimes|dijon|angers|brest|metz|caen|reims|nancy|pau|rouen|toulon|clermont|amiens|limoges|albi|laval|beziers|dax|blois|colmar)$/i;
-  if (VILLES.test(local)) return false;
-  const BAD_DOMAINS = /\.(ac-[a-z]+\.fr|gouv\.fr|edu\.fr)$|^(boulanger|fnac|darty|leroy-merlin)\.com$/;
-  if (BAD_DOMAINS.test(domain)) return false;
+  if (GENERIC_EXACT_RE.test(local) || GENERIC_PREFIX_RE.test(local)) return false;
+  if (VILLES_RE.test(local)) return false;
+  if (BAD_DOMAINS_RE.test(domain)) return false;
+  for (const pat of BLOCKED_DOMAINS_RE) { if (pat.test(domain)) return false; }
+  // Domaines perso (gmail, yahoo…) : local trop court = compte inexistant probable
+  if (SAFE_DOMAINS_SET.has(domain) && local.length < 6) return false;
   return true;
 }
 

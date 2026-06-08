@@ -1,9 +1,10 @@
 // clean_leads.js — tri des leads serpapi pour éviter les hard bounces
 // Usage : node clean_leads.js
-// Passes : (1) heuristiques email + nom + domaine  (2) vérification MX DNS
+// Passes : (1) heuristiques email + nom + domaine  (2) MX DNS  (3) SMTP RCPT TO (domaines custom)
 
 import { readFileSync, writeFileSync, readdirSync } from "fs";
 import { resolveMx } from "dns/promises";
+import { createConnection } from "net";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -113,6 +114,8 @@ function isCleanEmail(email) {
   if (genericExact.test(local) || genericPrefix.test(local)) return false;
   // Domaine bloqué
   for (const pat of BLOCKED_DOMAINS) { if (pat.test(domain)) return false; }
+  // Domaines perso : local trop court = compte inexistant probable
+  if (SAFE_DOMAINS.has(domain) && local.length < 6) return false;
   return true;
 }
 
@@ -150,14 +153,71 @@ async function checkMxBatch(domains) {
     await Promise.all(batch.map(async d => {
       try {
         const mx = await resolveMx(d);
-        results.set(d, mx && mx.length > 0);
+        results.set(d, mx && mx.length > 0 ? mx.sort((a,b) => a.priority - b.priority)[0].exchange : null);
       } catch {
-        results.set(d, false);
+        results.set(d, null);
       }
     }));
     if (i + BATCH < domains.length) {
       process.stdout.write(`   ${Math.min(i + BATCH, domains.length)}/${domains.length}\r`);
     }
+  }
+  return results; // Map<domain, mxHost|null>
+}
+
+// ── SMTP RCPT TO — vérifie que la boîte existe (domaines custom uniquement) ──
+function smtpVerify(email, mxHost) {
+  return new Promise(resolve => {
+    const TIMEOUT = 8000;
+    let done = false;
+    let buf  = "";
+
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { sock.destroy(); } catch {}
+      resolve(ok);
+    };
+
+    const sock = createConnection({ host: mxHost, port: 25 });
+    sock.setTimeout(TIMEOUT);
+    sock.on("timeout", () => finish(null)); // inconnu → on garde
+    sock.on("error",   () => finish(null));
+
+    const send = (line) => { try { sock.write(line + "\r\n"); } catch {} };
+
+    let step = 0;
+    sock.on("data", chunk => {
+      buf += chunk.toString();
+      const lines = buf.split(/\r?\n/);
+      buf = lines.pop();
+      for (const line of lines) {
+        const code = parseInt(line.slice(0, 3));
+        if (step === 0 && code === 220) { step = 1; send("EHLO localboost.fr"); }
+        else if (step === 1 && (code === 250 || code === 220)) { step = 2; send(`MAIL FROM:<verify@localboost.fr>`); }
+        else if (step === 2 && code === 250) { step = 3; send(`RCPT TO:<${email}>`); }
+        else if (step === 3) {
+          if (code === 250 || code === 251) finish(true);
+          else if (code >= 550 && code < 560) finish(false); // 550 = mailbox not found
+          else finish(null); // autre code → inconnu, on garde
+        }
+        // Refus de connexion ou erreur protocole
+        else if (code === 421 || code === 554) finish(null);
+      }
+    });
+  });
+}
+
+async function smtpVerifyBatch(emailsWithMx) {
+  const results = new Map();
+  const BATCH = 5; // SMTP est lent, petit batch
+  for (let i = 0; i < emailsWithMx.length; i += BATCH) {
+    const batch = emailsWithMx.slice(i, i + BATCH);
+    await Promise.all(batch.map(async ({ email, mxHost }) => {
+      const ok = await smtpVerify(email, mxHost);
+      results.set(email.toLowerCase(), ok); // true=existe, false=n'existe pas, null=inconnu
+    }));
+    process.stdout.write(`   smtp ${Math.min(i + BATCH, emailsWithMx.length)}/${emailsWithMx.length}\r`);
   }
   return results;
 }
@@ -188,13 +248,38 @@ async function run() {
     console.log(`   ${noMx} domaine(s) sans MX → emails supprimés`);
   }
 
-  const p2 = p1.filter(r => {
+  const afterMx = p1.filter(r => {
     const d = r.Email.split("@")[1]?.toLowerCase();
     if (!d) return false;
     if (SAFE_DOMAINS.has(d)) return true;
-    return mxResults.get(d) === true;
+    return mxResults.get(d) !== null && mxResults.get(d) !== undefined;
   });
-  console.log(`Après vérification MX    : ${p2.length}  (-${p1.length - p2.length})`);
+  console.log(`Après vérification MX    : ${afterMx.length}  (-${p1.length - afterMx.length})`);
+
+  // Passe 3 — SMTP RCPT TO pour domaines custom (détecte boîtes inexistantes)
+  const smtpTargets = afterMx
+    .filter(r => {
+      const d = r.Email.split("@")[1]?.toLowerCase();
+      return d && !SAFE_DOMAINS.has(d) && mxResults.get(d);
+    })
+    .map(r => ({ email: r.Email.toLowerCase(), mxHost: mxResults.get(r.Email.split("@")[1]?.toLowerCase()) }));
+
+  let smtpResults = new Map();
+  if (smtpTargets.length) {
+    process.stdout.write(`\nVérification SMTP : ${smtpTargets.length} boîte(s) custom...\n`);
+    smtpResults = await smtpVerifyBatch(smtpTargets);
+    const dead = [...smtpResults.values()].filter(v => v === false).length;
+    console.log(`   ${dead} boîte(s) inexistantes confirmées → supprimées`);
+  }
+
+  const p2 = afterMx.filter(r => {
+    const d = r.Email.split("@")[1]?.toLowerCase();
+    if (!d) return false;
+    if (SAFE_DOMAINS.has(d)) return true;
+    const smtpOk = smtpResults.get(r.Email.toLowerCase());
+    return smtpOk !== false; // false = confirmé inexistant ; null/true = on garde
+  });
+  console.log(`Après vérification SMTP  : ${p2.length}  (-${afterMx.length - p2.length})`);
 
   // Déduplication finale
   const seen = new Set();
