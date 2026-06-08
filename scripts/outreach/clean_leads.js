@@ -71,6 +71,19 @@ const BAD_NAME_RE = [
   /^magasin\./i,
   /hegel music/i,
   /^(annuaire|bottin|pages?[\s-]jaunes?)/i,
+  // Titres de pages / articles — pas des noms d'entreprise
+  /\+\s*\d+\s*(carreleurs?|coiffeurs?|électriciens?|plombiers?|artisans?|vérifiés?)/i,
+  /\.{2,}|…/,
+  /^nous\s+contacter$/i,
+  /^commerces?\s*(,|et)\s*services?/i,
+  /^les\s+(artisans?|professionnels?|carreleurs?|coiffeurs?|électriciens?|plombiers?|barbiers?|boulangers?)\b/i,
+  /^(coiffeur|carreleur|électricien|plombier|barbier|boulanger|fleuriste|garagiste|menuisier|peintre|jardinier|opticien|dentiste)\s+à\s+/i,
+  /^réseau\s+/i,
+  /\bannuaire\b/i,
+  /\boffre\s+d'emploi\b/i,
+  /^demande\s+de\s+devis/i,
+  /^(bonjour|salut)\s+/i,
+  /^profil\s+de\s+/i,
 ];
 
 function isCleanEmail(email) {
@@ -85,9 +98,19 @@ function isCleanEmail(email) {
   if (local.startsWith("www.") || local.startsWith("-")) return false;
   // Local contient une extension — URL collée
   if (/\.(com|fr|net|org|eu)$/.test(local)) return false;
-  // Locaux génériques
-  const GENERIC = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|pro|rh|facturation|reservation|commande|vente|sav|bonjour|equipe|team|boutique|news|newsletter|devis|presse|communication|achat|logistique|magasin)$/i;
-  if (GENERIC.test(local)) return false;
+  // Locaux génériques — exact ou préfixe (contact.xxx, info-xxx, service_xxx)
+  const GENERIC_WORDS = [
+    "contact","info","admin","webmaster","support","hello","service","mairie",
+    "secretariat","commercial","direction","recrutement","no-reply","noreply",
+    "comptabilite","gestionnaire","accueil","reception","pro","rh","facturation",
+    "reservation","commande","vente","sav","bonjour","equipe","team","boutique",
+    "news","newsletter","devis","presse","communication","achat","logistique",
+    "magasin","coiffure","carrelage","electricite","plomberie","boulangerie",
+    "fleuriste","jardinerie","menuiserie","peinture","serrurerie","garage",
+  ];
+  const genericExact = new RegExp(`^(${GENERIC_WORDS.join("|")})$`, "i");
+  const genericPrefix = new RegExp(`^(${GENERIC_WORDS.join("|")})[.\\-_]`, "i");
+  if (genericExact.test(local) || genericPrefix.test(local)) return false;
   // Domaine bloqué
   for (const pat of BLOCKED_DOMAINS) { if (pat.test(domain)) return false; }
   return true;
