@@ -94,6 +94,30 @@ export async function POST(req: NextRequest) {
   const { priority } = await req.json()
   if (!PROMPTS[priority]) return NextResponse.json({ error: 'Priorité inconnue' }, { status: 400 })
 
+  // Vérifier si l'utilisateur est pro ou gratuit
+  const { data: billing } = await supabase
+    .from('profiles')
+    .select('subscription_status')
+    .eq('id', user.id)
+    .single()
+
+  const isPro = billing?.subscription_status === 'active'
+
+  // Gratuit : vérifier le compteur d'utilisations IA
+  if (!isPro) {
+    const { count } = await supabase
+      .from('localboost_ai_usage')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if ((count ?? 0) >= 1) {
+      return NextResponse.json({
+        error:   'free_limit',
+        message: 'Vous avez utilisé votre action IA gratuite. Passez en Pro pour un accès illimité.',
+      }, { status: 402 })
+    }
+  }
+
   const { data: profile } = await supabase
     .from('localboost_profiles')
     .select('business_name, business_address, business_phone, business_website')
@@ -116,5 +140,13 @@ export async function POST(req: NextRequest) {
   })
 
   const content = response.content[0].type === 'text' ? response.content[0].text : ''
-  return NextResponse.json({ content })
+
+  // Enregistrer l'utilisation (gratuit ET pro — pour les stats)
+  await supabase.from('localboost_ai_usage').insert({
+    user_id:    user.id,
+    priority,
+    created_at: new Date().toISOString(),
+  }).catch(() => {})
+
+  return NextResponse.json({ content, isPro })
 }

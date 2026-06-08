@@ -74,8 +74,12 @@ function PriorityCard({ priorityKey, index }: { priorityKey: string; index: numb
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ priority: priorityKey }),
     })
-    const { content } = await res.json()
-    setAiResult(content ?? '')
+    const data = await res.json()
+    if (res.status === 402) {
+      setAiResult('__free_limit__')
+    } else {
+      setAiResult(data.content ?? '')
+    }
     setGenerating(false)
   }
 
@@ -135,7 +139,16 @@ function PriorityCard({ priorityKey, index }: { priorityKey: string; index: numb
               L'IA rédige votre contenu...
             </div>
           )}
-          {aiResult && (
+          {aiResult === '__free_limit__' && (
+            <div className="text-center py-3">
+              <p className="text-sm font-semibold text-gray-900 mb-1">Action gratuite déjà utilisée</p>
+              <p className="text-xs text-gray-500 mb-3">Passez en Pro pour générer du contenu IA sans limite.</p>
+              <Link href="/pricing" className="inline-block rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition">
+                Passer en Pro — 29€/mois →
+              </Link>
+            </div>
+          )}
+          {aiResult && aiResult !== '__free_limit__' && (
             <>
               <textarea
                 ref={textRef}
