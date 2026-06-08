@@ -130,15 +130,16 @@ function loadSet(file) {
 }
 
 // serpapi_coiffeur_Lyon_2026-06-06.csv → "coiffeur"
+// gmaps_coiffeur_Lyon_2026-06-06.csv  → "coiffeur"
 function secteurFromFilename(filename) {
-  const m = basename(filename).match(/^serpapi_([^_]+)_/)
+  const m = basename(filename).match(/^(?:serpapi|gmaps)_([^_]+)_/)
   return m ? m[1].toLowerCase() : "commerce"
 }
 
 const sentSet    = loadSet(join(__dirname, "sent.csv"))
 const bouncedSet = loadSet(join(__dirname, "bounced.csv"))
 
-const files = readdirSync(__dirname).filter(f => /^serpapi_.+\.csv$/.test(f))
+const files = readdirSync(__dirname).filter(f => /^(serpapi|gmaps)_.+\.csv$/.test(f))
 console.log(`📂 ${files.length} fichiers serpapi détectés\n`)
 
 const seen  = new Set()

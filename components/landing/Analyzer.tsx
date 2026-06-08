@@ -185,9 +185,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     if (!gateEmail.includes('@') || !result) return
     setGateLoading(true)
     try {
-      const redirectUrl = `${window.location.origin}/analyser?nom=${encodeURIComponent(result.name)}&ville=${encodeURIComponent(result.city)}&unlocked=1`
-      // Magic link (compte créé automatiquement après paiement)
-      await supabase.auth.signInWithOtp({ email: gateEmail, options: { emailRedirectTo: redirectUrl, shouldCreateUser: false } })
       // Envoi du rapport audit par email
       await fetch('/api/leads', {
         method: 'POST',

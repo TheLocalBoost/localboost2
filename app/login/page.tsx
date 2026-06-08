@@ -11,11 +11,31 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [status, setStatus]     = useState<'idle' | 'loading' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [resendEmail, setResendEmail]   = useState('')
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle')
+  const [resendMsg, setResendMsg]       = useState('')
   const router       = useRouter()
   const searchParams = useSearchParams()
   const confirmed    = searchParams.get('confirmed') === '1'
   const linkError    = searchParams.get('error')
   const supabase     = createClient()
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setResendStatus('loading')
+    const res = await fetch('/api/auth/resend-magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: resendEmail }),
+    })
+    if (res.ok) {
+      setResendStatus('sent')
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setResendMsg(d.error ?? 'Une erreur est survenue.')
+      setResendStatus('error')
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,18 +68,28 @@ function LoginForm() {
           </div>
         )}
 
-        {linkError === 'lien_expire' && (
-          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-5 text-center">
-            <p className="text-amber-800 font-semibold text-sm">⏰ Lien expiré</p>
-            <p className="text-amber-700 text-xs mt-1">
-              Le lien de confirmation n'est valable qu'1 heure.{' '}
-              <Link href="/signup" className="underline font-semibold">Recréez un compte →</Link>
-            </p>
-          </div>
-        )}
-        {linkError && linkError !== 'lien_expire' && (
-          <div className="rounded-xl bg-red-50 border border-red-100 p-4 mb-5 text-center">
-            <p className="text-red-700 text-sm">Lien de confirmation invalide ou expiré.</p>
+        {(linkError === 'lien_expire' || linkError === 'lien_invalide') && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-5 mb-5">
+            <p className="text-amber-800 font-semibold text-sm mb-1">⏰ Lien expiré ou invalide</p>
+            <p className="text-amber-700 text-xs mb-4">Les liens de connexion sont valables 1h. Entrez votre email pour en recevoir un nouveau.</p>
+            {resendStatus === 'sent' ? (
+              <p className="text-green-700 text-sm font-semibold text-center">✅ Nouveau lien envoyé — vérifiez votre boîte mail.</p>
+            ) : (
+              <form onSubmit={handleResend} className="flex gap-2">
+                <input
+                  type="email" value={resendEmail} onChange={e => setResendEmail(e.target.value)}
+                  placeholder="votre@email.com" required
+                  className="flex-1 rounded-lg border border-amber-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 bg-white"
+                />
+                <button
+                  type="submit" disabled={resendStatus === 'loading'}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition disabled:opacity-60 whitespace-nowrap"
+                >
+                  {resendStatus === 'loading' ? '...' : 'Renvoyer'}
+                </button>
+              </form>
+            )}
+            {resendStatus === 'error' && <p className="text-red-600 text-xs mt-2">{resendMsg}</p>}
           </div>
         )}
 
