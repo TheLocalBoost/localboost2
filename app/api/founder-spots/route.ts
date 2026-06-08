@@ -14,7 +14,7 @@ export async function GET() {
 
   if (error || !data?.length) {
     // Fallback si la table n'existe pas encore
-    return NextResponse.json({ total: 50, taken: 3, remaining: 47 }, {
+    return NextResponse.json({ total: 10, taken: 1, remaining: 9 }, {
       headers: { 'Cache-Control': 'public, max-age=60' },
     })
   }
