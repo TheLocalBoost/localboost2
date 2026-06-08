@@ -167,15 +167,15 @@ function LocalBoostSetupInner() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 mb-5">
-              <div className="flex gap-3">
-                <input value={search} onChange={e => setSearch(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && searchBusiness()}
-                  placeholder="Nom de votre commerce" className={`flex-1 ${input}`} />
-                <input value={city} onChange={e => setCity(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && searchBusiness()}
-                  placeholder="Ville" className={`w-32 ${input}`} />
-              </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3 mb-5">
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchBusiness()}
+                placeholder="Nom de votre commerce"
+                className={input} />
+              <input value={city} onChange={e => setCity(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchBusiness()}
+                placeholder="Ville"
+                className={input} />
               <button onClick={searchBusiness} disabled={searching || !search || !city}
                 className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition">
                 {searching ? 'Recherche...' : '🔍 Trouver mon établissement'}
