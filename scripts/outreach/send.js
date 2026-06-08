@@ -82,14 +82,13 @@ function isValidEmail(email) {
   const localPart = e.split("@")[0];
   if (localPart.length <= 3) return false;
   if (/^\d+$/.test(localPart)) return false;
-  // Locaux génériques — boîtes partagées, pas lues par le patron
-  const GENERIC = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|communication|pro|presse|rh|facturation|reservation|commande|vente|achats|logistique|sav)$/i;
+  const GENERIC = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|communication|pro|presse|rh|facturation|reservation|commande|vente|achats|logistique|sav|orders|sales|billing|postmaster|abuse|test|demo|exemple|example|user|email|mail|nul|null|placeholder)$/i;
   if (GENERIC.test(localPart)) return false;
-  // Local contient une extension de domaine — URL collée comme email
   if (/\.(com|fr|net|org|eu|io|co)$/.test(localPart)) return false;
-  // Local = nom de ville française
   const VILLES = /^(paris|lyon|marseille|toulouse|nantes|bordeaux|lille|nice|rennes|grenoble|strasbourg|montpellier|tours|nimes|vichy|dijon|angers|brest|metz|caen|reims|nancy|pau|rouen|toulon|clermont|amiens|limoges|boulogne|macon|albi|laval|beziers|dax|blois|tulle|colmar|thionville)$/i;
   if (VILLES.test(localPart)) return false;
+  const domain = e.split("@")[1];
+  if (/^(example\.com|exemple\.com|mail\.com|yoursite\.|mysite\.|mywebsite|domain\.com|test\.com|email\.com|website\.com|company\.com)$/.test(domain)) return false;
   return true;
 }
 
@@ -443,10 +442,6 @@ function buildEmail(c, stats) {
               </td>
             </tr>
           </table>
-          <p style="font-size:15px;line-height:1.7;color:#1a1a1a;margin:0;">
-            Brian<br>
-            <span style="color:#16a34a;font-weight:600;">LocalBoost</span>
-          </p>
         </td>
       </tr>
       <tr>

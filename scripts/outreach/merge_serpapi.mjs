@@ -57,8 +57,11 @@ const bounced     = loadSet("bounced.csv");
 console.log(`\n📬 ${alreadySent.size} déjà envoyés, ${bounced.size} bounced`);
 
 // ── Filtres email ────────────────────────────────────────────────────────────
-const GENERIC_LOCAL = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|communication|pro|presse|rh|facturation|reservation|commande|vente|achats|logistique|sav|equipe|team|boutique|news|newsletter|devis|magasin|bonjour|demande)$/i;
+const GENERIC_LOCAL = /^(contact|info|admin|webmaster|support|hello|service|mairie|secretariat|commercial|direction|recrutement|no-reply|noreply|comptabilite|gestionnaire|accueil|reception|communication|pro|presse|rh|facturation|reservation|commande|vente|achats|logistique|sav|equipe|team|boutique|news|newsletter|devis|magasin|bonjour|demande|orders|sales|billing|postmaster|abuse|spam|test|demo|exemple|example|user|username|email|mail|nul|null|void|placeholder)$/i;
 const VILLES_LOCAL  = /^(paris|lyon|marseille|toulouse|nantes|bordeaux|lille|nice|rennes|grenoble|strasbourg|montpellier|tours|nimes|vichy|dijon|angers|brest|metz|caen|reims|nancy|pau|rouen|toulon|clermont|amiens|limoges|boulogne|macon|albi|laval|beziers|dax|blois|tulle|colmar|thionville|perpignan)$/i;
+
+// Domaines placeholder ou suspects — souvent issus de templates de sites web
+const FAKE_DOMAINS = /^(example\.com|exemple\.com|mail\.com|yoursite\.|mysite\.|mywebsite|yourwebsite|votresite|domain\.com|test\.com|email\.com|site\.com|website\.com|company\.com)$/i;
 
 function isValidEmail(email) {
   if (!email || typeof email !== "string") return false;
@@ -72,8 +75,9 @@ function isValidEmail(email) {
   if (/\.(com|fr|net|org|eu|io|co)$/.test(local)) return false;
   if (GENERIC_LOCAL.test(local)) return false;
   if (VILLES_LOCAL.test(local)) return false;
-  // Domaines institutionnels
+  // Domaines institutionnels ou placeholder
   if (/\.(ac-[a-z]+|gouv|edu)\.fr$/.test(domain)) return false;
+  if (FAKE_DOMAINS.test(domain)) return false;
   return true;
 }
 
