@@ -111,44 +111,34 @@ export default function ExitIntentModal({ score, establishmentName, city, catego
         </div>
 
         <h2 className="text-lg font-bold text-gray-900 text-center mb-2">
-          Votre rapport va disparaître
+          Sauvegardez votre rapport — c'est gratuit
         </h2>
-        <p className="text-sm text-gray-500 text-center mb-5">
-          Votre score de <strong>{score}/100</strong> ne sera pas sauvegardé.
-          Laissez votre email pour le retrouver quand vous voulez.
+        <p className="text-sm text-gray-500 text-center mb-1">
+          Votre score de <strong className="text-gray-900">{score}/100</strong> + le plan d'action pour {establishmentName}.
+        </p>
+        <p className="text-xs text-gray-400 text-center mb-5">
+          Créez un compte gratuit — aucune carte bancaire requise.
         </p>
 
-        {sent ? (
-          <p className="text-center text-sm font-semibold text-green-600 py-4">
-            ✓ Rapport sauvegardé ! Vérifiez votre boîte mail.
-          </p>
-        ) : (
-          <>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="votre@email.fr"
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 transition"
-              >
-                {loading ? '...' : 'Sauvegarder mon rapport →'}
-              </button>
-            </form>
-            <button
-              onClick={() => setVisible(false)}
-              className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 transition"
-            >
-              Non merci, je préfère perdre mon rapport
-            </button>
-          </>
-        )}
+        <a
+          href={`/signup?nom=${encodeURIComponent(establishmentName)}&ville=${encodeURIComponent(city)}`}
+          className="block w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition text-center mb-3"
+        >
+          Créer mon compte gratuit →
+        </a>
+
+        <div className="flex items-center justify-center gap-4 text-xs text-gray-400 mb-4">
+          <span>✓ Gratuit</span>
+          <span>✓ Sans carte bancaire</span>
+          <span>✓ Score sauvegardé</span>
+        </div>
+
+        <button
+          onClick={() => setVisible(false)}
+          className="w-full text-xs text-gray-400 hover:text-gray-600 transition"
+        >
+          Non merci, continuer sans sauvegarder
+        </button>
       </div>
     </div>
   )
