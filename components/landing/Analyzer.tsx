@@ -524,10 +524,15 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                         source: searchParams.get('utm_source') ?? 'direct',
                       })
                     }}
-                    className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-2 text-center"
+                    className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
                   >
                     {ctaContent.btn}
                   </a>
+                  <div className="flex items-center justify-center gap-1.5 mb-2">
+                    <span className="text-amber-300 text-sm">★</span>
+                    <p className="text-white text-xs font-semibold">Satisfait ou remboursé 30 jours — aucune question posée</p>
+                    <span className="text-amber-300 text-sm">★</span>
+                  </div>
                   <p className="text-blue-300 text-xs text-center">Sans engagement · Résiliable à tout moment</p>
                 </div>
               )}

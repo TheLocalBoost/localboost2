@@ -141,8 +141,14 @@ function PricingContent() {
             {ctaLabel}
           </button>
 
+          {/* Garantie — mise en avant */}
+          <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-center">
+            <p className="text-sm font-bold text-amber-800">★ Satisfait ou remboursé 30 jours</p>
+            <p className="text-xs text-amber-700 mt-0.5">Si vous ne voyez pas de résultat en 30 jours, on vous rembourse intégralement. Aucune question posée.</p>
+          </div>
+
           {/* Réassurance */}
-          <div className="flex items-center justify-around mt-5 pt-5 border-t border-gray-100">
+          <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-100">
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="text-lg">🔒</span>
               <p className="text-xs text-gray-500">Paiement sécurisé<br />Stripe</p>
@@ -152,8 +158,8 @@ function PricingContent() {
               <p className="text-xs text-gray-500">Résiliable<br />en 1 clic</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">⭐</span>
-              <p className="text-xs text-gray-500">Résultats en 30 jours<br />ou remboursé</p>
+              <span className="text-lg">💬</span>
+              <p className="text-xs text-gray-500">Support<br />direct fondateur</p>
             </div>
           </div>
         </div>

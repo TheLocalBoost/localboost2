@@ -197,10 +197,12 @@ function selectVariant(stats) {
 }
 
 // ── 20 Variantes ─────────────────────────────────────────────────
-// Angle 1 : Scénario concret (0–6) · Angle 2 : Interpellation directe (7–13) · Angle 3 : Preuve sociale (14–19)
+// Angle 1 : Scénario (0–6) · Angle 2 : Observation directe (7–13) · Angle 3 : Chiffres / urgence (14–19)
+// Règle : zéro mention "gratuit / sans inscription / 30 secondes"
+// LocalBoost nommé dans la moitié des variantes. Bouton = "Voir ce que j'ai trouvé →"
 
 const SL = { boulangerie:'boulanger', plombier:'plombier', electricien:'électricien', coiffeur:'coiffeur',
-  restaurant:'restaurant', garage:'garagiste', pharmacie:'pharmacie', hotel:'hôtel',
+  restaurant:'restaurateur', garage:'garagiste', pharmacie:'pharmacie', hotel:'hôtelier',
   fleuriste:'fleuriste', opticien:'opticien', dentiste:'dentiste', medecin:'médecin' };
 
 const VARIANTS = [
@@ -218,28 +220,27 @@ Votre fiche est apparue — mais l'horaire affiché était faux. Le client a pen
 
 Vous ne l'avez jamais su.
 
-C'est ce qui arrive quand la fiche Google d'un commerce est incomplète ou incorrecte. Et la plupart des patrons ne savent même pas que la leur a un problème.
+J'ai créé LocalBoost pour que ça n'arrive plus : chaque semaine, votre fiche est mise à jour, vos horaires vérifiés, vos avis suivis.
 
-En 30 secondes, vous pouvez voir le score de votre fiche. C'est gratuit, sans inscription.
+J'ai regardé la fiche de ${nom}. Voilà ce que j'ai trouvé :
 
-Bonne journée,
 Brian`,
   }),
 
-  // 1 — Soir, urgence, premier résultat reçoit l'appel
+  // 1 — Urgence soir, premier résultat reçoit l'appel
   (nom, ville, s) => ({
     subject: `votre fiche Google Maps`,
     body: `Bonjour,
 
-Ce soir, quelqu'un a cherché un ${SL[s]||s} à ${ville} en urgence.
+Ce soir, quelqu'un cherche un ${SL[s]||s} à ${ville} en urgence.
 
-Il a vu trois résultats sur Google Maps. Il a appelé le premier qui avait un numéro visible et des horaires à jour.
+Il voit trois résultats. Il appelle le premier qui a un numéro visible et des horaires à jour.
 
-Pas le meilleur. Le premier qui inspirait confiance.
+Pas le meilleur — celui dont la fiche inspire confiance.
 
-Si la fiche de ${nom} n'est pas au niveau, vous perdez ces appels sans jamais le savoir.
+LocalBoost maintient la fiche de ses clients active chaque semaine : publications, réponses aux avis, horaires à jour.
 
-Vérifiez votre score en 30 secondes, gratuitement :
+La fiche de ${nom} — voilà ce que j'ai noté :
 
 Brian`,
   }),
@@ -249,33 +250,29 @@ Brian`,
     subject: `votre fiche Google Maps`,
     body: `Bonjour,
 
-Samedi matin, quelqu'un cherche un ${SL[s]||s} à ${ville}.
+Samedi matin. Quelqu'un cherche un ${SL[s]||s} à ${ville}.
 
-Il ouvre Google Maps. Il voit plusieurs résultats. Il regarde les photos, les horaires, les avis récents.
+Il ouvre Google Maps. Photos, horaires, avis récents. En 10 secondes, il a choisi.
 
-En 10 secondes, il a choisi. Pas sur la qualité — sur ce que la fiche lui a dit.
+Ce n'est pas la qualité qui décide — c'est la fiche.
 
-Est-ce que la fiche de ${nom} lui aurait donné envie d'appeler ?
-
-Vérifiez votre score en 30 secondes, gratuitement :
+J'ai regardé celle de ${nom}. Il y a des points qui jouent contre vous en ce moment.
 
 Brian`,
   }),
 
-  // 3 — Numéro pas cliquable sur mobile
+  // 3 — Mobile, numéro pas cliquable
   (nom, ville, s) => ({
     subject: `votre fiche Google Maps`,
     body: `Bonjour,
 
 Quelqu'un cherche un ${SL[s]||s} à ${ville} sur son téléphone.
 
-Il trouve votre fiche. Mais le numéro n'est pas cliquable, ou les horaires ne s'affichent pas correctement sur mobile.
+Il trouve votre fiche. Le numéro n'est pas cliquable. Il passe au suivant.
 
-Il passe au résultat suivant.
+C'est ce qui arrive quand personne ne s'occupe d'une fiche régulièrement.
 
-C'est ce qui arrive sur des milliers de fiches Google sans que le patron le sache.
-
-En 30 secondes, vous pouvez voir si c'est le cas pour ${nom}. C'est gratuit :
+J'ai vérifié celle de ${nom} — voilà ce que ça donne concrètement :
 
 Brian`,
   }),
@@ -287,91 +284,85 @@ Brian`,
 
 À ${ville}, un concurrent avec une moins bonne note que ${nom} apparaît avant vous sur Google Maps.
 
-Ce n'est pas une question de qualité. C'est une question d'activité de fiche — publications, photos, réponses aux avis.
+Ce n'est pas une question de qualité. Google favorise les fiches actives — publications, photos récentes, réponses aux avis.
 
-Google favorise les fiches actives, pas les meilleures.
+C'est exactement ce que LocalBoost fait chaque semaine pour ses clients.
 
-En 30 secondes, vous pouvez voir où en est votre fiche. C'est gratuit, sans inscription :
+J'ai regardé votre fiche. Voilà pourquoi vous n'êtes pas devant :
 
 Brian`,
   }),
 
-  // 5 — Nouveau client, première impression
+  // 5 — Première impression
   (nom, ville, s) => ({
     subject: `votre fiche Google Maps`,
     body: `Bonjour,
 
 Quand quelqu'un ne connaît pas encore ${nom}, votre fiche Google est sa première impression.
 
-Avant d'appeler, il regarde les photos, les avis récents, les horaires. En 10 secondes, il décide.
+Photos, avis récents, horaires. 10 secondes pour décider d'appeler ou de chercher ailleurs.
 
-Si la fiche est incomplète ou inactive, il cherche ailleurs — sans jamais vous contacter.
-
-Vérifiez votre score en 30 secondes, gratuitement :
+J'ai noté ce qui manque sur la vôtre.
 
 Brian`,
   }),
 
-  // 6 — Client devant la vitrine qui hésite
+  // 6 — Client devant la vitrine
   (nom, ville, s) => ({
     subject: `votre fiche Google Maps`,
     body: `Bonjour,
 
-Certains clients passent devant votre commerce, hésitent, puis vérifient votre fiche Google avant d'entrer.
+Certains clients passent devant votre commerce, hésitent, ouvrent Google Maps pour vérifier avant d'entrer.
 
-Ils cherchent les horaires, les avis, une photo de l'intérieur. Si l'information est manquante ou ancienne, ils passent leur chemin.
+Horaires, photos, avis. Si c'est absent ou ancien, ils passent leur chemin.
 
-C'est une vente perdue à deux mètres de votre porte.
+Une vente perdue à deux mètres de votre porte.
 
-En 30 secondes, vous pouvez voir le score de votre fiche. C'est gratuit :
+J'ai regardé la fiche de ${nom} — voilà ce que ça changerait :
 
 Brian`,
   }),
 
-  // ── ANGLE 2 : Interpellation directe (7–13) ───────────────────
+  // ── ANGLE 2 : Observation directe (7–13) ──────────────────────
 
-  // 7 — J'ai regardé votre fiche
+  // 7 — J'ai regardé, voici ce que j'ai trouvé
   (nom, ville, s) => ({
     subject: `j'ai regardé votre fiche Google`,
     body: `Bonjour,
 
-J'ai cherché votre commerce sur Google Maps il y a quelques jours.
+J'ai cherché ${nom} sur Google Maps.
 
-Votre fiche existe, mais elle a plusieurs points faibles qui font que vous apparaissez moins souvent que vos concurrents dans les résultats — parfois pas du tout.
+Votre fiche a plusieurs points qui font que vous apparaissez moins souvent que vos concurrents à ${ville}.
 
-Je ne vends rien. J'ai juste créé un outil qui analyse les fiches Google en 30 secondes et donne un score avec les points à corriger.
+J'ai créé LocalBoost pour régler ça — chaque semaine, votre fiche est active, vos avis suivis, votre classement surveillé.
 
-Si vous voulez savoir où vous en êtes :
+Ce que j'ai trouvé sur votre fiche :
 
 Brian`,
   }),
 
-  // 8 — En cherchant des Xs à Ville
+  // 8 — En cherchant des Xs à Ville (meilleure variante — à préserver)
   (nom, ville, s) => ({
     subject: `j'ai regardé votre fiche Google`,
     body: `Bonjour,
 
 En cherchant des ${SL[s]||s}s à ${ville} sur Google Maps, je suis tombé sur la fiche de ${nom}.
 
-J'ai noté quelques points qui pourraient expliquer pourquoi vous n'apparaissez pas toujours en premiers résultats.
+J'ai noté quelques points précis qui expliquent pourquoi vous n'apparaissez pas toujours en premiers résultats.
 
-J'ai créé un outil gratuit qui analyse ça en 30 secondes. Pas de compte, pas de carte bancaire.
-
-Si vous êtes curieux :
+Ce que j'ai trouvé :
 
 Brian`,
   }),
 
-  // 9 — Question simple
+  // 9 — Question directe
   (nom, ville, s) => ({
     subject: `j'ai regardé votre fiche Google`,
     body: `Bonjour,
 
-Est-ce que vous savez comment votre fiche Google apparaît quand quelqu'un cherche un ${SL[s]||s} à ${ville} ?
+Savez-vous comment ${nom} apparaît quand quelqu'un cherche un ${SL[s]||s} à ${ville} sur Google ?
 
-J'ai développé un outil qui analyse ça gratuitement en 30 secondes — score, points faibles, ce qui peut être amélioré.
-
-Aucune inscription requise.
+J'ai vérifié. Il y a des points précis qui jouent contre vous en ce moment.
 
 Brian`,
   }),
@@ -383,69 +374,67 @@ Brian`,
 
 J'ai regardé la fiche Google de ${nom} cette semaine.
 
-Ce qui m'a frappé : avec une fiche existante à ${ville}, vous devriez apparaître plus souvent dans les résultats locaux.
+Avec un commerce établi à ${ville}, vous devriez apparaître plus haut dans les résultats locaux. Ce n'est pas le cas — et il y a des raisons précises.
 
-Il y a probablement quelques points simples à corriger. J'ai un outil qui les identifie en 30 secondes, gratuitement.
+Je les ai notées.
 
 Brian`,
   }),
 
-  // 11 — Je ne vends rien
+  // 11 — Honnête sur le produit
   (nom, ville, s) => ({
     subject: `j'ai regardé votre fiche Google`,
     body: `Bonjour,
 
-Je ne vous contacte pas pour vous vendre quelque chose.
+J'ai regardé la fiche Google de ${nom}.
 
-J'ai regardé la fiche Google de ${nom} à ${ville}, et j'ai vu quelques points qui limitent votre visibilité dans les recherches locales.
+Il y a des points qui font que vous n'êtes pas en première position à ${ville}.
 
-J'ai créé un outil qui donne un score de fiche Google en 30 secondes. Gratuit, sans inscription.
+Je m'appelle Brian. J'ai créé LocalBoost — pour 29€/mois, votre fiche Google est maintenue active chaque semaine. Vos concurrents qui apparaissent devant vous le font déjà.
 
-Si ça peut vous être utile :
+Ce que j'ai trouvé sur la vôtre :
 
 Brian`,
   }),
 
-  // 12 — Direct, court
+  // 12 — Ultra court
   (nom, ville, s) => ({
     subject: `votre fiche Google à ${ville}`,
     body: `Bonjour,
 
-Votre fiche Google a des points faibles qui font que ${nom} apparaît moins souvent que d'autres ${SL[s]||s}s dans les résultats à ${ville}.
+La fiche Google de ${nom} a des points faibles qui vous font passer derrière d'autres ${SL[s]||s}s à ${ville}.
 
-J'ai un outil gratuit qui identifie ça en 30 secondes.
+Je les ai notés.
 
 Brian`,
   }),
 
-  // 13 — Transparence totale
+  // 13 — Transparence totale avec prix
   (nom, ville, s) => ({
     subject: `votre fiche Google à ${ville}`,
     body: `Bonjour,
 
-Je m'appelle Brian. J'ai créé un outil qui analyse les fiches Google des commerces locaux.
+Je m'appelle Brian. J'ai créé LocalBoost — pour 29€/mois, votre fiche Google est publiée chaque semaine, vos avis reçoivent une réponse, vos horaires restent à jour.
 
-J'ai regardé la fiche de ${nom} à ${ville}. Il y a des améliorations possibles qui pourraient vous faire apparaître plus souvent dans les résultats Google.
-
-Le diagnostic est gratuit, prend 30 secondes, et ne nécessite aucune inscription.
+J'ai regardé la fiche de ${nom} à ${ville}. Voilà ce que ça changerait concrètement :
 
 Brian`,
   }),
 
-  // ── ANGLE 3 : Preuve sociale / chiffre (14–19) ────────────────
+  // ── ANGLE 3 : Chiffres / urgence (14–19) ──────────────────────
 
   // 14 — 7 sur 10 choisissent avant d'appeler
   (nom, ville, s) => ({
     subject: `7 clients sur 10 choisissent avant d'appeler`,
     body: `Bonjour,
 
-Quand quelqu'un a besoin d'un ${SL[s]||s} en urgence, il tape sur Google, il voit trois résultats, il appelle le premier qui inspire confiance.
+Quand quelqu'un cherche un ${SL[s]||s} en urgence, il voit trois résultats sur Google et appelle le premier qui inspire confiance.
 
-Pas forcément le meilleur. Celui dont la fiche est complète, bien notée, avec des photos et les bons horaires.
+Pas le meilleur — celui dont la fiche est complète et active.
 
-Si votre fiche Google n'est pas au niveau, vous perdez ces appels sans jamais le savoir.
+LocalBoost maintient votre fiche active chaque semaine, pour que ce soit vous qui décrochiez cet appel.
 
-Vérifiez votre score en 30 secondes, gratuitement :
+J'ai regardé celle de ${nom} :
 
 Brian`,
   }),
@@ -455,29 +444,29 @@ Brian`,
     subject: `le premier résultat Google capte 70% des appels`,
     body: `Bonjour,
 
-Sur Google Maps, le premier résultat local capte la majorité des clics. Le deuxième et troisième se partagent le reste.
+Le premier résultat local sur Google capte la majorité des clics. Les suivants se partagent le reste.
 
-Ce n'est pas une question de qualité. C'est une question de fiche optimisée — horaires, photos, activité récente, réponses aux avis.
+Ce n'est pas une question de qualité — c'est une question de fiche active : horaires, photos récentes, publications, réponses aux avis.
 
-Si ${nom} n'apparaît pas en première position à ${ville}, vous perdez des clients chaque semaine.
+Si ${nom} n'est pas en première position à ${ville}, vous perdez des appels chaque semaine.
 
-Vérifiez votre position en 30 secondes, gratuitement :
+Ce que j'ai noté sur votre fiche :
 
 Brian`,
   }),
 
-  // 16 — Invisible malgré les bons avis
+  // 16 — Bien noté mais invisible
   (nom, ville, s) => ({
     subject: `bien noté mais invisible sur Google Maps`,
     body: `Bonjour,
 
-C'est le cas le plus frustrant : un commerce avec de bons avis, mais une fiche inactive qui le fait passer derrière des concurrents moins bien notés.
+Un commerce avec de bons avis, mais une fiche inactive — c'est le cas le plus frustrant.
 
 Google ne récompense pas la qualité. Il récompense l'activité.
 
-Une fiche sans publications récentes, sans photos récentes, sans réponses aux avis — elle descend dans les résultats, même avec 4,8 étoiles.
+Sans publications récentes, sans réponses aux avis, votre fiche descend dans les résultats, même avec 4,8 étoiles.
 
-En 30 secondes, vous pouvez voir où en est ${nom} à ${ville}. C'est gratuit :
+J'ai regardé celle de ${nom} à ${ville} :
 
 Brian`,
   }),
@@ -489,23 +478,23 @@ Brian`,
 
 C'est le temps qu'un client passe sur votre fiche Google avant de décider d'appeler ou de passer au suivant.
 
-Photos, note, horaires, nombre d'avis. Si l'un de ces éléments manque ou est incorrect, il continue de scroller.
+Photos, note, horaires, avis. Si l'un manque ou est incorrect, il continue de scroller.
 
-En 30 secondes, vous pouvez voir le score de la fiche de ${nom} à ${ville} et ce qui peut être amélioré. Gratuitement :
+J'ai regardé la fiche de ${nom}. Voilà ce qu'un client voit en ce moment :
 
 Brian`,
   }),
 
-  // 18 — 8 recherches sur 10 sur mobile
+  // 18 — Mobile
   (nom, ville, s) => ({
     subject: `comment vous apparaissez sur mobile`,
     body: `Bonjour,
 
-8 recherches locales sur 10 se font sur mobile. Les gens cherchent, ils voient les premiers résultats, ils appellent directement depuis Google — sans visiter de site web.
+8 recherches locales sur 10 se font sur mobile. Les gens voient les premiers résultats et appellent directement — sans visiter de site web.
 
-Si la fiche de ${nom} n'est pas optimisée pour ces recherches à ${ville}, vous passez à côté de clients qui ne sauront jamais que vous existez.
+Si ${nom} n'est pas bien positionné à ${ville}, ces clients ne sauront jamais que vous existez.
 
-Vérifiez votre visibilité mobile en 30 secondes, gratuitement :
+J'ai vérifié. Voilà ce que ça donne :
 
 Brian`,
   }),
@@ -515,14 +504,13 @@ Brian`,
     subject: `votre fiche Google travaille (ou pas) pendant que vous dormez`,
     body: `Bonjour,
 
-La nuit, le weekend, pendant que vous êtes occupé — votre fiche Google continue de recevoir des visites.
+La nuit, le weekend — votre fiche Google reçoit des visites.
 
-Si elle est incomplète, les gens partent sans appeler.
-Si elle est optimisée, ils appellent.
+Si elle est incomplète, les gens partent sans appeler. Si elle est active, ils appellent.
 
-La différence entre les deux se joue sur des détails simples à corriger.
+LocalBoost s'en occupe chaque semaine à votre place — publications, avis, horaires.
 
-En 30 secondes, vous pouvez voir l'état de la fiche de ${nom} à ${ville}. C'est gratuit :
+J'ai regardé celle de ${nom} :
 
 Brian`,
   }),
@@ -613,11 +601,6 @@ function buildEmail(c, stats) {
     <table width="560" cellpadding="0" cellspacing="0" border="0"
            style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
       <tr>
-        <td align="center" style="padding:28px 24px 20px;">
-          <img src="https://www.thelocalboost.fr/logo.png" alt="LocalBoost" width="140" style="display:block;" />
-        </td>
-      </tr>
-      <tr>
         <td style="padding:0 32px 32px;">
           ${paragraphs}
           ${scoreBlock}
@@ -626,7 +609,7 @@ function buildEmail(c, stats) {
               <td align="center">
                 <a href="${auditUrl}"
                    style="display:inline-block;background:#16a34a;color:#ffffff;font-weight:700;font-size:16px;padding:16px 36px;border-radius:8px;text-decoration:none;">
-                  Voir mon score Google →
+                  Voir ce que j'ai trouvé →
                 </a>
               </td>
             </tr>
