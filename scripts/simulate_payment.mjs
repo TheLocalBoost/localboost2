@@ -3,14 +3,22 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { Resend }        from "resend";
+import { config }        from "dotenv";
+
+config({ path: new URL("../.env.local", import.meta.url).pathname });
 
 const EMAIL   = process.argv[2];
 if (!EMAIL) { console.error("Usage: node scripts/simulate_payment.mjs email@exemple.com"); process.exit(1); }
 
-const SUPABASE_URL  = "https://gezgemgrfehsxbbkjwuz.supabase.co";
-const SERVICE_KEY   = "sb_secret_mSRMkqfgV1teHAy6MAwn3Q_1VOXFbRG";
+const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const APP_URL       = "https://thelocalboost.fr";
-const RESEND_KEY    = "re_R568eCuQ_Aebh5jngmHHdeB7yVF5LXR2c";
+const RESEND_KEY    = process.env.RESEND_API_KEY;
+
+if (!SUPABASE_URL || !SERVICE_KEY || !RESEND_KEY) {
+  console.error("❌ Variables manquantes dans .env.local (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY)");
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 const resend   = new Resend(RESEND_KEY);
@@ -61,11 +69,15 @@ async function run() {
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type:    "magiclink",
     email:   EMAIL,
-    options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent('/localboost/setup?welcome=1')}` },
+    options: { redirectTo: `${APP_URL}/auth/callback` },
   });
   if (linkError) { console.error("❌ Magic link :", linkError.message); process.exit(1); }
 
-  const magicLink = linkData?.properties?.action_link ?? `${APP_URL}/login`;
+  const hashedToken = linkData?.properties?.hashed_token;
+  const next        = encodeURIComponent("/localboost/setup?welcome=1");
+  const magicLink   = hashedToken
+    ? `${APP_URL}/auth/callback?token_hash=${hashedToken}&type=magiclink&next=${next}`
+    : `${APP_URL}/login`;
   console.log(`✅ Magic link généré`);
 
   // 5. Envoyer l'email de bienvenue

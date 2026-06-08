@@ -75,9 +75,15 @@ export async function POST(req: NextRequest) {
       const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
         type:    'magiclink',
         email,
-        options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent('/localboost/setup?welcome=1')}` },
+        options: { redirectTo: `${APP_URL}/auth/callback` },
       })
-      const magicLink = linkData?.properties?.action_link ?? `${APP_URL}/login`
+      // Bypass le endpoint Supabase (PKCE incompatible côté serveur) :
+      // on envoie le token_hash directement vers notre /auth/callback
+      const hashedToken = linkData?.properties?.hashed_token
+      const next        = encodeURIComponent('/localboost/setup?welcome=1')
+      const magicLink   = hashedToken
+        ? `${APP_URL}/auth/callback?token_hash=${hashedToken}&type=magiclink&next=${next}`
+        : `${APP_URL}/login`
 
       await sendTransactional({
         to:      email,

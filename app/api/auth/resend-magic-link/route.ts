@@ -31,9 +31,12 @@ export async function POST(req: NextRequest) {
   const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
     type:    'magiclink',
     email,
-    options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent('/localboost/dashboard')}` },
+    options: { redirectTo: `${APP_URL}/auth/callback` },
   })
-  const magicLink = linkData?.properties?.action_link ?? `${APP_URL}/login`
+  const hashedToken = linkData?.properties?.hashed_token
+  const magicLink   = hashedToken
+    ? `${APP_URL}/auth/callback?token_hash=${hashedToken}&type=magiclink&next=${encodeURIComponent('/localboost/dashboard')}`
+    : `${APP_URL}/login`
 
   // Envoyer notre email français custom
   await sendTransactional({
