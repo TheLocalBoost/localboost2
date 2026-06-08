@@ -256,7 +256,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   }
 
   const pricingUrl = result
-    ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}`
+    ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}&nom=${encodeURIComponent(result.name)}&revenue=${result.lostRevenue}`
     : '/pricing'
 
   const avgCompetitorScore = result?.competitors.length
@@ -428,7 +428,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </p>
                   <div className="mt-4 pt-4 border-t border-blue-200 text-center">
                     <a
-                      href="/pour-vous"
+                      href={pricingUrl}
                       onClick={() => track('cta_click_pour_vous', { score: result.score, source: searchParams.get('utm_source') ?? 'direct' })}
                       className="text-xs text-blue-600 hover:underline font-medium"
                     >
@@ -575,7 +575,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       On s'en occupe pour vous chaque mois — photos, horaires, avis, optimisation.
                     </p>
                     <a
-                      href="/pour-vous"
+                      href={pricingUrl}
                       onClick={() => {
                         setCtaClicked(true)
                         track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city })

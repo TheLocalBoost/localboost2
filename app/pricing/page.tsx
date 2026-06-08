@@ -30,6 +30,9 @@ function PricingContent() {
   const searchParams = useSearchParams()
   const city         = searchParams.get('city') ?? ''
   const category     = searchParams.get('category') ?? ''
+  const scoreParam   = parseInt(searchParams.get('score') ?? '0') || 0
+  const nomParam     = searchParams.get('nom') ?? ''
+  const revenueParam = parseInt(searchParams.get('revenue') ?? '0') || 0
 
   const [user, setUser]         = useState<{ email: string; id: string } | null>(null)
   const [loading, setLoading]   = useState(false)
@@ -37,7 +40,6 @@ function PricingContent() {
   const [guestEmail, setGuestEmail] = useState('')
 
   useEffect(() => {
-    // Pré-remplir l'email depuis l'URL si venu de l'analyzer
     const urlEmail = searchParams.get('email')
     if (urlEmail) setGuestEmail(urlEmail)
 
@@ -115,6 +117,22 @@ function PricingContent() {
         <div className="mb-6">
           <FounderSpotsCounter />
         </div>
+
+        {/* Bandeau personnalisé si score connu */}
+        {scoreParam > 0 && (
+          <div className="rounded-2xl bg-red-50 border border-red-200 p-5 mb-4 text-center">
+            <p className="text-sm text-red-700 font-semibold mb-1">
+              {nomParam ? `${nomParam} — score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
+            </p>
+            <p className="text-2xl font-extrabold text-red-600">
+              ~{revenueParam > 0 ? `${revenueParam}€` : '?'}
+              <span className="text-sm font-normal text-red-500"> perdus/mois à cause des lacunes détectées</span>
+            </p>
+            <p className="text-xs text-red-400 mt-2">
+              Pour 29€/mois, on corrige tout ça automatiquement.
+            </p>
+          </div>
+        )}
 
         {/* Carte pricing */}
         <div className="rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-md mb-6">
