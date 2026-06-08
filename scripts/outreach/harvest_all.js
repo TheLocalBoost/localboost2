@@ -24,12 +24,34 @@ const SECTORS = [
 ];
 
 const CITIES = [
+  // Grandes métropoles
   "Paris", "Lyon", "Marseille", "Toulouse", "Bordeaux",
   "Lille", "Nice", "Nantes", "Strasbourg", "Montpellier",
   "Grenoble", "Rennes", "Rouen", "Perpignan", "Toulon",
+  // Villes moyennes
   "Angers", "Brest", "Caen", "Dijon", "Limoges",
   "Metz", "Pau", "Tours", "Reims", "Nancy",
   "Saint-Étienne", "Le Havre", "Clermont-Ferrand", "Amiens", "Aix-en-Provence",
+  // Villes 100k-200k
+  "Nîmes", "Villeurbanne", "Orléans", "Mulhouse", "Besançon",
+  "La Rochelle", "Avignon", "Poitiers", "Mérignac", "Pessac",
+  "Dunkerque", "Annecy", "Chambéry", "Bayonne", "Valence",
+  "Troyes", "Cannes", "Antibes", "Colmar", "Saint-Denis",
+  // Villes 50k-100k
+  "Boulogne-sur-Mer", "Calais", "Arles", "Quimper", "Vannes",
+  "Saint-Brieuc", "Lorient", "Albi", "Tarbes", "Agen",
+  "Périgueux", "Brive", "Angoulême", "Niort", "Châteauroux",
+  "Évreux", "Chartres", "Laval", "Saint-Nazaire", "Belfort",
+  "Épinal", "Charleville-Mézières", "Cherbourg", "Béziers", "Fréjus",
+  "Hyères", "Ajaccio", "Bastia", "Thionville", "Mâcon",
+  // Banlieues Paris (sous-représentées)
+  "Versailles", "Créteil", "Montreuil", "Aubervilliers",
+  "Vitry-sur-Seine", "Champigny-sur-Marne", "Boulogne-Billancourt",
+  "Rueil-Malmaison", "Argenteuil", "Cergy", "Évry",
+  // Côte d'Azur / PACA
+  "Toulon", "Aix-en-Provence", "Arles", "Martigues", "Aubagne",
+  // DOM
+  "Fort-de-France", "Pointe-à-Pitre", "Saint-Denis de la Réunion",
 ];
 
 function alreadyScrapedSync(sector, city) {
