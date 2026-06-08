@@ -17,6 +17,7 @@ function ConnectInner() {
   const [reviews, setReviews]   = useState<any[]>([])
   const [posts, setPosts]       = useState<any[]>([])
   const [loading, setLoading]   = useState(true)
+  const [isPro, setIsPro]       = useState(false)
   const [tab, setTab]           = useState<'overview' | 'post' | 'reviews'>('overview')
   const [disconnecting, setDisconnecting] = useState(false)
 
@@ -42,6 +43,7 @@ function ConnectInner() {
       .then(r => r.json())
       .then(p => {
         setProfile(p)
+        setIsPro(p?.is_pro === true)
         if (p?.google_requested_email) setRequested(true)
         if (p?.google_connected) {
           Promise.all([
@@ -143,6 +145,36 @@ function ConnectInner() {
   const unanswered = reviews.filter(r => !r.hasReply).length
 
   if (loading) return <div className="text-center py-16 text-gray-400">Chargement...</div>
+
+  // ── GRATUIT — PAYWALL ─────────────────────────────────────────────────────
+  if (!isPro) {
+    return (
+      <div className="max-w-lg mx-auto text-center">
+        <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6">🔒</div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">Fonctionnalité Pro</h1>
+        <p className="text-gray-500 text-sm leading-relaxed mb-6">
+          La connexion Google Business vous permet de publier des posts, répondre aux avis et consulter vos statistiques réelles directement depuis LocalBoost.
+        </p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 text-left space-y-3">
+          {[
+            { icon: '🚀', label: 'Publier sur Google Business en 1 clic' },
+            { icon: '⭐', label: 'Répondre aux avis avec suggestions IA' },
+            { icon: '📊', label: 'Statistiques réelles (vues, appels, clics)' },
+          ].map((f, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xl">{f.icon}</span>
+              <span className="text-sm text-gray-700">{f.label}</span>
+            </div>
+          ))}
+        </div>
+        <a href="/pricing"
+          className="block w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition mb-2">
+          Passer en Pro — 29€/mois →
+        </a>
+        <p className="text-xs text-gray-400">Satisfait ou remboursé 30 jours · Sans engagement</p>
+      </div>
+    )
+  }
 
   // ── CONNECTÉ ──────────────────────────────────────────────────────────────
   if (profile?.google_connected) {

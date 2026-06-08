@@ -172,14 +172,13 @@ export default function LocalBoostDashboard() {
   const [priorities, setPriorities] = useState<string[]>([])
   const [loading, setLoading]       = useState(true)
   const [onboarded, setOnboarded]   = useState(true)
+  const [isPro, setIsPro]           = useState(false)
 
   useEffect(() => {
-    // Vérifie si l'onboarding est complet
-    const supabase = (window as any).__supabaseBrowser
-    // On récupère onboarded via l'API setup qui retourne le profil complet
     fetch('/api/localboost/setup').then(r => r.json()).then(p => {
       setProfile(p?.google_place_id ? p : null)
-      setOnboarded(p?.onboarded !== false) // false = pas encore terminé
+      setOnboarded(p?.onboarded !== false)
+      setIsPro(p?.is_pro === true)
       setLoading(false)
       if (p?.google_place_id) {
         fetchScore().then(s => {
@@ -289,8 +288,38 @@ export default function LocalBoostDashboard() {
             {priorities.length > 0 && (
               <div className="space-y-2">
                 {priorities.map((key, i) => (
-                  <PriorityCard key={key} priorityKey={key} index={i} />
+                  isPro || i === 0 ? (
+                    <PriorityCard key={key} priorityKey={key} index={i} />
+                  ) : (
+                    <div key={key} className="rounded-xl border border-gray-100 bg-gray-50 p-4 flex items-center justify-between gap-3 opacity-60">
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{PRIORITY_MAP[key]?.icon ?? '🎯'}</span>
+                        <div>
+                          <span className="text-xs font-bold text-gray-400">Priorité {i + 1}</span>
+                          <p className="text-sm font-semibold text-gray-400 blur-sm select-none">
+                            {PRIORITY_MAP[key]?.label ?? 'Action recommandée'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-lg shrink-0">🔒</span>
+                    </div>
+                  )
                 ))}
+                {!isPro && priorities.length > 1 && (
+                  <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-center">
+                    <p className="text-sm font-semibold text-blue-900 mb-1">
+                      {priorities.length - 1} action{priorities.length > 2 ? 's' : ''} supplémentaire{priorities.length > 2 ? 's' : ''} disponible{priorities.length > 2 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-blue-600 mb-3">
+                      Passez en Pro pour débloquer le plan complet, les posts Google et les réponses aux avis IA.
+                    </p>
+                    <Link href="/pricing"
+                      className="inline-block rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition">
+                      Passer en Pro — 29€/mois →
+                    </Link>
+                    <p className="text-xs text-blue-400 mt-2">Satisfait ou remboursé 30 jours</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

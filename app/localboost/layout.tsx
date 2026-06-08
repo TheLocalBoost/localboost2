@@ -26,18 +26,6 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('subscription_status')
-        .eq('id', user.id)
-        .single()
-
-      // Seul 'active' donne accès au dashboard
-      if (profile?.subscription_status !== 'active') {
-        router.push('/pricing')
-        return
-      }
-
       setReady(true)
     })
   }, [pathname])

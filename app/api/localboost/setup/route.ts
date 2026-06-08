@@ -8,13 +8,13 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
-  const { data } = await supabase
-    .from('localboost_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
+  const [{ data }, { data: billing }] = await Promise.all([
+    supabase.from('localboost_profiles').select('*').eq('user_id', user.id).single(),
+    supabase.from('profiles').select('subscription_status').eq('id', user.id).single(),
+  ])
 
-  return NextResponse.json(data ?? {})
+  const is_pro = billing?.subscription_status === 'active'
+  return NextResponse.json({ ...(data ?? {}), is_pro })
 }
 
 export async function POST(req: NextRequest) {
