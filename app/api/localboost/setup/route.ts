@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ results })
   }
 
+  // Mise à jour du ton de communication
+  if (body.action === 'update_tone') {
+    const { error } = await supabase
+      .from('localboost_profiles')
+      .update({ tone: body.tone, updated_at: new Date().toISOString() })
+      .eq('user_id', user.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: true })
+  }
+
   // Sauvegarde de la fiche sélectionnée
   if (body.action === 'save') {
     const place = body.place
