@@ -144,6 +144,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     const score   = searchParams.get('score')
     const secteur = searchParams.get('secteur')
     const source  = searchParams.get('utm_source')
+    const email   = searchParams.get('email')
 
     if (score) setEmailScore(parseInt(score))
 
@@ -151,6 +152,23 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       setForm({ name: nom, city: ville })
       if (source === 'brevo') track('email_click_landed', { nom, ville, score, secteur })
       runAnalysis(nom, ville)
+    }
+
+    // Capture silencieuse de l'email quand il vient d'un lien d'outreach
+    if (email && source === 'brevo') {
+      fetch('/api/waitlist', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email,
+          source:  'outreach_click',
+          nom:     nom ?? '',
+          ville:   ville ?? '',
+          secteur: secteur ?? '',
+          score:   score ?? '',
+        }),
+      }).catch(() => {})
+      onEmailCapture?.(email)
     }
   }, [])
 

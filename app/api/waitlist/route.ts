@@ -68,8 +68,22 @@ function buildReportEmail(commerce_name: string, city: string, score: number, ga
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, commerce_name, city, score, gaps, sector } = await req.json()
+    const body = await req.json()
+    const { email, commerce_name, city, score, gaps, sector, source, nom, ville, secteur } = body
 
+    // Capture silencieuse depuis lien d'outreach — juste sauvegarder, pas d'email
+    if (source === 'outreach_click') {
+      await supabaseAdmin.from('waitlist').upsert({
+        email,
+        commerce_name: nom || commerce_name || '',
+        city:          ville || city || '',
+        source:        'outreach_click',
+        created_at:    new Date().toISOString(),
+      }, { onConflict: 'email', ignoreDuplicates: true })
+      return NextResponse.json({ success: true })
+    }
+
+    // Capture normale (formulaire landing) — sauvegarder + envoyer rapport
     await supabaseAdmin.from('waitlist').insert({
       email,
       commerce_name,

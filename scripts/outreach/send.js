@@ -406,7 +406,8 @@ function buildEmail(c, stats) {
 
   const scoreParam   = score        ? `&score=${score}`                           : "";
   const secteurParam = c.Secteur    ? `&secteur=${encodeURIComponent(secteur)}`   : "";
-  const dest         = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}${scoreParam}${secteurParam}&utm_source=brevo&utm_medium=email&utm_campaign=v${vid}`;
+  const emailParam   = c.Email       ? `&email=${encodeURIComponent(c.Email.toLowerCase())}` : "";
+  const dest         = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}${scoreParam}${secteurParam}${emailParam}&utm_source=brevo&utm_medium=email&utm_campaign=v${vid}`;
   // Passe par /api/track pour enregistrer le clic dans Supabase avant redirect
   const auditUrl     = `https://thelocalboost.fr/api/track?vid=${vid}&url=${encodeURIComponent(dest)}`;
 
