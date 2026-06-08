@@ -463,11 +463,12 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
 
               {/* BLOC 9 — CTA */}
               <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-                <p className="text-white font-bold text-base mb-4">
-                  LocalBoost corrige ça automatiquement chaque semaine.
+                <p className="text-white font-bold text-base mb-1">
+                  Créez votre compte gratuit pour voir le plan d'action complet.
                 </p>
+                <p className="text-blue-200 text-xs mb-4">Score, problèmes détectés et 1 action IA — sans carte bancaire.</p>
                 <a
-                  href={pricingUrl}
+                  href="/signup"
                   onClick={() => {
                     setCtaClicked(true)
                     track('cta_click', {
@@ -479,9 +480,9 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   }}
                   className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
                 >
-                  Démarrer — 29€/mois →
+                  Créer mon compte gratuit →
                 </a>
-                <p className="text-blue-200 text-xs text-center">Satisfait ou remboursé 30 jours · Sans engagement</p>
+                <p className="text-blue-200 text-xs text-center">Gratuit · Passez Pro à 29€/mois quand vous êtes convaincu</p>
               </div>
 
             </div>

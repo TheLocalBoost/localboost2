@@ -72,7 +72,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 </button>
               </div>
               <p className="text-xs text-gray-400">
-                Aucune carte bancaire requise · Données directement depuis votre fiche Google
+                Gratuit · Aucune carte bancaire · <a href="/signup" className="text-blue-500 hover:underline">Créer un compte gratuit →</a>
               </p>
             </form>
 

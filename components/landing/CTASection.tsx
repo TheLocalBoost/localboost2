@@ -15,13 +15,21 @@ export default function CTASection() {
         <p className="text-blue-200 text-sm mb-8">
           La plupart des artisans découvrent entre 3 et 9 appels perdus par mois qu'ils ne soupçonnaient pas.
         </p>
-        <a
-          href="/analyser"
-          className="inline-block rounded-xl bg-white text-blue-600 font-bold text-base px-8 py-4 hover:bg-blue-50 transition shadow-lg"
-        >
-          Combien vous perdez en ce moment ? →
-        </a>
-        <p className="text-blue-200 text-sm mt-4">Aucune inscription nécessaire</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <a
+            href="/signup"
+            className="inline-block rounded-xl bg-white text-blue-600 font-bold text-base px-8 py-4 hover:bg-blue-50 transition shadow-lg"
+          >
+            Créer mon compte gratuit →
+          </a>
+          <a
+            href="/analyser"
+            className="inline-block rounded-xl bg-blue-500 text-white font-bold text-base px-8 py-4 hover:bg-blue-400 transition"
+          >
+            Analyser d'abord →
+          </a>
+        </div>
+        <p className="text-blue-200 text-sm mt-4">Gratuit · Aucune carte bancaire</p>
       </div>
     </section>
   )
