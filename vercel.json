@@ -15,6 +15,14 @@
     {
       "path": "/api/cron/email-sequence",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/send-outreach",
+      "schedule": "0 9 * * 1-5"
+    },
+    {
+      "path": "/api/cron/send-reengagement",
+      "schedule": "0 10 * * 2,4"
     }
   ]
 }
