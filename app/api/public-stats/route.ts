@@ -8,10 +8,11 @@ const supabase = createClient(
 
 export async function GET() {
   const { count } = await supabase
-    .from('profiles')
+    .from('analytics_events')
     .select('*', { count: 'exact', head: true })
-    .in('subscription_status', ['trialing', 'active'])
+    .eq('name', 'analyzer_result')
+
   return NextResponse.json({ count: count ?? 0 }, {
-    headers: { 'Cache-Control': 'public, s-maxage=60' },
+    headers: { 'Cache-Control': 'public, s-maxage=300' },
   })
 }
