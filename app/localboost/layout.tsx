@@ -6,11 +6,11 @@ import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
 const NAV = [
-  { href: '/localboost/dashboard', label: 'Tableau de bord',    icon: '📍' },
-  { href: '/localboost/avis',      label: 'Avis clients',       icon: '⭐' },
-  { href: '/localboost/photos',    label: 'Photos',             icon: '📸' },
-  { href: '/localboost/audit',     label: 'Analyser ma fiche',  icon: '🔍' },
-  { href: '/localboost/nap',       label: 'Mes annuaires',      icon: '🗂️' },
+  { href: '/localboost/dashboard', label: 'Accueil',   icon: '📍' },
+  { href: '/localboost/avis',      label: 'Avis',      icon: '⭐' },
+  { href: '/localboost/photos',    label: 'Photos',    icon: '📸' },
+  { href: '/localboost/audit',     label: 'Audit',     icon: '🔍' },
+  { href: '/localboost/nap',       label: 'Annuaires', icon: '🗂️' },
 ]
 
 export default function LocalBoostLayout({ children }: { children: React.ReactNode }) {
@@ -22,10 +22,8 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { router.push('/login'); return }
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       setReady(true)
     })
   }, [pathname])
@@ -39,14 +37,17 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/localboost/dashboard" className="flex items-center gap-2 font-bold text-gray-900">
+    <div className="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+
+      {/* ── Header desktop ───────────────────────────── */}
+      <nav className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Link href="/localboost/dashboard" className="flex items-center gap-2 font-bold text-gray-900 shrink-0">
             <span className="text-lg">📍</span>
-            <span>LocalBoost</span>
+            <span className="hidden sm:inline">LocalBoost</span>
           </Link>
-          <div className="flex items-center gap-1">
+          {/* Nav desktop uniquement */}
+          <div className="hidden sm:flex items-center gap-1">
             {NAV.map(n => (
               <Link
                 key={n.href}
@@ -62,7 +63,7 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Configuration</Link>
+          <Link href="/localboost/setup" className="text-xs text-gray-400 hover:text-gray-600">⚙️ Config</Link>
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
             className="text-xs text-gray-400 hover:text-red-500 transition"
@@ -71,7 +72,31 @@ export default function LocalBoostLayout({ children }: { children: React.ReactNo
           </button>
         </div>
       </nav>
-      <main className="max-w-5xl mx-auto px-6 py-8">{children}</main>
+
+      {/* ── Contenu ──────────────────────────────────── */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        {children}
+      </main>
+
+      {/* ── Bottom tab bar mobile ─────────────────────── */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 flex">
+        {NAV.map(n => {
+          const active = pathname.startsWith(n.href)
+          return (
+            <Link
+              key={n.href}
+              href={n.href}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition
+                ${active ? 'text-blue-600' : 'text-gray-400'}`}
+            >
+              <span className="text-xl leading-none">{n.icon}</span>
+              <span className={`text-[10px] font-medium ${active ? 'text-blue-600' : 'text-gray-400'}`}>
+                {n.label}
+              </span>
+            </Link>
+          )
+        })}
+      </nav>
     </div>
   )
 }

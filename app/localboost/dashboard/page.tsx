@@ -37,15 +37,10 @@ function ScoreGauge({ score }: { score: number }) {
   )
 }
 
-function getPriorities(details: Record<string, boolean>, avisEnvoyes: number, avisRecus: number): string[] {
-  const extra: string[] = []
-  if (avisEnvoyes === 0) extra.push('premiere_demande')
-  else if (avisEnvoyes >= 3 && avisRecus === 0) extra.push('conversion_nulle')
-
-  const google = ['avis20', 'photos', 'horaires', 'description', 'telephone', 'site', 'note4']
+function getPriorities(details: Record<string, boolean>): string[] {
+  return ['photos', 'horaires', 'description', 'telephone', 'site', 'avis20', 'note4']
     .filter(k => details[k] === false)
-
-  return [...extra, ...google].slice(0, 3)
+    .slice(0, 3)
 }
 
 async function fetchScore() {
@@ -196,7 +191,7 @@ export default function LocalBoostDashboard() {
       if (p?.google_place_id) {
         fetchScore().then(s => {
           setScore(s)
-          if (s?.details) setPriorities(getPriorities(s.details, s.avisEnvoyes ?? 0, s.avisRecus ?? 0))
+          if (s?.details) setPriorities(getPriorities(s.details))
         })
       }
     })
@@ -247,15 +242,17 @@ export default function LocalBoostDashboard() {
       {profile && (
         <div className="grid sm:grid-cols-3 gap-5 mb-6">
           {/* Score */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center justify-center">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
             {score ? (
-              <>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Ma visibilité Google</p>
-                <ScoreGauge score={score.score} />
-                <div className="mt-3 w-full space-y-2">
+              <div className="flex items-center gap-4 sm:flex-col sm:items-center">
+                <div className="shrink-0">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 text-center">Score fiche Google</p>
+                  <ScoreGauge score={score.audit} />
+                </div>
+                <div className="flex-1 sm:w-full space-y-2 sm:mt-3">
                   {[
-                    { label: 'Fiche Google', val: score.audit, color: 'bg-blue-500' },
-                    { label: 'Avis collectés', val: score.avis, color: 'bg-amber-400' },
+                    { label: 'Profil complet',    val: score.audit, color: 'bg-blue-500' },
+                    { label: 'Avis Google',        val: score.avis,  color: 'bg-amber-400' },
                   ].map(b => (
                     <div key={b.label}>
                       <div className="flex justify-between text-xs mb-1">
@@ -268,7 +265,7 @@ export default function LocalBoostDashboard() {
                     </div>
                   ))}
                 </div>
-              </>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-36">
                 <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -342,14 +339,14 @@ export default function LocalBoostDashboard() {
       {profile && score && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Demandes d\'avis',  value: score.avisEnvoyes ?? 0,  color: 'text-gray-900',  href: '/localboost/avis'  },
-            { label: 'Avis obtenus',       value: score.avisRecus ?? 0,    color: 'text-green-600', href: '/localboost/avis'  },
+            { label: 'Avis Google',        value: score.avisRecus ?? 0,    color: 'text-green-600', href: '/localboost/avis'  },
             { label: 'Critères manquants', value: Object.values(score.details ?? {}).filter(v => !v).length, color: 'text-red-500', href: '/localboost/audit' },
             { label: 'Score fiche',        value: `${score.audit}%`,       color: 'text-blue-600',  href: '/localboost/audit' },
+            { label: 'Score avis',         value: `${score.avis}%`,        color: 'text-amber-500', href: '/localboost/avis'  },
           ].map((k, i) => (
-            <Link key={i} href={k.href} className="bg-white rounded-xl border border-gray-100 p-4 text-center hover:border-blue-200 transition">
-              <p className={`text-2xl font-bold ${k.color}`}>{k.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{k.label}</p>
+            <Link key={i} href={k.href} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 text-center hover:border-blue-200 transition">
+              <p className={`text-xl sm:text-2xl font-bold ${k.color}`}>{k.value}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-tight">{k.label}</p>
             </Link>
           ))}
         </div>
