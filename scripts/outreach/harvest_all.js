@@ -13,7 +13,8 @@ const __dirname    = dirname(fileURLToPath(import.meta.url));
 const LOG_FILE     = join(__dirname, "harvest_all.log");
 const sleep        = ms => new Promise(r => setTimeout(r, ms));
 const PLACES_ONLY  = process.argv.includes("--places-only");
-const SERPER_ONLY  = process.argv.includes("--serper-only");
+// Places API = payante (Google Cloud) — désactivée par défaut, activer avec --with-places
+const SERPER_ONLY  = !process.argv.includes("--with-places");
 const SCORE_MAX    = 85; // fiches avec score < 85 = cibles LocalBoost
 
 const SECTORS = [
