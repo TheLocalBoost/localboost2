@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
         stripe_subscription_id:  session.subscription as string,
         subscription_status:     'active',
         onboarded:               false,
-        updated_at:              new Date().toISOString(),
       }, { onConflict: 'id' })
 
       // 3. Incrémenter le compteur de places fondateur
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest) {
       const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
         type:    'magiclink',
         email,
-        options: { redirectTo: `${APP_URL}/localboost/setup?welcome=1` },
+        options: { redirectTo: `${APP_URL}/auth/callback?next=${encodeURIComponent('/localboost/setup?welcome=1')}` },
       })
       const magicLink = linkData?.properties?.action_link ?? `${APP_URL}/login`
 
