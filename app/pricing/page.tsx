@@ -34,8 +34,13 @@ function PricingContent() {
   const [user, setUser]         = useState<{ email: string; id: string } | null>(null)
   const [loading, setLoading]   = useState(false)
   const [checking, setChecking] = useState(true)
+  const [guestEmail, setGuestEmail] = useState('')
 
   useEffect(() => {
+    // Pré-remplir l'email depuis l'URL si venu de l'analyzer
+    const urlEmail = searchParams.get('email')
+    if (urlEmail) setGuestEmail(urlEmail)
+
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       if (u) setUser({ email: u.email ?? '', id: u.id })
       setChecking(false)
@@ -51,13 +56,15 @@ function PricingContent() {
   const allTestimonials = [primaryTestimonial, ...otherTestimonials]
 
   const handleCTA = async () => {
-    if (!user) {
-      window.location.href = '/signup?redirect=pricing'
-      return
-    }
+    const email = user?.email ?? guestEmail
+    if (!email || !email.includes('@')) return
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const res = await fetch('/api/stripe/checkout', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email }),
+      })
       const data: { url?: string; error?: string } = await res.json()
       if (data.url)   window.location.href = data.url
       if (data.error) alert('Erreur : ' + data.error)
@@ -68,9 +75,7 @@ function PricingContent() {
     }
   }
 
-  const ctaLabel = loading
-    ? 'Chargement...'
-    : user ? 'Activer mon accès →' : 'Commencer →'
+  const ctaLabel = loading ? 'Chargement...' : 'Activer mon accès →'
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">
@@ -133,9 +138,18 @@ function PricingContent() {
             ))}
           </ul>
 
+          {!user && !checking && (
+            <input
+              type="email"
+              value={guestEmail}
+              onChange={e => setGuestEmail(e.target.value)}
+              placeholder="votre@email.fr"
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm mb-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          )}
           <button
             onClick={handleCTA}
-            disabled={loading || checking}
+            disabled={loading || checking || (!user && !guestEmail.includes('@'))}
             className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
           >
             {ctaLabel}

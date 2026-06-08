@@ -25,20 +25,44 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
 
     case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      // Le metadata contient supabase_user_id (défini dans /api/stripe/checkout)
-      const userId = session.metadata?.supabase_user_id
+      const session     = event.data.object as Stripe.Checkout.Session
+      const existingId  = session.metadata?.supabase_user_id
+      const email       = session.metadata?.email ?? session.customer_details?.email ?? session.customer_email
+
+      if (!email) break
+
+      // 1. Trouver ou créer le compte Supabase
+      let userId = existingId
+      if (!userId) {
+        // Chercher si un compte existe déjà avec cet email
+        const { data: listData } = await supabaseAdmin.auth.admin.listUsers()
+        const existing = listData.users.find((u: { email?: string }) => u.email === email)
+
+        if (existing) {
+          userId = existing.id
+        } else {
+          // Créer un nouveau compte (email confirmé automatiquement)
+          const { data: created } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            email_confirm: true,
+          })
+          userId = created.user?.id
+        }
+      }
+
       if (!userId) break
 
-      await supabaseAdmin.from('profiles').update({
+      // 2. Créer ou mettre à jour le profil
+      await supabaseAdmin.from('profiles').upsert({
+        id:                      userId,
         stripe_customer_id:      session.customer as string,
         stripe_subscription_id:  session.subscription as string,
         subscription_status:     'active',
         onboarded:               false,
         updated_at:              new Date().toISOString(),
-      }).eq('id', userId)
+      }, { onConflict: 'id' })
 
-      // Incrémenter le compteur de places fondateur prises
+      // 3. Incrémenter le compteur de places fondateur
       const { data: spotsRow } = await supabaseAdmin
         .from('founder_config').select('value').eq('key', 'spots_taken').single()
       if (spotsRow) {
@@ -48,36 +72,41 @@ export async function POST(req: NextRequest) {
           .eq('key', 'spots_taken')
       }
 
-      // Email de bienvenue envoyé uniquement après paiement confirmé
-      const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId)
-      const email = userData?.user?.email
-      if (email) {
-        await sendTransactional({
-          to:      email,
-          subject: 'Votre accès LocalBoost est activé ✓',
-          html: `
+      // 4. Générer un magic link pour la connexion + email de bienvenue
+      const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        type:    'magiclink',
+        email,
+        options: { redirectTo: `${APP_URL}/localboost/setup?welcome=1` },
+      })
+      const magicLink = linkData?.properties?.action_link ?? `${APP_URL}/login`
+
+      await sendTransactional({
+        to:      email,
+        subject: 'Votre accès LocalBoost est activé ✓',
+        html: `
 <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
-  <h2 style="font-size:20px;font-weight:700;margin:0 0 16px;">Bonjour,</h2>
-  <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
-    Votre accès LocalBoost est maintenant actif.
+  <h2 style="font-size:20px;font-weight:700;margin:0 0 16px;">Bienvenue sur LocalBoost !</h2>
+  <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">
+    Votre abonnement est actif. Cliquez sur le bouton ci-dessous pour accéder à votre tableau de bord et connecter votre fiche Google.
   </p>
-  <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 8px;">
-    Voici ce que vous pouvez faire dès maintenant :
-  </p>
-  <ol style="color:#374151;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px;">
-    <li>Connectez votre fiche Google Business — <a href="${APP_URL}/localboost/setup" style="color:#2563eb;">/localboost/setup</a></li>
-    <li>Consultez votre audit complet — <a href="${APP_URL}/localboost/audit" style="color:#2563eb;">/localboost/audit</a></li>
-    <li>Générez votre description Google optimisée — <a href="${APP_URL}/localboost/dashboard" style="color:#2563eb;">/localboost/dashboard</a></li>
-  </ol>
-  <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 24px;">
-    Si vous avez la moindre question, répondez directement à cet email.
-  </p>
-  <p style="color:#374151;font-size:15px;margin:0;">À bientôt,<br>L'équipe LocalBoost</p>
+  <div style="text-align:center;margin:28px 0;">
+    <a href="${magicLink}" style="display:inline-block;background:#2563eb;color:#fff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;">
+      Accéder à mon tableau de bord →
+    </a>
+    <p style="font-size:12px;color:#9ca3af;margin:10px 0 0;">Ce lien est valable 24h · Un seul clic suffit</p>
+  </div>
+  <p style="color:#374151;font-size:14px;line-height:1.7;margin:0 0 8px;">Une fois connecté, vous pourrez :</p>
+  <ul style="color:#374151;font-size:14px;line-height:2;margin:0 0 24px;padding-left:20px;">
+    <li>Connecter votre fiche Google Business</li>
+    <li>Voir votre audit complet et vos priorités</li>
+    <li>Activer les réponses automatiques aux avis</li>
+  </ul>
+  <p style="color:#374151;font-size:14px;margin:0;">Questions ? Répondez directement à cet email.<br>À bientôt,<br><strong>L'équipe LocalBoost</strong></p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0 16px;">
   <p style="color:#9ca3af;font-size:12px;margin:0;">LocalBoost · contact@thelocalboost.fr</p>
 </div>`,
-        }).catch(err => console.error('Welcome email error:', err))
-      }
+      }).catch(err => console.error('Welcome email error:', err))
+
       break
     }
 

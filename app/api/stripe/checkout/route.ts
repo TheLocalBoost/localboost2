@@ -1,22 +1,31 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const body = await req.json().catch(() => ({}))
+    const guestEmail: string | undefined = body.email
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+
+    // Utilisateur connecté OU email fourni en guest
+    const email = user?.email ?? guestEmail
+    if (!email) return NextResponse.json({ error: 'Email requis' }, { status: 400 })
 
     const session = await stripe.checkout.sessions.create({
       mode:                 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-      customer_email:       user.email,
+      customer_email:       email,
       allow_promotion_codes: true,
-      metadata:             { supabase_user_id: user.id },
+      metadata: {
+        ...(user?.id ? { supabase_user_id: user.id } : {}),
+        email,
+      },
       success_url: `${process.env.NEXT_PUBLIC_URL}/localboost/setup?welcome=1`,
       cancel_url:  `${process.env.NEXT_PUBLIC_URL}/pricing`,
     })
