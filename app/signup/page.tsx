@@ -139,8 +139,8 @@ export default function SignupPage() {
           <Link href="/" className="inline-block mb-6">
             <img src="/logo.png.png" alt="LocalBoost" className="h-16 w-auto mx-auto" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte</h1>
-          <p className="text-gray-500 text-sm">Sans engagement · Annulation en 1 clic</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte gratuit</h1>
+          <p className="text-gray-500 text-sm">Gratuit · Aucune carte bancaire requise</p>
         </div>
 
         {/* Étapes */}

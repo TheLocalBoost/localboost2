@@ -39,10 +39,9 @@ export async function GET(req: NextRequest) {
         nom:           meta.nom      ?? '',
       }),
     }).catch(() => {})
-
-    // Déconnecter — l'utilisateur doit se connecter manuellement
-    await supabase.auth.signOut()
   }
 
-  return NextResponse.redirect(new URL('/auth/confirm', origin))
+  // Redirige vers le dashboard directement — session active
+  const next = searchParams.get('next') ?? '/localboost/dashboard'
+  return NextResponse.redirect(new URL(next, origin))
 }
