@@ -211,68 +211,13 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     ? Math.round(result.competitors.reduce((a, c) => a + c.estimatedScore, 0) / result.competitors.length)
     : null
 
-  // CTA dynamique selon score + données réelles
-  const ctaContent = result ? (() => {
-    const { score, lostCalls, lostRevenue, reviews, competitors, problems, criteria, city } = result
-    const topComp    = competitors.find(c => c.estimatedScore > score) ?? null
-    const topProblem = problems[0] ?? null
-    const showLoss   = lostCalls >= 3
-
-    const MISSING_LABEL: Record<string, string> = {
-      horaires:     'vos horaires ne sont pas renseignés',
-      photos:       'vous manquez de photos récentes',
-      description:  'votre description est absente',
-      avis20:       "vous avez peu d'avis Google",
-      note4:        'votre note est en dessous de 4.0',
-      recentReview: 'aucun avis récent depuis 3 mois',
-      site:         'aucun site web lié à votre fiche',
-      telephone:    'votre téléphone est absent',
-    }
-    const firstMissing = Object.entries(criteria).find(([k, v]) => !v && !['nom','adresse'].includes(k))
-    const missingLabel = firstMissing ? (MISSING_LABEL[firstMissing[0]] ?? 'quelques points limitent votre visibilité') : null
-
-    if (score < 50) {
-      return {
-        hook: topComp
-          ? `${topComp.name} apparaît avant vous sur Google Maps. Chaque semaine, des clients vous cherchent et les trouvent eux à votre place.`
-          : `Votre fiche est quasiment invisible à ${city}. Des clients vous cherchent et ne vous trouvent pas.`,
-        metric: showLoss ? `~${lostRevenue}€ non réalisés ce mois-ci.` : null,
-        sub: 'LocalBoost reconstruit votre présence Google semaine après semaine — sans que vous ayez à y penser.',
-        btn: 'Récupérer ces clients — 29€/mois →',
-      }
-    }
-
-    if (score < 75) {
-      const hookComp = topComp
-        ? `${topComp.name} apparaît avant vous. Ils ont ${topComp.reviewCount} avis — vous en avez ${reviews}.`
-        : (topProblem?.text ?? `Votre fiche a des lacunes qui vous font perdre des appels chaque semaine.`)
-      const btnLabel = topComp
-        ? `Passer devant ${topComp.name.split(' ')[0]} — 29€/mois →`
-        : 'Corriger ça maintenant — 29€/mois →'
-      return {
-        hook: hookComp,
-        metric: showLoss ? `~${lostCalls} appel${lostCalls > 1 ? 's' : ''} perdu${lostCalls > 1 ? 's' : ''}/mois — ~${lostRevenue}€ non réalisés.` : null,
-        sub: 'LocalBoost publie chaque semaine, répond aux avis, et maintient votre fiche active à votre place.',
-        btn: btnLabel,
-      }
-    }
-
-    return {
-      hook: missingLabel
-        ? `Votre fiche est visible. Mais ${missingLabel} — ce qui vous coûte des clics chaque semaine.`
-        : 'Votre fiche est en bonne forme. Quelques points peuvent encore être améliorés.',
-      metric: showLoss ? `~${lostCalls} appel${lostCalls > 1 ? 's' : ''} perdu${lostCalls > 1 ? 's' : ''}/mois à cause de ça.` : null,
-      sub: 'LocalBoost maintient votre avance — publications régulières, réponses aux avis, mises à jour hebdomadaires.',
-      btn: 'Maintenir cette avance — 29€/mois →',
-    }
-  })() : null
 
   return (
     <section id="analyzer" className="py-20 px-6 bg-gray-50">
       <div className="max-w-xl mx-auto">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 border border-blue-200 px-4 py-1.5 text-sm font-medium text-blue-700 mb-4">
-            Gratuit · Résultat en 30 secondes · Sans inscription
+            Diagnostic de votre fiche Google
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
             Analysez votre fiche Google gratuitement
@@ -498,44 +443,28 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               )}
 
-              {/* BLOC 9 — CTA dynamique selon score */}
-              {ctaContent && (
-                <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-                  <p className="text-white font-bold text-base leading-snug mb-2">
-                    {ctaContent.hook}
-                  </p>
-                  {ctaContent.metric && (
-                    <div className="mb-3">
-                      <p className="text-amber-300 text-sm font-bold">{ctaContent.metric}</p>
-                      <p className="text-blue-300 text-xs mt-0.5">Estimation basée sur votre secteur et les données de votre fiche.</p>
-                    </div>
-                  )}
-                  <p className="text-blue-200 text-sm mb-5 leading-relaxed">
-                    {ctaContent.sub}
-                  </p>
-                  <a
-                    href={pricingUrl}
-                    onClick={() => {
-                      setCtaClicked(true)
-                      track('cta_click', {
-                        score: result.score,
-                        category: result.category,
-                        city: result.city,
-                        source: searchParams.get('utm_source') ?? 'direct',
-                      })
-                    }}
-                    className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
-                  >
-                    {ctaContent.btn}
-                  </a>
-                  <div className="flex items-center justify-center gap-1.5 mb-2">
-                    <span className="text-amber-300 text-sm">★</span>
-                    <p className="text-white text-xs font-semibold">Satisfait ou remboursé 30 jours — aucune question posée</p>
-                    <span className="text-amber-300 text-sm">★</span>
-                  </div>
-                  <p className="text-blue-300 text-xs text-center">Sans engagement · Résiliable à tout moment</p>
-                </div>
-              )}
+              {/* BLOC 9 — CTA */}
+              <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
+                <p className="text-white font-bold text-base mb-4">
+                  LocalBoost corrige ça automatiquement chaque semaine.
+                </p>
+                <a
+                  href={pricingUrl}
+                  onClick={() => {
+                    setCtaClicked(true)
+                    track('cta_click', {
+                      score: result.score,
+                      category: result.category,
+                      city: result.city,
+                      source: searchParams.get('utm_source') ?? 'direct',
+                    })
+                  }}
+                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
+                >
+                  Démarrer — 29€/mois →
+                </a>
+                <p className="text-blue-200 text-xs text-center">Satisfait ou remboursé 30 jours · Sans engagement</p>
+              </div>
 
             </div>
           )}
