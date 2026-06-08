@@ -9,7 +9,7 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   const { event, properties } = await req.json()
   if (!event) return NextResponse.json({ ok: false })
-  await supabase.from('analytics_events').insert({ event, properties: properties ?? {} })
+  await supabase.from('analytics_events').insert({ name: event, meta: properties ?? {} })
   return NextResponse.json({ ok: true })
 }
 

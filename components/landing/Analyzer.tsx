@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { track } from '@/lib/track'
-import EmailCaptureBlock from '@/components/analyser/EmailCaptureBlock'
+import { createClient } from '@/lib/supabase-browser'
 import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
 interface AnalyzerProps {
@@ -136,8 +136,14 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [step, setStep]       = useState(0)
   const [result, setResult]   = useState<AnalysisResult | null>(null)
   const [error, setError]     = useState('')
-  const [emailScore, setEmailScore] = useState<number | null>(null)
-  const [ctaClicked, setCtaClicked] = useState(false)
+  const [emailScore, setEmailScore]       = useState<number | null>(null)
+  const [ctaClicked, setCtaClicked]       = useState(false)
+  const [emailCaptured, setEmailCaptured] = useState(false)
+  const [gateEmail, setGateEmail]         = useState('')
+  const [gateUnlocked, setGateUnlocked]   = useState(false)
+  const [gateLoading, setGateLoading]     = useState(false)
+  const [gateSent, setGateSent]           = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
     const nom     = searchParams.get('nom')
@@ -169,9 +175,39 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           score:   score ?? '',
         }),
       }).catch(() => {})
+      setEmailCaptured(true)
       onEmailCapture?.(email)
     }
   }, [])
+
+  async function handleGateUnlock(e: React.FormEvent) {
+    e.preventDefault()
+    if (!gateEmail.includes('@') || !result) return
+    setGateLoading(true)
+    try {
+      const redirectUrl = `${window.location.origin}/analyser?nom=${encodeURIComponent(result.name)}&ville=${encodeURIComponent(result.city)}&unlocked=1`
+      // Magic link (compte créé automatiquement après paiement)
+      await supabase.auth.signInWithOtp({ email: gateEmail, options: { emailRedirectTo: redirectUrl, shouldCreateUser: false } })
+      // Envoi du rapport audit par email
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email:             gateEmail,
+          establishmentName: result.name,
+          score:             result.score,
+          city:              result.city,
+          category:          result.category,
+        }),
+      })
+      track('gate_unlock', { score: result.score, category: result.category, city: result.city, source: searchParams.get('utm_source') ?? 'direct' })
+      setGateSent(true)
+      setGateUnlocked(true)
+      setEmailCaptured(true)
+      onEmailCapture?.(gateEmail)
+    } catch { setGateUnlocked(true) } // déverrouiller même en cas d'erreur réseau
+    finally { setGateLoading(false) }
+  }
 
   // Niveau 5 — tracker non-converti : arrivé depuis email, résultat vu, pas de CTA cliqué après 20s
   useEffect(() => {
@@ -292,7 +328,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           {result && (
             <div className="space-y-4">
 
-              {/* BLOC 1 — Score + comparaison concurrents */}
+              {/* BLOC 1 — Score + concurrents (toujours visible) */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
                 <p className="text-xs text-gray-400 mb-4">{result.name} · {result.address}</p>
                 <div className="flex items-center justify-between">
@@ -311,191 +347,250 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-              {/* BLOC 2 — Problèmes avec impact individuel */}
+              {/* BLOC 2 — Premier problème seulement (toujours visible, crée l'urgence) */}
               {result.problems.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                    {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} — impact mensuel estimé
+                    {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} sur votre fiche
                   </p>
-                  <div className="space-y-3">
-                    {result.problems.map((pb, i) => (
-                      <div key={i} className="rounded-xl bg-red-50 border border-red-100 p-4">
-                        <div className="flex items-start gap-3">
-                          <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
-                          <p className="text-sm text-gray-800 leading-snug">{pb.text}</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{pb.calls} appel{pb.calls > 1 ? 's' : ''} perdu{pb.calls > 1 ? 's' : ''}/mois
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{pb.revenue}€ non réalisé/mois
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* BLOC 3 — Audit checklist */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                  Audit complet de votre fiche
-                </p>
-                <div className="space-y-2">
-                  {result.criteria && Object.entries(result.criteria).map(([key, ok]) => (
-                    <div key={key} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${ok ? 'bg-green-50' : 'bg-red-50 border border-red-100'}`}>
-                      <span className={`text-sm font-bold shrink-0 ${ok ? 'text-green-500' : 'text-red-500'}`}>{ok ? '✓' : '✗'}</span>
-                      <span className={`text-sm flex-1 ${ok ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
-                        {CRITERIA_LABELS[key] ?? key}
-                      </span>
-                      {key === 'avis20' && (
-                        <span className="text-xs text-gray-400">{result.reviews} avis</span>
-                      )}
-                      {key === 'photos' && (
-                        <span className="text-xs text-gray-400">{result.photos} photos</span>
-                      )}
-                      {key === 'note4' && (
-                        <span className="text-xs text-gray-400">{result.rating > 0 ? `${result.rating}★` : '—'}</span>
-                      )}
+                  <div className="rounded-xl bg-red-50 border border-red-100 p-4">
+                    <div className="flex items-start gap-3">
+                      <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
+                      <p className="text-sm text-gray-800 leading-snug">{result.problems[0].text}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* BLOC 4 — Concurrents */}
-              {result.competitors.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
-                  <div className="space-y-3">
-                    {result.competitors.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                          <p className="text-xs text-gray-400">
-                            {c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}
-                          </p>
-                        </div>
-                        <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
-                          {c.estimatedScore}/100
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* BLOC 5 — Total mensuel (Bug 1 corrigé : somme des problèmes, plafonnée par score) */}
-              <div className="bg-white rounded-2xl border border-red-100 p-6">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Total mensuel estimé — somme des problèmes détectés
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="rounded-xl bg-red-50 py-4">
-                    <p className="text-3xl font-extrabold text-red-500">~{result.lostCalls}</p>
-                    <p className="text-xs text-gray-500 mt-1">appels perdus/mois</p>
-                  </div>
-                  <div className="rounded-xl bg-red-50 py-4">
-                    <p className="text-3xl font-extrabold text-red-500">~{result.lostRevenue}€</p>
-                    <p className="text-xs text-gray-500 mt-1">CA non réalisé/mois</p>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-400 mt-3 text-center">
-                  Calculé à partir des problèmes détectés sur votre fiche et du panier moyen de votre secteur.
-                </p>
-              </div>
-
-              {/* BLOC 6 — Alerte fiche fermée */}
-              {result.isClosed && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-                  <p className="text-sm font-bold text-red-700 mb-1">Fiche marquée comme fermée</p>
-                  <p className="text-xs text-red-600">Google affiche votre établissement comme fermé{result.businessStatus === 'CLOSED_PERMANENTLY' ? ' définitivement' : ' temporairement'}. Les clients ne vous appelleront pas.</p>
-                </div>
-              )}
-
-              {/* BLOC 7 — Horaires réels Google */}
-              {result.weekdayHours.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Horaires affichés sur Google</p>
-                    {result.openNow !== null && (
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${result.openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                        {result.openNow ? '● Ouvert' : '● Fermé'}
+                    <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                        ~{result.problems[0].calls} appel{result.problems[0].calls > 1 ? 's' : ''} perdu{result.problems[0].calls > 1 ? 's' : ''}/mois
                       </span>
-                    )}
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                        ~{result.problems[0].revenue}€ non réalisé/mois
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    {result.weekdayHours.map((h, i) => (
-                      <p key={i} className="text-xs text-gray-600">{h}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* BLOC 8 — Avis réels Google */}
-              {result.recentReviews.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                    Derniers avis Google
-                  </p>
-                  <div className="space-y-4">
-                    {result.recentReviews.map((r, i) => (
-                      <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-gray-900">{r.author}</p>
-                          <div className="flex items-center gap-1">
-                            <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                            <span className="text-xs text-gray-400 ml-1">{r.time}</span>
-                          </div>
-                        </div>
-                        {r.text && <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{r.text}</p>}
-                      </div>
-                    ))}
-                  </div>
-                  {result.googleMapsUrl && (
-                    <a href={result.googleMapsUrl} target="_blank" rel="noopener"
-                      className="mt-3 block text-xs text-blue-500 hover:underline">
-                      Voir tous les avis sur Google Maps →
-                    </a>
+                  {result.problems.length > 1 && !gateUnlocked && (
+                    <p className="text-xs text-gray-400 mt-3 text-center">
+                      + {result.problems.length - 1} autre{result.problems.length > 2 ? 's' : ''} problème{result.problems.length > 2 ? 's' : ''} bloqué{result.problems.length > 2 ? 's' : ''}
+                    </p>
                   )}
                 </div>
               )}
 
-              {/* BLOC 9 — Capture email (visiteurs organiques) ou CTA direct (outreach) */}
-              {searchParams.get('utm_source') !== 'brevo' && (
-                <EmailCaptureBlock
-                  establishmentName={result.name}
-                  score={result.score}
-                  city={result.city}
-                  category={result.category}
-                  onCapture={email => onEmailCapture?.(email)}
-                />
-              )}
+              {/* GATE — mur email (affiché si pas encore déverrouillé) */}
+              {!gateUnlocked ? (
+                <div className="rounded-2xl border-2 border-blue-200 bg-blue-50 p-6">
+                  {/* Aperçu flou du contenu verrouillé */}
+                  <div className="relative mb-5 overflow-hidden rounded-xl" style={{ height: '80px' }}>
+                    <div className="absolute inset-0 pointer-events-none" style={{ filter: 'blur(4px)', opacity: 0.4 }}>
+                      <div className="bg-white rounded-xl p-4 space-y-2">
+                        <div className="h-3 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-red-200 rounded w-1/2" />
+                        <div className="h-3 bg-gray-200 rounded w-2/3" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-blue-700 bg-blue-100 rounded-full px-4 py-1.5">
+                        🔒 {result.problems.length > 1 ? `${result.problems.length - 1} problème${result.problems.length > 2 ? 's' : ''} + plan d'action complet` : 'Plan d\'action complet'}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* BLOC 10 — CTA compte gratuit */}
-              <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-                <p className="text-white font-bold text-base mb-1">
-                  Créez votre compte gratuit pour voir le plan d'action complet.
-                </p>
-                <p className="text-blue-200 text-xs mb-4">Score, problèmes détectés et 1 action IA — sans carte bancaire.</p>
-                <a
-                  href="/signup"
-                  onClick={() => {
-                    setCtaClicked(true)
-                    track('cta_click', {
-                      score: result.score,
-                      category: result.category,
-                      city: result.city,
-                      source: searchParams.get('utm_source') ?? 'direct',
-                    })
-                  }}
-                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
-                >
-                  Créer mon compte gratuit →
-                </a>
-                <p className="text-blue-200 text-xs text-center">Gratuit · Passez Pro à 29€/mois quand vous êtes convaincu</p>
-              </div>
+                  <p className="text-base font-bold text-gray-900 mb-1 text-center">
+                    Votre fiche perd ~{result.lostRevenue}€/mois.
+                  </p>
+                  <p className="text-sm text-gray-600 mb-5 text-center">
+                    Entrez votre email pour recevoir l'analyse complète + les actions prioritaires.
+                  </p>
+
+                  {gateSent ? (
+                    <div className="text-center py-2">
+                      <p className="text-green-700 font-semibold text-sm">✓ Votre plan est en route !</p>
+                      <p className="text-gray-500 text-xs mt-1">Vérifiez votre boîte mail dans 1 minute.</p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleGateUnlock} className="flex gap-2">
+                      <input
+                        type="email"
+                        value={gateEmail}
+                        onChange={e => setGateEmail(e.target.value)}
+                        placeholder="votre@email.fr"
+                        required
+                        className="flex-1 rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={gateLoading}
+                        className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {gateLoading ? '...' : 'Voir tout →'}
+                      </button>
+                    </form>
+                  )}
+
+                  <p className="text-xs text-gray-400 text-center mt-3">
+                    Pas de spam · Désabonnement en 1 clic
+                  </p>
+                  <div className="mt-4 pt-4 border-t border-blue-200 text-center">
+                    <a
+                      href="/pour-vous"
+                      onClick={() => track('cta_click_pour_vous', { score: result.score, source: searchParams.get('utm_source') ?? 'direct' })}
+                      className="text-xs text-blue-600 hover:underline font-medium"
+                    >
+                      Je préfère que ce soit géré pour moi — 29€/mois →
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                /* CONTENU DÉVERROUILLÉ */
+                <>
+                  {/* Problèmes restants */}
+                  {result.problems.length > 1 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                        Tous les problèmes détectés
+                      </p>
+                      <div className="space-y-3">
+                        {result.problems.slice(1).map((pb, i) => (
+                          <div key={i} className="rounded-xl bg-red-50 border border-red-100 p-4">
+                            <div className="flex items-start gap-3">
+                              <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
+                              <p className="text-sm text-gray-800 leading-snug">{pb.text}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                                ~{pb.calls} appel{pb.calls > 1 ? 's' : ''} perdu{pb.calls > 1 ? 's' : ''}/mois
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                                ~{pb.revenue}€ non réalisé/mois
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Total mensuel */}
+                  <div className="bg-white rounded-2xl border border-red-100 p-6">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                      Impact total mensuel estimé
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div className="rounded-xl bg-red-50 py-4">
+                        <p className="text-3xl font-extrabold text-red-500">~{result.lostCalls}</p>
+                        <p className="text-xs text-gray-500 mt-1">appels perdus/mois</p>
+                      </div>
+                      <div className="rounded-xl bg-red-50 py-4">
+                        <p className="text-3xl font-extrabold text-red-500">~{result.lostRevenue}€</p>
+                        <p className="text-xs text-gray-500 mt-1">CA non réalisé/mois</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Audit checklist */}
+                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      Audit complet de votre fiche
+                    </p>
+                    <div className="space-y-2">
+                      {result.criteria && Object.entries(result.criteria).map(([key, ok]) => (
+                        <div key={key} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${ok ? 'bg-green-50' : 'bg-red-50 border border-red-100'}`}>
+                          <span className={`text-sm font-bold shrink-0 ${ok ? 'text-green-500' : 'text-red-500'}`}>{ok ? '✓' : '✗'}</span>
+                          <span className={`text-sm flex-1 ${ok ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
+                            {CRITERIA_LABELS[key] ?? key}
+                          </span>
+                          {key === 'avis20' && <span className="text-xs text-gray-400">{result.reviews} avis</span>}
+                          {key === 'photos' && <span className="text-xs text-gray-400">{result.photos} photos</span>}
+                          {key === 'note4' && <span className="text-xs text-gray-400">{result.rating > 0 ? `${result.rating}★` : '—'}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Concurrents */}
+                  {result.competitors.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
+                      <div className="space-y-3">
+                        {result.competitors.map((c, i) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                              <p className="text-xs text-gray-400">{c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}</p>
+                            </div>
+                            <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
+                              {c.estimatedScore}/100
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fiche fermée */}
+                  {result.isClosed && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                      <p className="text-sm font-bold text-red-700 mb-1">Fiche marquée comme fermée</p>
+                      <p className="text-xs text-red-600">Google affiche votre établissement comme fermé{result.businessStatus === 'CLOSED_PERMANENTLY' ? ' définitivement' : ' temporairement'}.</p>
+                    </div>
+                  )}
+
+                  {/* Horaires */}
+                  {result.weekdayHours.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Horaires Google</p>
+                        {result.openNow !== null && (
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${result.openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                            {result.openNow ? '● Ouvert' : '● Fermé'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        {result.weekdayHours.map((h, i) => <p key={i} className="text-xs text-gray-600">{h}</p>)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Avis */}
+                  {result.recentReviews.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Derniers avis Google</p>
+                      <div className="space-y-4">
+                        {result.recentReviews.map((r, i) => (
+                          <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium text-gray-900">{r.author}</p>
+                              <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                            </div>
+                            {r.text && <p className="text-xs text-gray-500 line-clamp-2">{r.text}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CTA final — abonnement */}
+                  <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
+                    <p className="text-white font-bold text-base mb-1">
+                      Prêt à corriger ces problèmes ?
+                    </p>
+                    <p className="text-blue-200 text-xs mb-4">
+                      On s'en occupe pour vous chaque mois — photos, horaires, avis, optimisation.
+                    </p>
+                    <a
+                      href="/pour-vous"
+                      onClick={() => {
+                        setCtaClicked(true)
+                        track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city })
+                      }}
+                      className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
+                    >
+                      Je veux que ce soit géré — 29€/mois →
+                    </a>
+                    <p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic</p>
+                  </div>
+                </>
+              )}
 
             </div>
           )}

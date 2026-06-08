@@ -34,7 +34,6 @@ export default function SignupPage() {
     secteur: '',
     email: '',
     password: '',
-    confirm: '',
   })
   const [status, setStatus]       = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg]   = useState('')
@@ -50,10 +49,7 @@ export default function SignupPage() {
   }
 
   function checkPassword(pwd: string): string | null {
-    if (pwd.length < 8)          return 'Au moins 8 caractères'
-    if (!/[A-Z]/.test(pwd))      return 'Au moins une majuscule'
-    if (!/[0-9]/.test(pwd))      return 'Au moins un chiffre'
-    if (!/[^A-Za-z0-9]/.test(pwd)) return 'Au moins un caractère spécial (!@#$...)'
+    if (pwd.length < 8) return 'Au moins 8 caractères'
     return null
   }
 
@@ -67,12 +63,6 @@ export default function SignupPage() {
     const pwdErr = checkPassword(form.password)
     if (pwdErr) {
       setErrorMsg(pwdErr)
-      setStatus('error')
-      return
-    }
-
-    if (form.password !== form.confirm) {
-      setErrorMsg('Les mots de passe ne correspondent pas.')
       setStatus('error')
       return
     }
@@ -218,22 +208,8 @@ export default function SignupPage() {
                 {form.password && passwordError && (
                   <p className="text-xs text-red-500 mt-1">⚠ {passwordError}</p>
                 )}
-                {form.password && !passwordError && (
-                  <p className="text-xs text-green-600 mt-1">✓ Mot de passe fort</p>
-                )}
                 {!form.password && (
-                  <p className="text-xs text-gray-400 mt-1">8 caractères min · 1 majuscule · 1 chiffre · 1 caractère spécial</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Confirmer le mot de passe *</label>
-                <input
-                  type="password" value={form.confirm} onChange={set('confirm')}
-                  placeholder="Répétez votre mot de passe" required minLength={8}
-                  className={`${input} ${form.confirm && form.confirm !== form.password ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20' : ''}`}
-                />
-                {form.confirm && form.confirm !== form.password && (
-                  <p className="text-xs text-red-500 mt-1">Les mots de passe ne correspondent pas</p>
+                  <p className="text-xs text-gray-400 mt-1">8 caractères minimum</p>
                 )}
               </div>
 
