@@ -145,7 +145,7 @@ function PricingContent() {
               <span className="text-5xl font-extrabold text-gray-900">29€</span>
               <span className="text-gray-500 text-lg">/mois</span>
             </div>
-            <p className="text-sm text-gray-400 mt-1">puis 29€/mois, résiliable à tout moment</p>
+            <p className="text-sm text-gray-400 mt-1">sans engagement · résiliable en 1 clic</p>
           </div>
 
           <ul className="space-y-3 mt-6 mb-8">
