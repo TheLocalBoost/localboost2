@@ -326,11 +326,21 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   )}
                 </div>
                 {result.score < 86 && (
-                  <div className="mt-4 pt-4 border-t border-gray-50 flex items-start gap-2.5">
-                    <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
-                    <p className="text-sm text-gray-700">
-                      <strong>LocalBoost gère votre fiche Google à votre place</strong> — corrections, description, réponses aux avis, photos — chaque mois. Vous ne touchez à rien.
-                    </p>
+                  <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
+                      <p className="text-sm text-gray-700">
+                        <strong>LocalBoost gère votre fiche Google à votre place</strong> — corrections, description, réponses aux avis, photos — chaque mois. Vous ne touchez à rien.
+                      </p>
+                    </div>
+                    {result.lostCalls >= 2 && (
+                      <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3">
+                        <p className="text-sm text-green-800">
+                          <strong>ROI estimé :</strong> si on récupère 2 appels/mois sur les ~{result.lostCalls} perdus
+                          {' '}→ <strong>{2 * (result.lostRevenue > 0 ? Math.round(result.lostRevenue / result.lostCalls) : 150)}€ de CA</strong> pour 29€ investis.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

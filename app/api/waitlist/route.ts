@@ -73,13 +73,15 @@ export async function POST(req: NextRequest) {
 
     // Capture silencieuse depuis lien d'outreach — juste sauvegarder, pas d'email
     if (source === 'outreach_click') {
-      await supabaseAdmin.from('waitlist').upsert({
+      const row: Record<string, unknown> = {
         email,
         commerce_name: nom || commerce_name || '',
         city:          ville || city || '',
         source:        'outreach_click',
         created_at:    new Date().toISOString(),
-      }, { onConflict: 'email', ignoreDuplicates: true })
+      }
+      if (score != null) row.score = String(score)
+      await supabaseAdmin.from('waitlist').upsert(row, { onConflict: 'email', ignoreDuplicates: true })
       return NextResponse.json({ success: true })
     }
 

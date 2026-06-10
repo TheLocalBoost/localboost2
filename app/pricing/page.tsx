@@ -41,7 +41,21 @@ function PricingContent() {
 
   useEffect(() => {
     const urlEmail = searchParams.get('email')
-    if (urlEmail) setGuestEmail(urlEmail)
+    if (urlEmail) {
+      setGuestEmail(urlEmail)
+      // Capture silencieuse de la visite pricing pour rappel J+1
+      fetch('/api/waitlist', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:  urlEmail,
+          nom:    nomParam,
+          ville:  city,
+          score:  scoreParam || undefined,
+          source: 'outreach_click',
+        }),
+      }).catch(() => {})
+    }
 
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       if (u) setUser({ email: u.email ?? '', id: u.id })
@@ -140,13 +154,21 @@ function PricingContent() {
             Offre fondateur
           </div>
 
-          <div className="text-center mb-2">
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-5xl font-extrabold text-gray-900">29€</span>
-              <span className="text-gray-500 text-lg">/mois</span>
+          {/* Ancre prix — plan annuel barré */}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="text-center opacity-40">
+              <p className="text-xs text-gray-500 mb-0.5">Annuel</p>
+              <p className="text-lg font-bold text-gray-400 line-through">348€</p>
             </div>
-            <p className="text-sm text-gray-400 mt-1">sans engagement · résiliable en 1 clic</p>
+            <div className="text-center">
+              <p className="text-xs text-blue-600 font-semibold mb-0.5">Mensuel</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-5xl font-extrabold text-gray-900">29€</span>
+                <span className="text-gray-500 text-lg">/mois</span>
+              </div>
+            </div>
           </div>
+          <p className="text-sm text-gray-400 text-center mb-2">sans engagement · résiliable en 1 clic</p>
 
           <ul className="space-y-3 mt-6 mb-8">
             {FEATURES.map(f => (
@@ -212,6 +234,12 @@ function PricingContent() {
             <TestimonialCard key={t.metier} testimonial={t} />
           ))}
         </div>
+
+        {/* SIRET + confiance */}
+        <p className="text-center text-xs text-gray-300 mt-8">
+          LocalBoost — Entreprise française · SIREN 105 578 884<br />
+          Données hébergées en France · contact@thelocalboost.fr
+        </p>
 
       </div>
     </div>
