@@ -447,15 +447,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 >
                   Voir mon plan d'action — 29€/mois →
                 </a>
-                <a
-                  href="https://wa.me/33651234567"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full rounded-xl bg-blue-500/40 py-3 text-sm font-medium text-white hover:bg-blue-500/60 transition mb-3 text-center"
-                >
-                  💬 Parler à Brian sur WhatsApp
-                </a>
-                <p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic · Remboursé si pas de résultat</p>
+<p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic · Remboursé si pas de résultat</p>
               </div>
 
               {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
