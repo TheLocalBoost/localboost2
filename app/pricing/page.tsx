@@ -157,13 +157,23 @@ function PricingContent() {
           </ul>
 
           {!user && !checking && (
-            <input
-              type="email"
-              value={guestEmail}
-              onChange={e => setGuestEmail(e.target.value)}
-              placeholder="votre@email.fr"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm mb-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
+            guestEmail
+              ? (
+                <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-3 flex items-center gap-2">
+                  <span className="text-blue-600 text-sm font-bold">✓</span>
+                  <span className="text-sm text-blue-800 flex-1 truncate">{guestEmail}</span>
+                  <button onClick={() => setGuestEmail('')} className="text-xs text-blue-400 hover:text-blue-600 shrink-0">changer</button>
+                </div>
+              )
+              : (
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={e => setGuestEmail(e.target.value)}
+                  placeholder="votre@email.fr"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm mb-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              )
           )}
           <button
             onClick={handleCTA}

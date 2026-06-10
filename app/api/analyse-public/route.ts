@@ -231,7 +231,7 @@ function generateRichProblems(
   return { problems: sliced, lostCalls: cappedCalls, lostRevenue: cappedRevenue }
 }
 
-// Rate limiting: 5 req/min per IP (protects Google Places API costs)
+// Rate limiting: 60 req/min per IP
 const rl = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(ip: string): boolean {
@@ -241,9 +241,26 @@ function checkRateLimit(ip: string): boolean {
     rl.set(ip, { count: 1, resetAt: now + 60_000 })
     return true
   }
-  if (entry.count >= 5) return false
+  if (entry.count >= 60) return false
   entry.count++
   return true
+}
+
+// Cache in-memory (nom+ville → résultat, TTL 30min)
+const cache = new Map<string, { data: any; expiresAt: number }>()
+function cacheKey(name: string, city: string) { return `${name.toLowerCase().trim()}|${city.toLowerCase().trim()}` }
+function fromCache(name: string, city: string) {
+  const c = cache.get(cacheKey(name, city))
+  if (!c || Date.now() > c.expiresAt) return null
+  return c.data
+}
+function toCache(name: string, city: string, data: any) {
+  cache.set(cacheKey(name, city), { data, expiresAt: Date.now() + 30 * 60_000 })
+}
+
+// Normalise une ville pour comparaison (accents, casse, tirets)
+function normalizeStr(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
 }
 
 export async function POST(req: NextRequest) {
@@ -255,12 +272,22 @@ export async function POST(req: NextRequest) {
   const { commerce_name, city } = await req.json()
   if (!commerce_name || !city) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
 
+  // Cache hit
+  const cached = fromCache(commerce_name, city)
+  if (cached) return NextResponse.json(cached)
+
   // 1. Textsearch
   const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(`${commerce_name} ${city}`)}&language=fr&region=fr&key=${GOOGLE_API_KEY}`
   const searchData = await fetch(searchUrl).then(r => r.json())
   const results: any[] = searchData.results ?? []
-  const place = results[0]
-  if (!place) return NextResponse.json({ error: 'Établissement introuvable. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
+  if (!results.length) return NextResponse.json({ error: 'Établissement introuvable. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
+
+  // Choisir le résultat qui correspond à la bonne ville (évite de montrer le mauvais établissement)
+  const cityNorm = normalizeStr(city)
+  const place = results.find(r => {
+    const addr = normalizeStr(r.formatted_address ?? r.vicinity ?? '')
+    return addr.includes(cityNorm)
+  }) ?? results[0]
 
   // 2. Détails
   const fields = [
@@ -325,7 +352,7 @@ export async function POST(req: NextRequest) {
   const weekdayHours: string[] = p.opening_hours?.weekday_text ?? []
   const openNow: boolean | null = p.opening_hours?.open_now ?? null
 
-  return NextResponse.json({
+  const responseData = {
     found:    true,
     name:     p.name ?? commerce_name,
     address:  p.formatted_address ?? '',
@@ -348,5 +375,8 @@ export async function POST(req: NextRequest) {
     lostCalls,
     lostRevenue,
     competitors,
-  })
+  }
+
+  toCache(commerce_name, city, responseData)
+  return NextResponse.json(responseData)
 }
