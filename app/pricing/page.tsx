@@ -1,26 +1,18 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
-import TestimonialCard from '@/components/shared/TestimonialCard'
-import { getTestimonial, testimonialsByCategory, type Testimonial } from '@/lib/testimonials'
 
 const FEATURES = [
-  'Plan d\'action personnalisé mis à jour chaque semaine',
-  'Description Google rédigée par IA',
-  'Réponses aux avis générées par IA',
-  'Générateur de demandes d\'avis + QR Code',
+  'Plan d\'action personnalisÃ© mis Ã  jour chaque semaine',
+  'Description Google rÃ©digÃ©e par IA',
+  'RÃ©ponses aux avis gÃ©nÃ©rÃ©es par IA',
+  'GÃ©nÃ©rateur de demandes d\'avis + QR Code',
   'Publications Google automatiques',
   'Rapport hebdomadaire par email',
   'Historique de votre score sur 12 mois',
-]
-
-const TESTIMONIALS = [
-  { name: 'Marc D.', role: 'Plombier · Lyon', text: '« En 3 semaines, je suis passé de la 5e à la 2e position sur Google. 4 nouveaux clients ce mois-ci. »', stars: 5 },
-  { name: 'Sophie L.', role: 'Coiffeuse · Bordeaux', text: '« L\'email de demande d\'avis a multiplié mes avis Google par 3 en un mois. Simple et efficace. »', stars: 5 },
-  { name: 'Thomas R.', role: 'Électricien · Nantes', text: '« Les priorités IA m\'ont évité de perdre du temps sur ce qui n\'avait pas d\'impact. Très bien. »', stars: 5 },
 ]
 
 const SPOTS_LEFT = parseInt(process.env.NEXT_PUBLIC_FOUNDER_SPOTS_LEFT ?? '47', 10)
@@ -49,19 +41,11 @@ function PricingContent() {
     })
   }, [])
 
-  // Témoignages : métier détecté en premier, puis 2 autres au hasard
-  const primaryTestimonial = getTestimonial(category)
-  const otherTestimonials  = Object.values(testimonialsByCategory)
-    .filter((t: Testimonial) => t !== primaryTestimonial)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 2) as Testimonial[]
-  const allTestimonials = [primaryTestimonial, ...otherTestimonials]
-
   const handleCTA = async () => {
     const email = user?.email ?? guestEmail
     if (!email || !email.includes('@')) return
     setLoading(true)
-    // Capture au moment du clic — consentement explicite (l'artisan essaie de payer)
+    // Capture au moment du clic â€” consentement explicite (l'artisan essaie de payer)
     fetch('/api/waitlist', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -77,13 +61,13 @@ function PricingContent() {
       if (data.url)   window.location.href = data.url
       if (data.error) alert('Erreur : ' + data.error)
     } catch {
-      alert('Erreur de connexion. Réessayez.')
+      alert('Erreur de connexion. RÃ©essayez.')
     } finally {
       setLoading(false)
     }
   }
 
-  const ctaLabel = loading ? 'Chargement...' : 'Confier ma fiche Google à LocalBoost →'
+  const ctaLabel = loading ? 'Chargement...' : 'Confier ma fiche Google Ã  LocalBoost â†’'
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">
@@ -92,50 +76,50 @@ function PricingContent() {
         {/* Logo */}
         <div className="text-center mb-10">
           <a href="/" className="inline-flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
-            <span>📍</span><span>LocalBoost</span>
+            <span>ðŸ“</span><span>LocalBoost</span>
           </a>
 
           {checking ? null : user ? (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Vous y êtes presque</h1>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Vous y Ãªtes presque</h1>
               <p className="text-gray-500 text-sm">
-                Votre compte est créé. Activez votre accès pour débloquer votre plan d'action.
+                Votre compte est crÃ©Ã©. Activez votre accÃ¨s pour dÃ©bloquer votre plan d'action.
               </p>
             </>
           ) : city ? (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Débloquez votre plan d'action complet</h1>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">DÃ©bloquez votre plan d'action complet</h1>
               <p className="text-gray-500 text-sm">
-                Rejoignez les artisans de <strong>{city}</strong> qui améliorent leur visibilité Google chaque semaine.
+                Rejoignez les artisans de <strong>{city}</strong> qui amÃ©liorent leur visibilitÃ© Google chaque semaine.
               </p>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Débloquez votre plan d'action complet</h1>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">DÃ©bloquez votre plan d'action complet</h1>
               <p className="text-gray-500 text-sm">
-                Rejoignez les artisans qui améliorent leur visibilité Google chaque semaine.
+                Rejoignez les artisans qui amÃ©liorent leur visibilitÃ© Google chaque semaine.
               </p>
             </>
           )}
         </div>
 
-        {/* Compteur temps réel — L6 */}
+        {/* Compteur temps rÃ©el â€” L6 */}
         <div className="mb-6">
           <FounderSpotsCounter />
         </div>
 
-        {/* Bandeau personnalisé si score connu */}
+        {/* Bandeau personnalisÃ© si score connu */}
         {scoreParam > 0 && (
           <div className="rounded-2xl bg-red-50 border border-red-200 p-5 mb-4 text-center">
             <p className="text-sm text-red-700 font-semibold mb-1">
-              {nomParam ? `${nomParam} — score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
+              {nomParam ? `${nomParam} â€” score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
             </p>
             <p className="text-2xl font-extrabold text-red-600">
-              ~{revenueParam > 0 ? `${revenueParam}€` : '?'}
-              <span className="text-sm font-normal text-red-500"> perdus/mois à cause des lacunes détectées</span>
+              ~{revenueParam > 0 ? `${revenueParam}â‚¬` : '?'}
+              <span className="text-sm font-normal text-red-500"> perdus/mois Ã  cause des lacunes dÃ©tectÃ©es</span>
             </p>
             <p className="text-xs text-red-400 mt-2">
-              Pour 29€/mois, on corrige tout ça automatiquement.
+              Pour 29â‚¬/mois, on corrige tout Ã§a automatiquement.
             </p>
           </div>
         )}
@@ -146,26 +130,26 @@ function PricingContent() {
             Offre fondateur
           </div>
 
-          {/* Ancre prix — plan annuel barré */}
+          {/* Ancre prix â€” plan annuel barrÃ© */}
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="text-center opacity-40">
               <p className="text-xs text-gray-500 mb-0.5">Annuel</p>
-              <p className="text-lg font-bold text-gray-400 line-through">348€</p>
+              <p className="text-lg font-bold text-gray-400 line-through">348â‚¬</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-blue-600 font-semibold mb-0.5">Mensuel</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-gray-900">29€</span>
+                <span className="text-5xl font-extrabold text-gray-900">29â‚¬</span>
                 <span className="text-gray-500 text-lg">/mois</span>
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 text-center mb-2">sans engagement · résiliable en 1 clic</p>
+          <p className="text-sm text-gray-400 text-center mb-2">sans engagement Â· rÃ©siliable en 1 clic</p>
 
           <ul className="space-y-3 mt-6 mb-8">
             {FEATURES.map(f => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
-                <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{f}
+                <span className="text-green-500 shrink-0 mt-0.5 font-bold">âœ“</span>{f}
               </li>
             ))}
           </ul>
@@ -174,7 +158,7 @@ function PricingContent() {
             guestEmail
               ? (
                 <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-3 flex items-center gap-2">
-                  <span className="text-blue-600 text-sm font-bold">✓</span>
+                  <span className="text-blue-600 text-sm font-bold">âœ“</span>
                   <span className="text-sm text-blue-800 flex-1 truncate">{guestEmail}</span>
                   <button onClick={() => setGuestEmail('')} className="text-xs text-blue-400 hover:text-blue-600 shrink-0">changer</button>
                 </div>
@@ -197,40 +181,64 @@ function PricingContent() {
             {ctaLabel}
           </button>
 
-          {/* Garantie — mise en avant */}
+          {/* Garantie â€” mise en avant */}
           <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-center">
-            <p className="text-sm font-bold text-amber-800">★ Satisfait ou remboursé 30 jours</p>
-            <p className="text-xs text-amber-700 mt-0.5">Si vous ne voyez pas de résultat en 30 jours, on vous rembourse intégralement. Aucune question posée.</p>
+            <p className="text-sm font-bold text-amber-800">â˜… Satisfait ou remboursÃ© 30 jours</p>
+            <p className="text-xs text-amber-700 mt-0.5">Si vous ne voyez pas de rÃ©sultat en 30 jours, on vous rembourse intÃ©gralement. Aucune question posÃ©e.</p>
           </div>
 
-          {/* Réassurance */}
+          {/* RÃ©assurance */}
           <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-100">
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">🔒</span>
-              <p className="text-xs text-gray-500">Paiement sécurisé<br />Stripe</p>
+              <span className="text-lg">ðŸ”’</span>
+              <p className="text-xs text-gray-500">Paiement sÃ©curisÃ©<br />Stripe</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">📅</span>
-              <p className="text-xs text-gray-500">Résiliable<br />en 1 clic</p>
+              <span className="text-lg">ðŸ“…</span>
+              <p className="text-xs text-gray-500">RÃ©siliable<br />en 1 clic</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">💬</span>
+              <span className="text-lg">ðŸ’¬</span>
               <p className="text-xs text-gray-500">Support<br />direct fondateur</p>
             </div>
           </div>
         </div>
 
-        {/* Témoignages dynamiques par métier — L5 */}
-        <div className="space-y-3">
-          {allTestimonials.map(t => (
-            <TestimonialCard key={t.metier} testimonial={t} />
-          ))}
+        {/* Ce que vous recevez */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <p className="text-sm font-bold text-gray-900 mb-4">Ce qui se passe aprÃ¨s votre paiement</p>
+          <div className="space-y-4">
+            <div className="flex gap-3">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Aujourd'hui</p>
+                <p className="text-xs text-gray-500 mt-0.5">Vous recevez votre audit complet (9 critÃ¨res) et les 3 actions prioritaires pour votre fiche.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Dans 48h</p>
+                <p className="text-xs text-gray-500 mt-0.5">Votre description Google est rÃ©digÃ©e et soumise. Vos horaires et services sont vÃ©rifiÃ©s et corrigÃ©s.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Chaque semaine</p>
+                <p className="text-xs text-gray-500 mt-0.5">Un rapport vous dit oÃ¹ en est votre fiche. On rÃ©pond aux avis, on publie du contenu. Vous ne touchez Ã  rien.</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 pt-4 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400">Pas de rÃ©sultat visible en 30 jours â†’ remboursement intÃ©gral, aucune question posÃ©e.</p>
+          </div>
         </div>
 
         {/* SIRET + confiance */}
         <p className="text-center text-xs text-gray-300 mt-8">
-          LocalBoost — Entreprise française · SIREN 105 578 884<br />
-          Données hébergées en France · contact@thelocalboost.fr
+          LocalBoost â€” Entreprise franÃ§aise Â· SIREN 105 578 884<br />
+          DonnÃ©es hÃ©bergÃ©es en France Â· contact@thelocalboost.fr
         </p>
 
       </div>
