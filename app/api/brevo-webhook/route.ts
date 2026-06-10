@@ -59,6 +59,17 @@ export async function POST(req: NextRequest) {
         .eq('email', email)
         .single()
 
+      // Anti-bot : ignorer si plus de 3 clics dans les 5 dernières minutes pour ce lead
+      if (lead?.id) {
+        const since = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+        const { count } = await supabase
+          .from('email_clicks')
+          .select('id', { count: 'exact', head: true })
+          .eq('lead_id', lead.id)
+          .gte('clicked_at', since)
+        if ((count ?? 0) >= 3) continue
+      }
+
       await supabase.from('email_clicks').insert({
         variant_id: variantId,
         clicked_at: clickedAt,
