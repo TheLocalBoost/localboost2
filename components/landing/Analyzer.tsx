@@ -139,6 +139,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [emailScore, setEmailScore]       = useState<number | null>(null)
   const [ctaClicked, setCtaClicked]       = useState(false)
   const [emailCaptured, setEmailCaptured] = useState(false)
+  const [capturedEmail, setCapturedEmail] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
@@ -171,6 +172,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           score:   score ?? '',
         }),
       }).catch(() => {})
+      setCapturedEmail(email)
       setEmailCaptured(true)
       onEmailCapture?.(email)
     }
@@ -226,7 +228,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   }
 
   const pricingUrl = result
-    ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}&nom=${encodeURIComponent(result.name)}&revenue=${result.lostRevenue}`
+    ? `/pricing?city=${encodeURIComponent(result.city)}&category=${encodeURIComponent(result.category)}&score=${result.score}&nom=${encodeURIComponent(result.name)}&revenue=${result.lostRevenue}${capturedEmail ? `&email=${encodeURIComponent(capturedEmail)}` : ''}`
     : '/pricing'
 
   const avgCompetitorScore = result?.competitors.length
@@ -314,34 +316,50 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-              {/* BLOC 2 — Tous les problèmes détectés */}
+              {/* BLOC 2 — 1er problème visible, reste bloqué */}
               {result.problems.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
                     {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} sur votre fiche
                   </p>
                   <div className="space-y-3">
-                    {result.problems.map((pb, i) => (
-                      <div key={i} className="rounded-xl bg-red-50 border border-red-100 p-4">
-                        <div className="flex items-start gap-3">
-                          <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
-                          <p className="text-sm text-gray-800 leading-snug">{pb.text}</p>
+                    {/* 1er problème visible */}
+                    <div className="rounded-xl bg-red-50 border border-red-100 p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
+                        <p className="text-sm text-gray-800 leading-snug">{result.problems[0].text}</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                          ~{result.problems[0].calls} appel{result.problems[0].calls > 1 ? 's' : ''} perdu{result.problems[0].calls > 1 ? 's' : ''}/mois
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                          ~{result.problems[0].revenue}€ non réalisé/mois
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Reste bloqué */}
+                    {result.problems.length > 1 && (
+                      <div className="relative">
+                        <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 p-4 blur-[2px] select-none pointer-events-none">
+                          <div className="flex items-start gap-3">
+                            <span className="text-red-400 font-bold text-sm shrink-0">✗</span>
+                            <p className="text-sm text-gray-400">••••••••••••••••••••••••</p>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{pb.calls} appel{pb.calls > 1 ? 's' : ''} perdu{pb.calls > 1 ? 's' : ''}/mois
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{pb.revenue}€ non réalisé/mois
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                            +{result.problems.length - 1} problème{result.problems.length > 2 ? 's' : ''} masqué{result.problems.length > 2 ? 's' : ''}
                           </span>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* BLOC 3 — Impact total mensuel */}
+              {/* BLOC 3 — Impact total */}
               <div className="bg-white rounded-2xl border border-red-100 p-6">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
                   Impact total mensuel estimé
@@ -358,90 +376,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-              {/* Audit checklist */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                  Audit complet de votre fiche
-                </p>
-                <div className="space-y-2">
-                  {result.criteria && Object.entries(result.criteria).map(([key, ok]) => (
-                    <div key={key} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${ok ? 'bg-green-50' : 'bg-red-50 border border-red-100'}`}>
-                      <span className={`text-sm font-bold shrink-0 ${ok ? 'text-green-500' : 'text-red-500'}`}>{ok ? '✓' : '✗'}</span>
-                      <span className={`text-sm flex-1 ${ok ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
-                        {CRITERIA_LABELS[key] ?? key}
-                      </span>
-                      {key === 'avis20' && <span className="text-xs text-gray-400">{result.reviews} avis</span>}
-                      {key === 'photos' && <span className="text-xs text-gray-400">{result.photos} photos</span>}
-                      {key === 'note4' && <span className="text-xs text-gray-400">{result.rating > 0 ? `${result.rating}★` : '—'}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Concurrents */}
-              {result.competitors.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
-                  <div className="space-y-3">
-                    {result.competitors.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                          <p className="text-xs text-gray-400">{c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}</p>
-                        </div>
-                        <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
-                          {c.estimatedScore}/100
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Fiche fermée */}
-              {result.isClosed && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-                  <p className="text-sm font-bold text-red-700 mb-1">Fiche marquée comme fermée</p>
-                  <p className="text-xs text-red-600">Google affiche votre établissement comme fermé{result.businessStatus === 'CLOSED_PERMANENTLY' ? ' définitivement' : ' temporairement'}.</p>
-                </div>
-              )}
-
-              {/* Horaires */}
-              {result.weekdayHours.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Horaires Google</p>
-                    {result.openNow !== null && (
-                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${result.openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                        {result.openNow ? '● Ouvert' : '● Fermé'}
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    {result.weekdayHours.map((h, i) => <p key={i} className="text-xs text-gray-600">{h}</p>)}
-                  </div>
-                </div>
-              )}
-
-              {/* Avis */}
-              {result.recentReviews.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Derniers avis Google</p>
-                  <div className="space-y-4">
-                    {result.recentReviews.map((r, i) => (
-                      <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-gray-900">{r.author}</p>
-                          <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-                        </div>
-                        {r.text && <p className="text-xs text-gray-500 line-clamp-2">{r.text}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* CTA final */}
+              {/* CTA — immédiatement après l'impact, avant le reste */}
               <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
                 <p className="text-white font-bold text-lg mb-1">
                   {avgCompetitorScore !== null && result.score < avgCompetitorScore
@@ -459,10 +394,102 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   }}
                   className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
                 >
-                  Corriger tout ça — 29€/mois →
+                  Voir mon plan d'action — 29€/mois →
                 </a>
-                <p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic</p>
+                <p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic · Remboursé si pas de résultat</p>
               </div>
+
+              {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
+              <details className="group">
+                <summary className="cursor-pointer text-xs text-gray-400 text-center py-2 select-none list-none flex items-center justify-center gap-1">
+                  <span className="group-open:hidden">Voir le détail complet de l'audit ▾</span>
+                  <span className="hidden group-open:inline">Masquer ▴</span>
+                </summary>
+                <div className="space-y-4 mt-2">
+                  {/* Audit checklist */}
+                  <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                      Audit complet de votre fiche
+                    </p>
+                    <div className="space-y-2">
+                      {result.criteria && Object.entries(result.criteria).map(([key, ok]) => (
+                        <div key={key} className={`flex items-center gap-3 rounded-xl px-4 py-3 ${ok ? 'bg-green-50' : 'bg-red-50 border border-red-100'}`}>
+                          <span className={`text-sm font-bold shrink-0 ${ok ? 'text-green-500' : 'text-red-500'}`}>{ok ? '✓' : '✗'}</span>
+                          <span className={`text-sm flex-1 ${ok ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>
+                            {CRITERIA_LABELS[key] ?? key}
+                          </span>
+                          {key === 'avis20' && <span className="text-xs text-gray-400">{result.reviews} avis</span>}
+                          {key === 'photos' && <span className="text-xs text-gray-400">{result.photos} photos</span>}
+                          {key === 'note4' && <span className="text-xs text-gray-400">{result.rating > 0 ? `${result.rating}★` : '—'}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Concurrents */}
+                  {result.competitors.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
+                      <div className="space-y-3">
+                        {result.competitors.map((c, i) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{c.name}</p>
+                              <p className="text-xs text-gray-400">{c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}</p>
+                            </div>
+                            <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
+                              {c.estimatedScore}/100
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Horaires */}
+                  {result.weekdayHours.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Horaires Google</p>
+                        {result.openNow !== null && (
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${result.openNow ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                            {result.openNow ? '● Ouvert' : '● Fermé'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        {result.weekdayHours.map((h, i) => <p key={i} className="text-xs text-gray-600">{h}</p>)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Avis */}
+                  {result.recentReviews.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Derniers avis Google</p>
+                      <div className="space-y-4">
+                        {result.recentReviews.map((r, i) => (
+                          <div key={i} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium text-gray-900">{r.author}</p>
+                              <span className="text-amber-400 text-xs">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                            </div>
+                            {r.text && <p className="text-xs text-gray-500 line-clamp-2">{r.text}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fiche fermée */}
+                  {result.isClosed && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+                      <p className="text-sm font-bold text-red-700 mb-1">Fiche marquée comme fermée</p>
+                      <p className="text-xs text-red-600">Google affiche votre établissement comme fermé{result.businessStatus === 'CLOSED_PERMANENTLY' ? ' définitivement' : ' temporairement'}.</p>
+                    </div>
+                  )}
+                </div>
+              </details>
 
             </div>
           )}
