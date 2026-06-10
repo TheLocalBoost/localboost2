@@ -41,21 +41,7 @@ function PricingContent() {
 
   useEffect(() => {
     const urlEmail = searchParams.get('email')
-    if (urlEmail) {
-      setGuestEmail(urlEmail)
-      // Capture silencieuse de la visite pricing pour rappel J+1
-      fetch('/api/waitlist', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          email:  urlEmail,
-          nom:    nomParam,
-          ville:  city,
-          score:  scoreParam || undefined,
-          source: 'outreach_click',
-        }),
-      }).catch(() => {})
-    }
+    if (urlEmail) setGuestEmail(urlEmail)
 
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       if (u) setUser({ email: u.email ?? '', id: u.id })
@@ -75,6 +61,12 @@ function PricingContent() {
     const email = user?.email ?? guestEmail
     if (!email || !email.includes('@')) return
     setLoading(true)
+    // Capture au moment du clic — consentement explicite (l'artisan essaie de payer)
+    fetch('/api/waitlist', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ email, nom: nomParam, ville: city, score: scoreParam || undefined, source: 'outreach_click' }),
+    }).catch(() => {})
     try {
       const res = await fetch('/api/stripe/checkout', {
         method:  'POST',
@@ -91,7 +83,7 @@ function PricingContent() {
     }
   }
 
-  const ctaLabel = loading ? 'Chargement...' : 'Activer mon accès →'
+  const ctaLabel = loading ? 'Chargement...' : 'Confier ma fiche Google à LocalBoost →'
 
   return (
     <div className="min-h-screen bg-gray-50 py-16 px-4">

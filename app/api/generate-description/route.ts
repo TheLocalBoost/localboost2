@@ -21,23 +21,22 @@ export async function POST(req: NextRequest) {
 
   const problemList = (problems ?? []).slice(0, 3).map((p: { text: string }) => `- ${p.text}`).join('\n')
 
-  const prompt = `Tu es un expert en référencement local Google. Rédige une description Google Business Profile pour cet établissement.
+  const prompt = `Tu es un expert en référencement local Google. Rédige la description Google Business Profile de "${name}", ${category ?? 'artisan'} à ${city}.
 
-Établissement : ${name}
-Ville : ${city}
-Secteur : ${category ?? 'artisan'}
-Problèmes actuels de la fiche :
-${problemList || '- Description manquante'}
+Cette description sera publiée demain matin sur la vraie fiche Google de "${name}".
 
-Contraintes :
-- Entre 150 et 220 mots
-- Commence directement par le service (pas "Bienvenue chez" ou "Nous sommes")
-- Inclure le nom de la ville et le secteur pour le référencement local
-- Ton professionnel mais humain, pas corporate
-- Terminer par un appel à l'action simple (appel, visite, devis)
-- Ne pas mentionner les problèmes listés ci-dessus
+Problèmes actuels de la fiche (à corriger implicitement dans la description) :
+${problemList || '- Description absente'}
 
-Réponds uniquement avec la description, rien d'autre.`
+Contraintes strictes :
+- 150 à 220 mots exactement
+- Commence par le métier exercé et la ville, jamais par "Bienvenue" ou "Nous"
+- Cite le nom "${name}" et la ville "${city}" dans les deux premières phrases (SEO local)
+- Ton humain, direct, comme si un artisan parlait lui-même — pas de jargon marketing
+- Un seul appel à l'action à la fin (appel téléphonique ou devis)
+- Aucune mention des lacunes listées ci-dessus
+
+Réponds uniquement avec la description rédigée, rien d'autre.`
 
   try {
     const msg = await anthropic.messages.create({
