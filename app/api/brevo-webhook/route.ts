@@ -12,36 +12,59 @@ export async function POST(req: NextRequest) {
   const events = Array.isArray(body) ? body : [body]
 
   for (const ev of events) {
-    if (ev.event !== 'click') continue
-
-    const link: string  = ev.link ?? ev.url ?? ''
     const email: string = (ev.email ?? '').toLowerCase().trim()
+    if (!email) continue
 
-    // Extraire vid depuis ?vid=X (lien /api/track) ou utm_campaign=vX (lien direct)
-    const vidMatch = link.match(/[?&]vid=(\d+)/)
-                  ?? link.match(/utm_campaign=v(\d+)/)
-                  ?? link.match(/utm_campaign%3Dv(\d+)/)   // URL-encodé
-    if (!vidMatch) continue
+    // ── Hard bounce / Soft bounce → bloquer définitivement les hard bounces
+    if (ev.event === 'hard_bounce' || ev.event === 'invalid_email') {
+      await supabase
+        .from('leads')
+        .update({ email_status: 'bounced', sent: true })
+        .eq('email', email)
+      continue
+    }
 
-    const variantId = parseInt(vidMatch[1])
-    const clickedAt = new Date(((ev.ts_event ?? ev.ts ?? Date.now() / 1000) as number) * 1000).toISOString()
+    // ── Unsubscribe
+    if (ev.event === 'unsubscribe') {
+      await supabase
+        .from('leads')
+        .update({ email_status: 'unsubscribed' })
+        .eq('email', email)
+      continue
+    }
 
-    // Chercher le lead correspondant à cet email
-    let leadId: number | null = null
-    if (email) {
+    // ── Spam complaint
+    if (ev.event === 'spam') {
+      await supabase
+        .from('leads')
+        .update({ email_status: 'unsubscribed' })
+        .eq('email', email)
+      continue
+    }
+
+    // ── Click
+    if (ev.event === 'click') {
+      const link: string = ev.link ?? ev.url ?? ''
+      const vidMatch = link.match(/[?&]vid=(\d+)/)
+                    ?? link.match(/utm_campaign=v(\d+)/)
+                    ?? link.match(/utm_campaign%3Dv(\d+)/)
+      if (!vidMatch) continue
+
+      const variantId = parseInt(vidMatch[1])
+      const clickedAt = new Date(((ev.ts_event ?? ev.ts ?? Date.now() / 1000) as number) * 1000).toISOString()
+
       const { data: lead } = await supabase
         .from('leads')
         .select('id')
         .eq('email', email)
         .single()
-      leadId = lead?.id ?? null
-    }
 
-    await supabase.from('email_clicks').insert({
-      variant_id: variantId,
-      clicked_at: clickedAt,
-      lead_id:    leadId,
-    })
+      await supabase.from('email_clicks').insert({
+        variant_id: variantId,
+        clicked_at: clickedAt,
+        lead_id:    lead?.id ?? null,
+      })
+    }
   }
 
   return NextResponse.json({ ok: true })

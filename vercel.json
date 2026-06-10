@@ -23,6 +23,10 @@
     {
       "path": "/api/cron/send-reengagement",
       "schedule": "0 10 * * 2,4"
+    },
+    {
+      "path": "/api/cron/send-clicker-followup",
+      "schedule": "0 11 * * 1-5"
     }
   ]
 }

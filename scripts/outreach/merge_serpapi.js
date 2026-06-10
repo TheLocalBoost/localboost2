@@ -12,6 +12,10 @@ const __dirname   = dirname(fileURLToPath(import.meta.url))
 const USE_ZEROBOUNCE = process.env.ZEROBOUNCE_API_KEY && process.argv.includes("--validate")
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
+const GENERIC_LOCAL_RE    = /^(contact|info|admin|webmaster|support|service|mairie|secretariat|commercial|direction|recrutement|noreply|no-reply|donotreply|do-not-reply|accueil|reception|rh|facturation|reservation|vente|sav|newsletter|devis|presse|communication|notifications?|postmaster|bounce|maildaemon|bonjour|hello|votre|prenom|monsieur|madame)([.\-_]|$)/i;
+const PLACEHOLDER_LOCALS  = new Set(["jean","pierre","marie","paul","dupont","durand","martin","monemail","monmail","anonymous","exemple","example","test","user","votremail","votrenom","prenom","nom","email","mail","firstname","lastname"]);
+const PLACEHOLDER_DOMAINS = new Set(["email.fr","email.com","example.com","example.fr","exemple.fr","test.com","test.fr","domain.com","domain.fr","anonymous.com","monemail.fr","monmail.fr","placeholder.com","votrenom.fr","sentry.io","sentry.wadrid.net","surecart.com"]);
+
 // Cache MX par domaine — évite de requêter le même domaine plusieurs fois
 const mxCache = new Map()
 
@@ -157,6 +161,11 @@ for (const file of files) {
     if (!email) continue
     if (sentSet.has(email) || bouncedSet.has(email)) { excluded++; continue }
     if (seen.has(email)) { dupes++; continue }
+    const [local, domain] = email.split("@")
+    if (GENERIC_LOCAL_RE.test(local)) { excluded++; continue }
+    if (PLACEHOLDER_LOCALS.has(local) || PLACEHOLDER_DOMAINS.has(domain)) { excluded++; continue }
+    // Hash-looking locals (random hex strings 20+ chars)
+    if (local.length > 20 && /^[a-f0-9]+$/.test(local)) { excluded++; continue }
     const nomBrut = row.Nom ?? row.nom ?? ""
     if (!isRealBusinessName(nomBrut)) continue
 
