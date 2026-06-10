@@ -276,10 +276,37 @@ export async function POST(req: NextRequest) {
   const cached = fromCache(commerce_name, city)
   if (cached) return NextResponse.json(cached)
 
-  // 1. Textsearch
-  const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(`${commerce_name} ${city}`)}&language=fr&region=fr&key=${GOOGLE_API_KEY}`
-  const searchData = await fetch(searchUrl).then(r => r.json())
-  const results: any[] = searchData.results ?? []
+  // 1. Textsearch — essaie le nom complet, puis le premier mot si pas de résultat
+  async function textsearch(query: string) {
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&language=fr&region=fr&key=${GOOGLE_API_KEY}`
+    const data = await fetch(url).then(r => r.json())
+    return (data.results ?? []) as any[]
+  }
+
+  let results = await textsearch(`${commerce_name} ${city}`)
+
+  // Nom avec virgules (ex: "JP Entreprise Plomberie, Electricité, Chauffage") → essaie avant la 1ère virgule
+  if (!results.length && commerce_name.includes(',')) {
+    const beforeComma = commerce_name.split(',')[0].trim()
+    results = await textsearch(`${beforeComma} ${city}`)
+    // Puis 2 premiers mots de la partie avant virgule
+    if (!results.length && beforeComma.includes(' ')) {
+      const twoWords = beforeComma.split(' ').slice(0, 2).join(' ')
+      results = await textsearch(`${twoWords} ${city}`)
+    }
+  }
+
+  // Retry avec nom tronqué aux 2 premiers mots si nom long et 0 résultats
+  if (!results.length && commerce_name.includes(' ')) {
+    const shortName = commerce_name.split(' ').slice(0, 2).join(' ')
+    results = await textsearch(`${shortName} ${city}`)
+  }
+
+  // Retry avec seulement le premier mot si toujours rien
+  if (!results.length && commerce_name.includes(' ')) {
+    results = await textsearch(`${commerce_name.split(' ')[0]} ${city}`)
+  }
+
   if (!results.length) return NextResponse.json({ error: 'Établissement introuvable. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
 
   // Choisir le résultat qui correspond à la bonne ville (évite de montrer le mauvais établissement)

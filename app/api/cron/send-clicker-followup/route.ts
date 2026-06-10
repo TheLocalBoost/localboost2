@@ -42,10 +42,10 @@ Je peux m'en occuper cette semaine. <strong>29€/mois</strong>, annulable à to
   },
 ]
 
-function buildEmail(nom: string, ville: string, score: number, leadId: string, variantIdx: number) {
+function buildEmail(nom: string, ville: string, score: number, leadId: string, variantIdx: number, email: string) {
   const v    = ville && ville !== 'France' ? ville : 'votre ville'
   const vnt  = VARIANTS[variantIdx % VARIANTS.length]
-  const dest = `${APP_URL}/pricing?nom=${encodeURIComponent(nom)}&score=${score}&ville=${encodeURIComponent(v)}&utm_source=brevo&utm_medium=clicker_followup&utm_campaign=v${variantIdx}`
+  const dest = `${APP_URL}/pricing?nom=${encodeURIComponent(nom)}&score=${score}&ville=${encodeURIComponent(v)}&email=${encodeURIComponent(email)}&utm_source=brevo&utm_medium=clicker_followup&utm_campaign=v${variantIdx}`
   const trackUrl = `${APP_URL}/api/track?lid=${leadId}&vid=cf${variantIdx}&url=${encodeURIComponent(dest)}`
 
   return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;color:#1a1a1a;font-size:15px;line-height:1.7;">
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
           sender:      { name: 'Brian de LocalBoost', email: 'contact@thelocalboost.fr' },
           to:          [{ email: lead.email, name: nom }],
           subject:     vnt.subject(nom),
-          htmlContent: buildEmail(nom, ville, score, lead.id, i),
+          htmlContent: buildEmail(nom, ville, score, lead.id, i, lead.email),
         }),
       })
       if (!res.ok) throw new Error(((await res.json()) as { message: string }).message)

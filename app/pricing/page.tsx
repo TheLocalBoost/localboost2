@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -6,16 +6,14 @@ import { createClient } from '@/lib/supabase-browser'
 import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
 
 const FEATURES = [
-  'Plan d\'action personnalisÃ© mis Ã  jour chaque semaine',
-  'Description Google rÃ©digÃ©e par IA',
-  'RÃ©ponses aux avis gÃ©nÃ©rÃ©es par IA',
-  'GÃ©nÃ©rateur de demandes d\'avis + QR Code',
+  'Plan d\'action personnalisé mis à jour chaque semaine',
+  'Description Google rédigée par IA',
+  'Réponses aux avis générées par IA',
+  'Générateur de demandes d\'avis + QR Code',
   'Publications Google automatiques',
   'Rapport hebdomadaire par email',
   'Historique de votre score sur 12 mois',
 ]
-
-const SPOTS_LEFT = parseInt(process.env.NEXT_PUBLIC_FOUNDER_SPOTS_LEFT ?? '47', 10)
 
 function PricingContent() {
   const supabase     = createClient()
@@ -26,10 +24,11 @@ function PricingContent() {
   const nomParam     = searchParams.get('nom') ?? ''
   const revenueParam = parseInt(searchParams.get('revenue') ?? '0') || 0
 
-  const [user, setUser]         = useState<{ email: string; id: string } | null>(null)
-  const [loading, setLoading]   = useState(false)
-  const [checking, setChecking] = useState(true)
+  const [user, setUser]             = useState<{ email: string; id: string } | null>(null)
+  const [loading, setLoading]       = useState(false)
+  const [checking, setChecking]     = useState(true)
   const [guestEmail, setGuestEmail] = useState('')
+  const [emailError, setEmailError] = useState(false)
 
   useEffect(() => {
     const urlEmail = searchParams.get('email')
@@ -43,13 +42,16 @@ function PricingContent() {
 
   const handleCTA = async () => {
     const email = user?.email ?? guestEmail
-    if (!email || !email.includes('@')) return
+    if (!email || !email.includes('@')) {
+      setEmailError(true)
+      return
+    }
+    setEmailError(false)
     setLoading(true)
-    // Capture au moment du clic â€” consentement explicite (l'artisan essaie de payer)
     fetch('/api/waitlist', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, nom: nomParam, ville: city, score: scoreParam || undefined, source: 'outreach_click' }),
+      body:    JSON.stringify({ email, nom: nomParam, ville: city, score: scoreParam || undefined, source: 'pricing_cta' }),
     }).catch(() => {})
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -61,65 +63,65 @@ function PricingContent() {
       if (data.url)   window.location.href = data.url
       if (data.error) alert('Erreur : ' + data.error)
     } catch {
-      alert('Erreur de connexion. RÃ©essayez.')
+      alert('Erreur de connexion. Réessayez.')
     } finally {
       setLoading(false)
     }
   }
 
-  const ctaLabel = loading ? 'Chargement...' : 'Confier ma fiche Google Ã  LocalBoost â†’'
-
   return (
-    <div className="min-h-screen bg-gray-50 py-16 px-4">
+    <div className="min-h-screen bg-gray-50 py-16 px-4 pb-28 sm:pb-16">
       <div className="max-w-lg mx-auto">
 
         {/* Logo */}
         <div className="text-center mb-10">
           <a href="/" className="inline-flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
-            <span>ðŸ“</span><span>LocalBoost</span>
+            <span>📍</span><span>LocalBoost</span>
           </a>
 
-          {checking ? null : user ? (
-            <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Vous y Ãªtes presque</h1>
-              <p className="text-gray-500 text-sm">
-                Votre compte est crÃ©Ã©. Activez votre accÃ¨s pour dÃ©bloquer votre plan d'action.
-              </p>
-            </>
-          ) : city ? (
-            <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">DÃ©bloquez votre plan d'action complet</h1>
-              <p className="text-gray-500 text-sm">
-                Rejoignez les artisans de <strong>{city}</strong> qui amÃ©liorent leur visibilitÃ© Google chaque semaine.
-              </p>
-            </>
-          ) : (
-            <>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">DÃ©bloquez votre plan d'action complet</h1>
-              <p className="text-gray-500 text-sm">
-                Rejoignez les artisans qui amÃ©liorent leur visibilitÃ© Google chaque semaine.
-              </p>
-            </>
+          {!checking && (
+            user ? (
+              <>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Vous y êtes presque</h1>
+                <p className="text-gray-500 text-sm">
+                  Votre compte est créé. Activez votre accès pour débloquer votre plan d'action.
+                </p>
+              </>
+            ) : city ? (
+              <>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">On corrige votre fiche Google pour vous</h1>
+                <p className="text-gray-500 text-sm">
+                  Rejoignez les artisans de <strong>{city}</strong> qui récupèrent des clients chaque semaine.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">On corrige votre fiche Google pour vous</h1>
+                <p className="text-gray-500 text-sm">
+                  Rejoignez les artisans qui récupèrent des clients perdus chaque semaine.
+                </p>
+              </>
+            )
           )}
         </div>
 
-        {/* Compteur temps rÃ©el â€” L6 */}
+        {/* Compteur temps réel */}
         <div className="mb-6">
           <FounderSpotsCounter />
         </div>
 
-        {/* Bandeau personnalisÃ© si score connu */}
+        {/* Bandeau personnalisé si score connu */}
         {scoreParam > 0 && (
           <div className="rounded-2xl bg-red-50 border border-red-200 p-5 mb-4 text-center">
             <p className="text-sm text-red-700 font-semibold mb-1">
-              {nomParam ? `${nomParam} â€” score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
+              {nomParam ? `${nomParam} — score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
             </p>
             <p className="text-2xl font-extrabold text-red-600">
-              ~{revenueParam > 0 ? `${revenueParam}â‚¬` : '?'}
-              <span className="text-sm font-normal text-red-500"> perdus/mois Ã  cause des lacunes dÃ©tectÃ©es</span>
+              ~{revenueParam > 0 ? `${revenueParam}€` : '?'}
+              <span className="text-sm font-normal text-red-500"> perdus/mois à cause des lacunes détectées</span>
             </p>
             <p className="text-xs text-red-400 mt-2">
-              Pour 29â‚¬/mois, on corrige tout Ã§a automatiquement.
+              Pour 29€/mois, on corrige tout ça automatiquement.
             </p>
           </div>
         )}
@@ -130,26 +132,26 @@ function PricingContent() {
             Offre fondateur
           </div>
 
-          {/* Ancre prix â€” plan annuel barrÃ© */}
+          {/* Prix */}
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="text-center opacity-40">
               <p className="text-xs text-gray-500 mb-0.5">Annuel</p>
-              <p className="text-lg font-bold text-gray-400 line-through">348â‚¬</p>
+              <p className="text-lg font-bold text-gray-400 line-through">348€</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-blue-600 font-semibold mb-0.5">Mensuel</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-gray-900">29â‚¬</span>
+                <span className="text-5xl font-extrabold text-gray-900">29€</span>
                 <span className="text-gray-500 text-lg">/mois</span>
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 text-center mb-2">sans engagement Â· rÃ©siliable en 1 clic</p>
+          <p className="text-sm text-gray-400 text-center mb-2">sans engagement · résiliable en 1 clic</p>
 
           <ul className="space-y-3 mt-6 mb-8">
             {FEATURES.map(f => (
               <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
-                <span className="text-green-500 shrink-0 mt-0.5 font-bold">âœ“</span>{f}
+                <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{f}
               </li>
             ))}
           </ul>
@@ -158,89 +160,114 @@ function PricingContent() {
             guestEmail
               ? (
                 <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-3 flex items-center gap-2">
-                  <span className="text-blue-600 text-sm font-bold">âœ“</span>
+                  <span className="text-blue-600 text-sm font-bold">✓</span>
                   <span className="text-sm text-blue-800 flex-1 truncate">{guestEmail}</span>
                   <button onClick={() => setGuestEmail('')} className="text-xs text-blue-400 hover:text-blue-600 shrink-0">changer</button>
                 </div>
               )
               : (
-                <input
-                  type="email"
-                  value={guestEmail}
-                  onChange={e => setGuestEmail(e.target.value)}
-                  placeholder="votre@email.fr"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm mb-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
+                <div className="mb-3">
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    onChange={e => { setGuestEmail(e.target.value); setEmailError(false) }}
+                    placeholder="votre@email.fr"
+                    className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'}`}
+                  />
+                  {emailError && <p className="text-xs text-red-500 mt-1 ml-1">Entrez votre email pour continuer</p>}
+                </div>
               )
           )}
+
           <button
             onClick={handleCTA}
-            disabled={loading || checking || (!user && !guestEmail.includes('@'))}
+            disabled={loading || checking}
             className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
           >
-            {ctaLabel}
+            {loading ? 'Chargement...' : checking ? 'Chargement...' : 'Démarrer — 29€/mois →'}
           </button>
 
-          {/* Garantie â€” mise en avant */}
+          {/* Garantie */}
           <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-center">
-            <p className="text-sm font-bold text-amber-800">â˜… Satisfait ou remboursÃ© 30 jours</p>
-            <p className="text-xs text-amber-700 mt-0.5">Si vous ne voyez pas de rÃ©sultat en 30 jours, on vous rembourse intÃ©gralement. Aucune question posÃ©e.</p>
+            <p className="text-sm font-bold text-amber-800">★ Satisfait ou remboursé 30 jours</p>
+            <p className="text-xs text-amber-700 mt-0.5">Si vous ne voyez pas de résultat en 30 jours, on vous rembourse intégralement. Aucune question posée.</p>
           </div>
 
-          {/* RÃ©assurance */}
+          {/* Réassurance */}
           <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-100">
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">ðŸ”’</span>
-              <p className="text-xs text-gray-500">Paiement sÃ©curisÃ©<br />Stripe</p>
+              <span className="text-lg">🔒</span>
+              <p className="text-xs text-gray-500">Paiement sécurisé<br />Stripe</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">ðŸ“…</span>
-              <p className="text-xs text-gray-500">RÃ©siliable<br />en 1 clic</p>
+              <span className="text-lg">📅</span>
+              <p className="text-xs text-gray-500">Résiliable<br />en 1 clic</p>
             </div>
             <div className="flex flex-col items-center gap-1 text-center">
-              <span className="text-lg">ðŸ’¬</span>
+              <span className="text-lg">💬</span>
               <p className="text-xs text-gray-500">Support<br />direct fondateur</p>
             </div>
           </div>
         </div>
 
-        {/* Ce que vous recevez */}
+        {/* Ce qui se passe après */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
-          <p className="text-sm font-bold text-gray-900 mb-4">Ce qui se passe aprÃ¨s votre paiement</p>
+          <p className="text-sm font-bold text-gray-900 mb-4">Ce qui se passe après votre paiement</p>
           <div className="space-y-4">
             <div className="flex gap-3">
               <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">Aujourd'hui</p>
-                <p className="text-xs text-gray-500 mt-0.5">Vous recevez votre audit complet (9 critÃ¨res) et les 3 actions prioritaires pour votre fiche.</p>
+                <p className="text-xs text-gray-500 mt-0.5">Vous recevez votre audit complet (9 critères) et les 3 actions prioritaires pour votre fiche.</p>
               </div>
             </div>
             <div className="flex gap-3">
               <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">Dans 48h</p>
-                <p className="text-xs text-gray-500 mt-0.5">Votre description Google est rÃ©digÃ©e et soumise. Vos horaires et services sont vÃ©rifiÃ©s et corrigÃ©s.</p>
+                <p className="text-xs text-gray-500 mt-0.5">Votre description Google est rédigée et soumise. Vos horaires et services sont vérifiés et corrigés.</p>
               </div>
             </div>
             <div className="flex gap-3">
               <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">Chaque semaine</p>
-                <p className="text-xs text-gray-500 mt-0.5">Un rapport vous dit oÃ¹ en est votre fiche. On rÃ©pond aux avis, on publie du contenu. Vous ne touchez Ã  rien.</p>
+                <p className="text-xs text-gray-500 mt-0.5">Un rapport vous dit où en est votre fiche. On répond aux avis, on publie du contenu. Vous ne touchez à rien.</p>
               </div>
             </div>
           </div>
           <div className="mt-5 pt-4 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400">Pas de rÃ©sultat visible en 30 jours â†’ remboursement intÃ©gral, aucune question posÃ©e.</p>
+            <p className="text-xs text-gray-400">Pas de résultat visible en 30 jours → remboursement intégral, aucune question posée.</p>
           </div>
         </div>
 
-        {/* SIRET + confiance */}
+        {/* SIRET */}
         <p className="text-center text-xs text-gray-300 mt-8">
-          LocalBoost â€” Entreprise franÃ§aise Â· SIREN 105 578 884<br />
-          DonnÃ©es hÃ©bergÃ©es en France Â· contact@thelocalboost.fr
+          LocalBoost — Entreprise française · SIREN 105 578 884<br />
+          Données hébergées en France · contact@thelocalboost.fr
         </p>
 
+      </div>
+
+      {/* Barre CTA fixe mobile — toujours visible */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-50">
+        {!user && !checking && !guestEmail && (
+          <input
+            type="email"
+            value={guestEmail}
+            onChange={e => { setGuestEmail(e.target.value); setEmailError(false) }}
+            placeholder="votre@email.fr"
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm mb-2 focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'}`}
+          />
+        )}
+        <button
+          onClick={handleCTA}
+          disabled={loading || checking}
+          className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
+        >
+          {loading ? 'Chargement...' : checking ? 'Chargement...' : 'Démarrer — 29€/mois · Sans engagement →'}
+        </button>
+        {emailError && <p className="text-xs text-red-500 mt-1 text-center">Entrez votre email pour continuer</p>}
       </div>
     </div>
   )
