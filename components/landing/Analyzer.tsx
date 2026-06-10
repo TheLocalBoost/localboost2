@@ -137,9 +137,11 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [result, setResult]   = useState<AnalysisResult | null>(null)
   const [error, setError]     = useState('')
   const [emailScore, setEmailScore]       = useState<number | null>(null)
-  const [ctaClicked, setCtaClicked]       = useState(false)
-  const [emailCaptured, setEmailCaptured] = useState(false)
-  const [capturedEmail, setCapturedEmail] = useState('')
+  const [ctaClicked, setCtaClicked]               = useState(false)
+  const [emailCaptured, setEmailCaptured]         = useState(false)
+  const [capturedEmail, setCapturedEmail]         = useState('')
+  const [generatedDesc, setGeneratedDesc]         = useState<string | null>(null)
+  const [generatingDesc, setGeneratingDesc]       = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -215,6 +217,15 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       track('analyzer_result', { score: data.score, city: data.city, category: data.category })
       onResult?.({ score: data.score, name: data.name, city: data.city, category: data.category })
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
+      // Génère la description en arrière-plan si la fiche a une description manquante
+      if (!data.criteria?.description) {
+        setGeneratingDesc(true)
+        fetch('/api/generate-description', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: data.name, city: data.city, category: data.category, problems: data.problems }),
+        }).then(r => r.json()).then(d => { if (d.description) setGeneratedDesc(d.description) }).catch(() => {}).finally(() => setGeneratingDesc(false))
+      }
     } catch {
       setError('Erreur de connexion. Réessayez.')
     } finally {
@@ -314,6 +325,14 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     </div>
                   )}
                 </div>
+                {result.score < 86 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50 flex items-start gap-2.5">
+                    <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
+                    <p className="text-sm text-gray-700">
+                      <strong>LocalBoost gère votre fiche Google à votre place</strong> — corrections, description, réponses aux avis, photos — chaque mois. Vous ne touchez à rien.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* BLOC 2 — 1er problème visible, reste bloqué */}
@@ -376,6 +395,28 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
+              {/* Description générée par IA */}
+              {(generatingDesc || generatedDesc) && (
+                <div className="bg-white rounded-2xl border border-blue-100 p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-blue-600 text-sm">✦</span>
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Description Google rédigée par IA — aperçu</p>
+                  </div>
+                  {generatingDesc ? (
+                    <div className="space-y-2 animate-pulse">
+                      <div className="h-3 bg-gray-100 rounded w-full" />
+                      <div className="h-3 bg-gray-100 rounded w-5/6" />
+                      <div className="h-3 bg-gray-100 rounded w-4/6" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{generatedDesc}</p>
+                      <p className="text-xs text-gray-400 mt-3">On publiera la version complète sur votre fiche dans les 48h après activation.</p>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* CTA — immédiatement après l'impact, avant le reste */}
               <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
                 <p className="text-white font-bold text-lg mb-1">
@@ -395,6 +436,14 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
                 >
                   Voir mon plan d'action — 29€/mois →
+                </a>
+                <a
+                  href="https://wa.me/33651234567"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full rounded-xl bg-blue-500/40 py-3 text-sm font-medium text-white hover:bg-blue-500/60 transition mb-3 text-center"
+                >
+                  💬 Parler à Brian sur WhatsApp
                 </a>
                 <p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic · Remboursé si pas de résultat</p>
               </div>
