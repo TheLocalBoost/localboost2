@@ -1,8 +1,36 @@
 import "dotenv/config";
 import axios from "axios";
+import nodemailer from "nodemailer";
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+
+// ── Amazon SES (SMTP) ─────────────────────────────────────────────
+// Activé automatiquement si SES_SMTP_USER est défini dans .env.local
+// Variables à ajouter quand tu as les credentials SES :
+//   SES_SMTP_HOST=email-smtp.eu-west-1.amazonaws.com
+//   SES_SMTP_PORT=587
+//   SES_SMTP_USER=<SMTP username depuis AWS console>
+//   SES_SMTP_PASS=<SMTP password depuis AWS console>
+//   SES_SENDER_EMAIL=contact@thelocalboost.fr
+//   SES_SENDER_NAME=Brian de LocalBoost
+const USE_SES = !!process.env.SES_SMTP_USER;
+
+let sesTransport = null;
+if (USE_SES) {
+  sesTransport = nodemailer.createTransport({
+    host:   process.env.SES_SMTP_HOST ?? "email-smtp.eu-west-1.amazonaws.com",
+    port:   parseInt(process.env.SES_SMTP_PORT ?? "587"),
+    secure: false,
+    auth: {
+      user: process.env.SES_SMTP_USER,
+      pass: process.env.SES_SMTP_PASS,
+    },
+  });
+  console.log(`\n🚀 Mode SES activé — ${process.env.SES_SENDER_EMAIL} via ${process.env.SES_SMTP_HOST}\n`);
+} else {
+  console.log(`\n📬 Mode Brevo (SES non configuré)\n`);
+}
 
 // ── Rotation comptes Brevo ────────────────────────────────────────
 // Ajouter dans .env : BREVO_API_KEY_1, BREVO_API_KEY_2, etc.
@@ -466,9 +494,23 @@ function buildEmail(c, stats) {
 const delay      = ms => new Promise(r => setTimeout(r, ms));
 const humanDelay = () => delay(2_000 + Math.random() * 2_000); // 2–4s burst
 
-async function sendEmail(c, stats, attempt = 0) {
+async function sendEmailSES(c, stats) {
+  const nom = c.Nom || "votre établissement";
+  const { subject, html, vid } = buildEmail(c, stats);
+  await sesTransport.sendMail({
+    from:    `"${process.env.SES_SENDER_NAME ?? "Brian de LocalBoost"}" <${process.env.SES_SENDER_EMAIL ?? "contact@thelocalboost.fr"}>`,
+    to:      `"${nom}" <${c.Email}>`,
+    subject,
+    html,
+  });
+  markSent(c.Email.toLowerCase());
+  saveSend(vid, stats);
+  console.log(`✅ [SES] v${vid} ${c.Email.padEnd(38)} ${nom.slice(0, 28)}`);
+}
+
+async function sendEmailBrevo(c, stats, attempt = 0) {
   if (attempt >= BREVO_ACCOUNTS.length) {
-    console.error(`❌ ${c.Email} — tous les comptes épuisés`);
+    console.error(`❌ ${c.Email} — tous les comptes Brevo épuisés`);
     return;
   }
   const nom = c.Nom || "votre établissement";
@@ -493,11 +535,16 @@ async function sendEmail(c, stats, attempt = 0) {
     if (status === 429 || (status === 400 && /limit|quota|daily/i.test(msg))) {
       console.warn(`⚠️  Compte ${accountIdx + 1} limite atteinte — rotation`);
       rotateAccount();
-      await sendEmail(c, stats, attempt + 1);
+      await sendEmailBrevo(c, stats, attempt + 1);
     } else {
       console.error(`❌ ${c.Email}`, msg);
     }
   }
+}
+
+async function sendEmail(c, stats, attempt = 0) {
+  if (USE_SES) return sendEmailSES(c, stats);
+  return sendEmailBrevo(c, stats, attempt);
 }
 
 // ── Main ─────────────────────────────────────────────────────────
