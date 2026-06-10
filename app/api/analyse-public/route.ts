@@ -231,7 +231,27 @@ function generateRichProblems(
   return { problems: sliced, lostCalls: cappedCalls, lostRevenue: cappedRevenue }
 }
 
+// Rate limiting: 5 req/min per IP (protects Google Places API costs)
+const rl = new Map<string, { count: number; resetAt: number }>()
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rl.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rl.set(ip, { count: 1, resetAt: now + 60_000 })
+    return true
+  }
+  if (entry.count >= 5) return false
+  entry.count++
+  return true
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans une minute.' }, { status: 429 })
+  }
+
   const { commerce_name, city } = await req.json()
   if (!commerce_name || !city) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
 
