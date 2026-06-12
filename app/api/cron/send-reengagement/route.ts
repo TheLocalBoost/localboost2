@@ -41,10 +41,10 @@ const VARIANTS = [
   },
 ]
 
-function buildEmail(nom: string, ville: string, leadId: string, variantIdx: number) {
+function buildEmail(nom: string, ville: string, leadId: string, variantIdx: number, email: string) {
   const v        = ville && ville !== 'France' ? ville : 'votre ville'
   const vnt      = VARIANTS[variantIdx % VARIANTS.length]
-  const dest     = `${APP_URL}/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(v)}&email=${encodeURIComponent(lead.email)}&utm_source=brevo&utm_medium=reengagement`
+  const dest     = `${APP_URL}/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(v)}&email=${encodeURIComponent(email)}&utm_source=brevo&utm_medium=reengagement`
   const trackUrl = `${APP_URL}/api/track?lid=${leadId}&vid=re${variantIdx}&url=${encodeURIComponent(dest)}`
   return `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;color:#1a1a1a;font-size:15px;line-height:1.7;">
   <p style="margin:0 0 20px;">Bonjour,</p>
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
           sender: { name: 'Brian de LocalBoost', email: 'contact@thelocalboost.fr' },
           to: [{ email: lead.email, name: nom }],
           subject: VARIANTS[i % VARIANTS.length].subject(nom),
-          htmlContent: buildEmail(nom, v, lead.id, i),
+          htmlContent: buildEmail(nom, v, lead.id, i, lead.email),
         }),
       })
       if (!res.ok) throw new Error((await res.json() as { message: string }).message)

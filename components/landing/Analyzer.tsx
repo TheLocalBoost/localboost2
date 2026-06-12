@@ -154,14 +154,15 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
 
     if (score) setEmailScore(parseInt(score))
 
+    const isOutreach = source === 'brevo' || source === 'ses'
     if (nom && ville) {
       setForm({ name: nom, city: ville })
-      if (source === 'brevo') track('email_click_landed', { nom, ville, score, secteur })
+      if (isOutreach) track('email_click_landed', { nom, ville, score, secteur })
       runAnalysis(nom, ville)
     }
 
     // Capture silencieuse de l'email quand il vient d'un lien d'outreach
-    if (email && source === 'brevo') {
+    if (email && isOutreach) {
       fetch('/api/waitlist', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,7 +184,8 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   // tracker non-converti : arrivé depuis email, résultat vu, pas de CTA cliqué après 20s
   useEffect(() => {
     if (!result || ctaClicked) return
-    if (searchParams.get('utm_source') !== 'brevo') return
+    const src = searchParams.get('utm_source')
+    if (src !== 'brevo' && src !== 'ses') return
     const t = setTimeout(() => {
       track('email_no_convert', {
         score:   result.score,
@@ -352,24 +354,26 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} sur votre fiche
                   </p>
                   <div className="space-y-3">
-                    {/* 1er problème visible */}
-                    <div className="rounded-xl bg-red-50 border border-red-100 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
-                        <p className="text-sm text-gray-800 leading-snug">{result.problems[0].text}</p>
+                    {/* 2 premiers problèmes visibles */}
+                    {result.problems.slice(0, 2).map((problem, idx) => (
+                      <div key={idx} className="rounded-xl bg-red-50 border border-red-100 p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
+                          <p className="text-sm text-gray-800 leading-snug">{problem.text}</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                            ~{problem.calls} appel{problem.calls > 1 ? 's' : ''} perdu{problem.calls > 1 ? 's' : ''}/mois
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                            ~{problem.revenue}€ non réalisé/mois
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                          ~{result.problems[0].calls} appel{result.problems[0].calls > 1 ? 's' : ''} perdu{result.problems[0].calls > 1 ? 's' : ''}/mois
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                          ~{result.problems[0].revenue}€ non réalisé/mois
-                        </span>
-                      </div>
-                    </div>
+                    ))}
 
-                    {/* Reste bloqué */}
-                    {result.problems.length > 1 && (
+                    {/* Reste bloqué à partir du 3ème */}
+                    {result.problems.length > 2 && (
                       <div className="relative">
                         <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 p-4 blur-[2px] select-none pointer-events-none">
                           <div className="flex items-start gap-3">
@@ -379,7 +383,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                            +{result.problems.length - 1} problème{result.problems.length > 2 ? 's' : ''} masqué{result.problems.length > 2 ? 's' : ''}
+                            +{result.problems.length - 2} problème{result.problems.length > 3 ? 's' : ''} masqué{result.problems.length > 3 ? 's' : ''}
                           </span>
                         </div>
                       </div>

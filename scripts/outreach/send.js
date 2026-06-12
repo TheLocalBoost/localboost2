@@ -19,7 +19,7 @@ const USE_SES = !!process.env.SES_SMTP_USER;
 let sesTransport = null;
 if (USE_SES) {
   sesTransport = nodemailer.createTransport({
-    host:   process.env.SES_SMTP_HOST ?? "email-smtp.eu-west-1.amazonaws.com",
+    host:   process.env.SES_SMTP_HOST ?? "email-smtp.eu-north-1.amazonaws.com",
     port:   parseInt(process.env.SES_SMTP_PORT ?? "587"),
     secure: false,
     auth: {
@@ -435,7 +435,8 @@ function buildEmail(c, stats) {
   const scoreParam   = score        ? `&score=${score}`                           : "";
   const secteurParam = c.Secteur    ? `&secteur=${encodeURIComponent(secteur)}`   : "";
   const emailParam   = c.Email       ? `&email=${encodeURIComponent(c.Email.toLowerCase())}` : "";
-  const dest         = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}${scoreParam}${secteurParam}${emailParam}&utm_source=brevo&utm_medium=email&utm_campaign=v${vid}`;
+  const utmSource    = USE_SES ? "ses" : "brevo";
+  const dest         = `https://thelocalboost.fr/analyser?nom=${encodeURIComponent(nom)}&ville=${encodeURIComponent(ville)}${scoreParam}${secteurParam}${emailParam}&utm_source=${utmSource}&utm_medium=email&utm_campaign=v${vid}`;
   // Passe par /api/track pour enregistrer le clic dans Supabase avant redirect
   const auditUrl     = `https://thelocalboost.fr/api/track?vid=${vid}&url=${encodeURIComponent(dest)}`;
 

@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
     user_id:    user.id,
     priority,
     created_at: new Date().toISOString(),
-  }).catch(() => {})
+  })
 
   return NextResponse.json({ content, isPro })
 }
