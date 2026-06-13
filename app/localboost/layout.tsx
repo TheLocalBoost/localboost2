@@ -10,7 +10,7 @@ const NAV = [
   { href: '/localboost/avis',      label: 'Avis',      icon: '⭐' },
   { href: '/localboost/photos',    label: 'Photos',    icon: '📸' },
   { href: '/localboost/audit',     label: 'Audit',     icon: '🔍' },
-  { href: '/localboost/nap',       label: 'Annuaires', icon: '🗂️' },
+  { href: '/localboost/connect',   label: 'Google',    icon: '🔗' },
 ]
 
 export default function LocalBoostLayout({ children }: { children: React.ReactNode }) {
