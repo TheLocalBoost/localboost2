@@ -401,6 +401,7 @@ export async function POST(req: NextRequest) {
     priceLevel:      p.price_level ?? null,
     googleMapsUrl:   p.url ?? null,
     phoneIntl:       p.international_phone_number ?? null,
+    placeId:         place.place_id ?? null,
     lostCalls,
     lostRevenue,
     competitors,

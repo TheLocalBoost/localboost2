@@ -34,29 +34,74 @@ export async function POST(req: NextRequest) {
 
       if (!email) break
 
-      // ── One-shot 99€ : générer le contenu et envoyer par email ──
+      // ── One-shot 99€ : audit réel + génération contextualisée + envoi ──
       if (session.metadata?.type === 'oneshot') {
-        const nom   = session.metadata?.nom   ?? 'votre établissement'
-        const ville = session.metadata?.ville ?? 'votre ville'
+        const nom   = session.metadata?.nom   ?? ''
+        const ville = session.metadata?.ville ?? ''
 
         try {
-          const prompt = `Tu es un expert en Google Business Profile. Génère le pack complet pour "${nom}", artisan à ${ville}.
+          // 1. Récupérer les vraies données Google de la fiche
+          const auditRes = await fetch(`${APP_URL}/api/analyse-public`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ commerce_name: nom, city: ville }),
+          })
+          const audit = auditRes.ok ? await auditRes.json() : null
 
-Réponds UNIQUEMENT avec ce format JSON (aucun texte avant ou après) :
+          // Données réelles extraites de l'audit
+          const realName       = audit?.name ?? nom
+          const realCity       = audit?.city ?? ville
+          const realRating     = audit?.rating ?? 0
+          const realReviews    = audit?.reviews ?? 0
+          const realPhotos     = audit?.photos ?? 0
+          const realPhone      = audit?.phoneIntl ?? null
+          const realProblems   = (audit?.problems ?? []).slice(0, 3).map((p: { text: string }) => p.text)
+          const realReviews3   = (audit?.recentReviews ?? []).filter((r: { text: string }) => r.text?.length > 15).slice(0, 2)
+          const topCompetitor  = audit?.competitors?.[0] ?? null
+          const lostRevenue    = audit?.lostRevenue ?? 0
+          const score          = audit?.score ?? 0
+          const placeId        = audit?.placeId ?? null
+          const reviewUrl      = placeId ? `https://search.google.com/local/writereview?placeid=${placeId}` : null
+          const qrUrl          = reviewUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(reviewUrl)}&color=1a1a1a&bgcolor=ffffff` : null
+
+          const competitorCtx = topCompetitor
+            ? `Concurrent principal : ${topCompetitor.name} (${topCompetitor.rating}★ · ${topCompetitor.reviewCount} avis · score ${topCompetitor.estimatedScore}/100 — apparaît avant ${realName})`
+            : ''
+
+          const reviewsCtx = realReviews3.length > 0
+            ? realReviews3.map((r: { author: string; rating: number; text: string }) =>
+                `- ${r.author} (${r.rating}★) : "${r.text.slice(0, 120)}"`).join('\n')
+            : ''
+
+          const prompt = `Tu es un expert Google Business Profile. Génère le pack complet pour "${realName}", à ${realCity}.
+
+DONNÉES RÉELLES DE LA FICHE (utilise UNIQUEMENT ces données, n'invente rien) :
+- Note Google : ${realRating > 0 ? `${realRating}/5` : 'non renseignée'}
+- Nombre d'avis : ${realReviews}
+- Photos : ${realPhotos}
+- Score de fiche : ${score}/100
+- CA estimé perdu/mois : ${lostRevenue > 0 ? `${lostRevenue}€` : 'non calculé'}
+${competitorCtx ? `- ${competitorCtx}` : ''}
+${realProblems.length > 0 ? `\nProblèmes détectés :\n${realProblems.map(p => `- ${p}`).join('\n')}` : ''}
+${reviewsCtx ? `\nDerniers avis clients :\n${reviewsCtx}` : ''}
+
+Réponds UNIQUEMENT avec ce JSON valide (aucun texte avant ou après) :
 {
   "description": "...",
   "posts": ["post1", "post2", "post3", "post4"],
-  "conseil": "..."
+  "reviewResponses": ["réponse à l'avis 1", "réponse à l'avis 2"],
+  "priorite": "..."
 }
 
-Contraintes :
-- description : 150-200 mots, mentionne "${nom}" et "${ville}", ton artisan direct
-- posts : 4 posts Google distincts (60-90 mots chacun), angles variés : expertise, conseil pratique, disponibilité, saison/actualité. Chaque post termine par un appel à l'action + 2-3 hashtags
-- conseil : 1 phrase d'action prioritaire pour améliorer le classement Google cette semaine`
+Contraintes STRICTES :
+- description : 150-200 mots, mentionne "${realName}" et "${realCity}", jamais de durée inventée ("depuis X ans"), jamais de garantie inventée, ton artisan direct
+- posts : 4 posts distincts (60-80 mots), basés sur les vrais problèmes et données ci-dessus${realPhone ? `, termine le dernier post avec le vrai numéro ${realPhone}` : ', ne mets jamais de numéro fictif'}. Chaque post : appel à l'action + 2 hashtags locaux
+- reviewResponses : réponds à chaque avis listé ci-dessus par son prénom et en citant un détail de son avis. Si aucun avis : tableau vide []
+- priorite : 1 action concrète basée sur le problème #1 détecté, chiffrée si possible`
 
           const msg = await anthropic.messages.create({
             model:      'claude-haiku-4-5-20251001',
-            max_tokens: 1500,
+            max_tokens: 2000,
             messages:   [{ role: 'user', content: prompt }],
           })
 
@@ -64,35 +109,80 @@ Contraintes :
           const pack = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
 
           const postsHtml = pack.posts.map((p: string, i: number) => `
-            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 12px;">
-              <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;">Post ${i + 1}/4</p>
-              <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;white-space:pre-line;">${p}</p>
-            </div>`).join('')
+<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 12px;">
+  <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;">Post ${i + 1}/4 — Semaine ${i + 1}</p>
+  <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;white-space:pre-line;">${p}</p>
+</div>`).join('')
+
+          const reviewsHtml = (pack.reviewResponses ?? []).length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 Réponses à vos avis</h3>
+${(pack.reviewResponses as string[]).map((r: string, i: number) => `
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin:0 0 12px;">
+  <p style="font-size:11px;color:#16a34a;font-weight:700;margin:0 0 8px;">Réponse à l'avis ${i + 1}</p>
+  <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">${r}</p>
+</div>`).join('')}`
+            : ''
+
+          const situationHtml = audit ? `
+<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin:0 0 24px;">
+  <p style="font-size:13px;font-weight:700;color:#991b1b;margin:0 0 10px;">Votre situation réelle sur Google</p>
+  <table style="width:100%;font-size:13px;color:#374151;border-collapse:collapse;">
+    <tr><td style="padding:4px 0;">Note Google</td><td style="text-align:right;font-weight:700;">${realRating > 0 ? `${realRating}/5` : '—'} · ${realReviews} avis</td></tr>
+    <tr><td style="padding:4px 0;">Score de fiche</td><td style="text-align:right;font-weight:700;">${score}/100</td></tr>
+    ${lostRevenue > 0 ? `<tr><td style="padding:4px 0;">CA perdu estimé/mois</td><td style="text-align:right;font-weight:700;color:#dc2626;">~${lostRevenue}€</td></tr>` : ''}
+    ${topCompetitor ? `<tr><td style="padding:4px 0;">Concurrent principal</td><td style="text-align:right;font-weight:700;">${topCompetitor.name} (${topCompetitor.reviewCount} avis)</td></tr>` : ''}
+  </table>
+</div>` : ''
 
           await sendTransactional({
             to:      email,
-            subject: `Votre optimisation Google est prête — ${nom}`,
+            subject: `Votre optimisation Google est prête — ${realName}`,
             html: `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
   <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;">Votre pack Google Business est prêt ✅</h2>
-  <p style="color:#6b7280;font-size:14px;margin:0 0 28px;">${nom} · ${ville}</p>
+  <p style="color:#6b7280;font-size:14px;margin:0 0 20px;">${realName} · ${realCity}</p>
+
+  ${situationHtml}
 
   <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Description Google à publier</h3>
+  <p style="font-size:12px;color:#9ca3af;margin:0 0 8px;">Copiez ce texte dans Google Business → Infos → Description.</p>
   <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 24px;">
     <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">${pack.description}</p>
   </div>
 
-  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 4 posts Google prêts à publier</h3>
-  <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Publiez-en un par semaine depuis Google Business → Ajouter une mise à jour.</p>
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 4 posts Google — 1 par semaine</h3>
+  <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Google Business → Ajouter une mise à jour → Copier/coller.</p>
   ${postsHtml}
+
+  ${reviewsHtml}
 
   <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Priorité cette semaine</h3>
   <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;margin:0 0 28px;">
-    <p style="font-size:14px;color:#92400e;margin:0;">${pack.conseil}</p>
+    <p style="font-size:14px;color:#92400e;margin:0;">${pack.priorite}</p>
   </div>
 
+  ${qrUrl ? `
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Collectez plus d'avis Google</h3>
+  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin:0 0 24px;text-align:center;">
+    <p style="font-size:13px;color:#374151;margin:0 0 16px;">Imprimez ce QR code et posez-le en caisse, sur vos factures ou en vitrine.<br>Vos clients scannent → laissent un avis en 30 secondes.</p>
+    <img src="${qrUrl}" width="160" height="160" alt="QR code avis Google" style="display:inline-block;border-radius:8px;border:2px solid #e5e7eb;" />
+    <p style="font-size:11px;color:#9ca3af;margin:12px 0 0;">Lien direct : <a href="${reviewUrl}" style="color:#2563eb;">${reviewUrl}</a></p>
+  </div>
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📞 Script téléphone (30 secondes)</h3>
+  <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 12px;">
+    <p style="font-size:13px;color:#6b7280;font-style:italic;margin:0 0 8px;">À dire à la fin d'une prestation ou au moment de régler :</p>
+    <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">"Bonjour, si vous êtes satisfait de la prestation, est-ce que vous auriez 30 secondes pour nous laisser un avis sur Google ? Ça nous aide énormément. Je peux vous envoyer le lien directement par SMS si vous voulez."</p>
+  </div>
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">💬 SMS à envoyer après la prestation</h3>
+  <div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 24px;">
+    <p style="font-size:13px;color:#6b7280;font-style:italic;margin:0 0 8px;">Copiez-collez ce message dans votre téléphone :</p>
+    <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">Bonjour [Prénom] ! C'est ${realName}. Merci pour votre confiance 🙏 Si vous avez 30 secondes, un avis Google nous aiderait beaucoup : ${reviewUrl}</p>
+  </div>` : ''}
+
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;">
-  <p style="color:#6b7280;font-size:13px;margin:0 0 4px;">Des questions sur comment publier ? Répondez directement à cet email.</p>
+  <p style="color:#6b7280;font-size:13px;margin:0 0 4px;">Des questions ? Répondez directement à cet email.</p>
   <p style="color:#6b7280;font-size:13px;margin:0;"><strong>Brian · LocalBoost</strong></p>
 </div>`,
           })
