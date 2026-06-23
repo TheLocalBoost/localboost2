@@ -72,7 +72,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 </button>
               </div>
               <p className="text-xs text-gray-400">
-                Gratuit · Aucune carte bancaire · <a href="/signup" className="text-blue-500 hover:underline">Créer un compte gratuit →</a>
+                Aucune inscription requise pour l'analyse · <a href="/pricing" className="text-blue-500 hover:underline">Voir les offres Pro →</a>
               </p>
             </form>
 

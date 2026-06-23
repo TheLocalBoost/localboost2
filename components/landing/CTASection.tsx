@@ -17,10 +17,10 @@ export default function CTASection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
-            href="/signup"
+            href="/pricing"
             className="inline-block rounded-xl bg-white text-blue-600 font-bold text-base px-8 py-4 hover:bg-blue-50 transition shadow-lg"
           >
-            Créer mon compte gratuit →
+            Passer en Pro — 29€/mois →
           </a>
           <a
             href="/analyser"
@@ -29,7 +29,7 @@ export default function CTASection() {
             Analyser d'abord →
           </a>
         </div>
-        <p className="text-blue-200 text-sm mt-4">Gratuit · Aucune carte bancaire</p>
+        <p className="text-blue-200 text-sm mt-4">Sans engagement · Résiliation en 1 clic</p>
       </div>
     </section>
   )

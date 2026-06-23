@@ -49,18 +49,18 @@ export default function EmailCaptureBlock({ establishmentName, score, city, cate
             ✓ Votre plan arrive dans quelques minutes. Vérifiez votre boîte mail.
           </p>
         )}
-        <p className="text-white font-bold text-xl mb-2">Créez votre compte gratuit</p>
+        <p className="text-white font-bold text-xl mb-2">Passez en Pro — plan d'action complet</p>
         <p className="text-blue-200 text-sm mb-5">
-          Score sauvegardé · 1 action IA débloquée · Aucune carte bancaire
+          Score sauvegardé · Posts Google IA · Satisfait ou remboursé 30 jours
         </p>
         <a
-          href={`/signup?nom=${encodeURIComponent(establishmentName)}&ville=${encodeURIComponent(city)}`}
+          href={pricingUrl}
           onClick={() => track('cta_click', { score, category, city, source: 'email_block' })}
           className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition"
         >
-          Créer mon compte gratuit →
+          Démarrer — 29€/mois →
         </a>
-        <p className="text-blue-300 text-xs mt-3">Passez Pro à 29€/mois quand vous êtes convaincu</p>
+        <p className="text-blue-300 text-xs mt-3">Sans engagement · Résiliation en 1 clic</p>
       </div>
     )
   }
@@ -82,7 +82,7 @@ export default function EmailCaptureBlock({ establishmentName, score, city, cate
       style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12 }}
     >
       <p className="text-sm font-bold text-gray-900 mb-1">
-        Recevez votre plan d'action détaillé par email — gratuit
+        Recevez votre plan d'action détaillé par email
       </p>
       <p className="text-xs text-gray-500 mb-4">
         3 actions concrètes pour améliorer votre score cette semaine, rédigées pour {establishmentName}

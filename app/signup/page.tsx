@@ -129,8 +129,8 @@ export default function SignupPage() {
           <Link href="/" className="inline-block mb-6">
             <img src="/logo.png.png" alt="LocalBoost" className="h-16 w-auto mx-auto" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte gratuit</h1>
-          <p className="text-gray-500 text-sm">Gratuit · Aucune carte bancaire requise</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Créer votre compte</h1>
+          <p className="text-gray-500 text-sm">Accédez à LocalBoost Pro — 29€/mois · Sans engagement</p>
         </div>
 
         {/* Étapes */}
@@ -226,7 +226,7 @@ export default function SignupPage() {
               )}
 
               <button type="submit" disabled={status === 'loading'} className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-60">
-                {status === 'loading' ? 'Création du compte...' : 'Créer mon compte gratuitement →'}
+                {status === 'loading' ? 'Création du compte...' : 'Créer mon compte →'}
               </button>
 
               <p className="text-xs text-gray-400 text-center">

@@ -9,22 +9,22 @@ export default function CTAFinal() {
         </p>
         <h2 className="text-3xl font-extrabold text-white mb-5 leading-tight">
           Consacrer 2h30 chaque semaine à votre fiche Google.<br />
-          <span className="text-blue-400">Ou déléguer à LocalBoost — gratuitement pour commencer.</span>
+          <span className="text-blue-400">Ou déléguer à LocalBoost — dès 29€/mois.</span>
         </h2>
         <p className="text-gray-300 mb-4 leading-relaxed">
           Si vous ne faites ni l'un ni l'autre, votre fiche descend. Vos concurrents remontent. Et vous perdez des clients sans le savoir.
         </p>
         <p className="text-gray-400 text-sm mb-8">
-          Créez votre compte gratuit en 30 secondes. Aucune carte bancaire requise.
+          Démarrez en 5 minutes. Satisfait ou remboursé 30 jours.
         </p>
         <a
-          href="/signup"
+          href="/pricing"
           className="inline-block rounded-xl bg-blue-600 text-white font-bold text-sm px-10 py-4 hover:bg-blue-700 transition shadow-lg mb-3"
         >
-          Créer mon compte gratuit →
+          Passer en Pro — 29€/mois →
         </a>
         <p className="text-gray-500 text-xs">
-          Gratuit pour toujours · Passez Pro quand vous êtes convaincu
+          Sans engagement · Résiliation en 1 clic
         </p>
       </div>
     </section>

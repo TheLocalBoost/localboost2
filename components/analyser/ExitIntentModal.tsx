@@ -111,25 +111,25 @@ export default function ExitIntentModal({ score, establishmentName, city, catego
         </div>
 
         <h2 className="text-lg font-bold text-gray-900 text-center mb-2">
-          Sauvegardez votre rapport — c'est gratuit
+          Débloquez votre plan d'action complet
         </h2>
         <p className="text-sm text-gray-500 text-center mb-1">
-          Votre score de <strong className="text-gray-900">{score}/100</strong> + le plan d'action pour {establishmentName}.
+          Votre score de <strong className="text-gray-900">{score}/100</strong> + les actions prioritaires pour {establishmentName}.
         </p>
         <p className="text-xs text-gray-400 text-center mb-5">
-          Créez un compte gratuit — aucune carte bancaire requise.
+          LocalBoost Pro corrige votre fiche et génère vos posts Google chaque semaine.
         </p>
 
         <a
-          href={`/signup?nom=${encodeURIComponent(establishmentName)}&ville=${encodeURIComponent(city)}`}
+          href={`/pricing?nom=${encodeURIComponent(establishmentName)}&city=${encodeURIComponent(city)}&score=${score}`}
           className="block w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition text-center mb-3"
         >
-          Créer mon compte gratuit →
+          Passer en Pro — 29€/mois →
         </a>
 
         <div className="flex items-center justify-center gap-4 text-xs text-gray-400 mb-4">
-          <span>✓ Gratuit</span>
-          <span>✓ Sans carte bancaire</span>
+          <span>✓ Satisfait ou remboursé 30j</span>
+          <span>✓ Sans engagement</span>
           <span>✓ Score sauvegardé</span>
         </div>
 
