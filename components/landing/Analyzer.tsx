@@ -142,6 +142,9 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [capturedEmail, setCapturedEmail]         = useState('')
   const [generatedDesc, setGeneratedDesc]         = useState<string | null>(null)
   const [generatingDesc, setGeneratingDesc]       = useState(false)
+  const [generatedPost, setGeneratedPost]         = useState<string | null>(null)
+  const [generatedReview, setGeneratedReview]     = useState<string | null>(null)
+  const [generatingContent, setGeneratingContent] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -228,6 +231,18 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           body: JSON.stringify({ name: data.name, city: data.city, category: data.category, problems: data.problems }),
         }).then(r => r.json()).then(d => { if (d.description) setGeneratedDesc(d.description) }).catch(() => {}).finally(() => setGeneratingDesc(false))
       }
+
+      // Génère post Google + réponse à avis en arrière-plan
+      setGeneratingContent(true)
+      const bestReview = (data.recentReviews ?? []).find((r: { text: string }) => r.text?.length > 20) ?? null
+      fetch('/api/generate-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: data.name, city: data.city, category: data.category, recentReview: bestReview }),
+      }).then(r => r.json()).then(d => {
+        if (d.post) setGeneratedPost(d.post)
+        if (d.reviewResponse) setGeneratedReview(d.reviewResponse)
+      }).catch(() => {}).finally(() => setGeneratingContent(false))
     } catch {
       setError('Erreur de connexion. Réessayez.')
     } finally {
@@ -462,6 +477,69 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       <p className="text-xs text-gray-400 mt-3">On publiera la version complète sur votre fiche dans les 48h après activation.</p>
                     </>
                   )}
+                </div>
+              )}
+
+              {/* BLOC — Ce que LocalBoost a déjà préparé */}
+              {(generatingContent || generatedPost) && (
+                <div className="bg-white rounded-2xl border border-blue-100 p-6">
+                  <div className="flex items-center gap-2 mb-5">
+                    <span className="text-blue-600 text-sm">✦</span>
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Ce que LocalBoost a déjà préparé pour vous</p>
+                  </div>
+
+                  <div className="space-y-5">
+                    {/* Post Google */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                        <span>📍</span> Post Google prêt à publier
+                      </p>
+                      {generatingContent && !generatedPost ? (
+                        <div className="space-y-2 animate-pulse">
+                          <div className="h-3 bg-gray-100 rounded w-full" />
+                          <div className="h-3 bg-gray-100 rounded w-5/6" />
+                          <div className="h-3 bg-gray-100 rounded w-4/6" />
+                        </div>
+                      ) : (
+                        <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPost}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Réponse à l'avis */}
+                    {(generatingContent || generatedReview) && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                          <span>📍</span> Réponse à votre dernier avis
+                        </p>
+                        {generatingContent && !generatedReview ? (
+                          <div className="space-y-2 animate-pulse">
+                            <div className="h-3 bg-gray-100 rounded w-full" />
+                            <div className="h-3 bg-gray-100 rounded w-3/4" />
+                          </div>
+                        ) : (
+                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                            <p className="text-sm text-gray-800 leading-relaxed">{generatedReview}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Priorité détectée */}
+                    {result.problems.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                          <span>📍</span> Priorité détectée
+                        </p>
+                        <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                          <p className="text-sm text-amber-800 leading-snug">{result.problems[0].text}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-400 mt-4 text-center">Débloque les prochaines semaines de contenu → 29€/mois</p>
                 </div>
               )}
 
