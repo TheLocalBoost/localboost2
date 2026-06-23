@@ -566,7 +566,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   }}
                   className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-3 text-center shadow-lg shadow-green-900/30"
                 >
-                  Corriger ma fiche — 29€/mois →
+                  Récupérer mes appels perdus — 29€/mois →
                 </a>
                 <p className="text-gray-400 text-xs text-center">Sans engagement · Remboursé si pas de résultat en 30 jours</p>
               </div>

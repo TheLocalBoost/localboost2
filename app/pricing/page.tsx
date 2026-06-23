@@ -26,10 +26,11 @@ function PricingContent() {
   const revenueParam = parseInt(searchParams.get('revenue') ?? '0') || 0
 
   const [user, setUser]             = useState<{ email: string; id: string } | null>(null)
-  const [loading, setLoading]       = useState(false)
-  const [checking, setChecking]     = useState(true)
-  const [guestEmail, setGuestEmail] = useState('')
-  const [emailError, setEmailError] = useState(false)
+  const [loading, setLoading]           = useState(false)
+  const [loadingOneshot, setLoadingOneshot] = useState(false)
+  const [checking, setChecking]         = useState(true)
+  const [guestEmail, setGuestEmail]     = useState('')
+  const [emailError, setEmailError]     = useState(false)
 
   useEffect(() => {
     const urlEmail = searchParams.get('email')
@@ -40,6 +41,27 @@ function PricingContent() {
       setChecking(false)
     })
   }, [])
+
+  const handleOneshot = async () => {
+    const email = user?.email ?? guestEmail
+    if (!email || !email.includes('@')) { setEmailError(true); return }
+    setEmailError(false)
+    setLoadingOneshot(true)
+    try {
+      const res = await fetch('/api/stripe/checkout-oneshot', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, nom: nomParam, ville: city }),
+      })
+      const data: { url?: string; error?: string } = await res.json()
+      if (data.url)   window.location.href = data.url
+      if (data.error) alert('Erreur : ' + data.error)
+    } catch {
+      alert('Erreur de connexion. Réessayez.')
+    } finally {
+      setLoadingOneshot(false)
+    }
+  }
 
   const handleCTA = async () => {
     const email = user?.email ?? guestEmail
@@ -90,14 +112,14 @@ function PricingContent() {
               </>
             ) : city ? (
               <>
-                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Corrigez votre fiche Google en 10 minutes</h1>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Récupérez les appels que Google vous coûte</h1>
                 <p className="text-gray-500 text-sm">
                   Rejoignez les artisans de <strong>{city}</strong> qui récupèrent des clients chaque semaine.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Corrigez votre fiche Google en 10 minutes</h1>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Récupérez les appels que Google vous coûte</h1>
                 <p className="text-gray-500 text-sm">
                   Rejoignez les artisans qui récupèrent des clients perdus chaque semaine.
                 </p>
@@ -126,6 +148,33 @@ function PricingContent() {
             </p>
           </div>
         )}
+
+        {/* Carte one-shot 99€ */}
+        <div className="rounded-2xl border-2 border-green-500 bg-white p-5 sm:p-6 shadow-md mb-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-4">
+            Résultat garanti sous 48h
+          </div>
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-4xl font-extrabold text-gray-900">99€</span>
+            <span className="text-gray-400 text-sm">une seule fois</span>
+          </div>
+          <p className="text-sm font-bold text-gray-800 mb-1">On optimise votre fiche Google cette semaine</p>
+          <p className="text-xs text-gray-500 mb-4">Description rédigée + 4 posts prêts à publier + réponses à vos avis — livré par email sous 48h. Sans abonnement.</p>
+          <button
+            onClick={handleOneshot}
+            disabled={loadingOneshot || checking}
+            className="w-full rounded-xl bg-green-500 hover:bg-green-400 py-3.5 text-sm font-extrabold text-white transition disabled:opacity-60 shadow-lg shadow-green-100"
+          >
+            {loadingOneshot ? 'Chargement...' : 'Je veux mes appels perdus — 99€ →'}
+          </button>
+          <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé · Satisfait ou remboursé</p>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <p className="text-xs text-gray-400 shrink-0">ou continuez à améliorer chaque semaine</p>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
 
         {/* Carte pricing */}
         <div className="rounded-2xl border-2 border-blue-500 bg-white p-5 sm:p-8 shadow-md mb-6">
