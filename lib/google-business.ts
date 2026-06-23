@@ -17,7 +17,7 @@ export const GBP_SCOPES = [
 export function getOAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id:     process.env.GOOGLE_BUSINESS_CLIENT_ID!,
-    redirect_uri:  process.env.GOOGLE_BUSINESS_REDIRECT_URI!,
+    redirect_uri:  process.env.GBP_REDIRECT_URI ?? process.env.GOOGLE_BUSINESS_REDIRECT_URI!,
     response_type: 'code',
     scope:         GBP_SCOPES,
     access_type:   'offline',
@@ -39,7 +39,7 @@ export async function exchangeCode(code: string): Promise<{
       code,
       client_id:     process.env.GOOGLE_BUSINESS_CLIENT_ID!,
       client_secret: process.env.GOOGLE_BUSINESS_CLIENT_SECRET!,
-      redirect_uri:  process.env.GOOGLE_BUSINESS_REDIRECT_URI!,
+      redirect_uri:  process.env.GBP_REDIRECT_URI ?? process.env.GOOGLE_BUSINESS_REDIRECT_URI!,
       grant_type:    'authorization_code',
     }),
   })
