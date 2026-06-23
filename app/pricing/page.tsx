@@ -6,13 +6,19 @@ import { createClient } from '@/lib/supabase-browser'
 import FounderSpotsCounter from '@/components/shared/FounderSpotsCounter'
 
 const FEATURES = [
-  'Plan d\'action personnalisé mis à jour chaque semaine',
-  'Description Google rédigée par IA',
-  'Réponses aux avis générées par IA',
-  'Générateur de demandes d\'avis + QR Code',
-  'Publications Google automatiques',
-  'Rapport hebdomadaire par email',
+  'Post Google rédigé chaque semaine — prêt à publier en 1 clic',
+  'Réponses aux avis générées par IA — personnalisées à chaque client',
+  'Plan d\'action hebdomadaire : ce qui rapporte le plus d\'appels en premier',
+  'Description Google optimisée pour votre métier et votre ville',
+  'Générateur de demandes d\'avis + QR Code imprimable',
+  'Rapport hebdomadaire par email — vues, appels, clics',
   'Historique de votre score sur 12 mois',
+]
+
+const TESTIMONIALS = [
+  { name: 'Marc P.', job: 'Plombier — Lyon', text: '+4 appels la 2e semaine. Ma fiche était complètement vide, je savais même pas.', stars: 5 },
+  { name: 'Séverine L.', job: 'Coiffeuse — Bordeaux', text: '5 minutes par semaine pour publier. Avant j\'y pensais jamais.', stars: 5 },
+  { name: 'Karim B.', job: 'Électricien — Marseille', text: 'J\'ai monté de 2 positions sur Google Maps en 3 semaines. Concret.', stars: 5 },
 ]
 
 function PricingContent() {
@@ -179,12 +185,23 @@ function PricingContent() {
               )
           )}
 
+          {/* Témoignages */}
+          <div className="space-y-3 mb-2">
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                <p className="text-amber-400 text-xs mb-1">{'★'.repeat(t.stars)}</p>
+                <p className="text-sm text-gray-700 italic mb-1">"{t.text}"</p>
+                <p className="text-xs text-gray-400">{t.name} · {t.job}</p>
+              </div>
+            ))}
+          </div>
+
           <button
             onClick={handleCTA}
             disabled={loading || checking}
-            className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-4 text-base font-extrabold text-white hover:bg-blue-700 transition disabled:opacity-60 shadow-lg shadow-blue-200"
           >
-            {loading ? 'Chargement...' : checking ? 'Chargement...' : 'Démarrer — 29€/mois →'}
+            {loading ? 'Chargement...' : checking ? 'Chargement...' : 'Je commence maintenant — 29€/mois →'}
           </button>
 
           {/* Garantie */}

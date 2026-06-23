@@ -432,14 +432,19 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               )}
 
               {/* CTA — immédiatement après l'impact, avant le reste */}
-              <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 p-6">
-                <p className="text-white font-bold text-lg mb-1">
-                  {avgCompetitorScore !== null && result.score < avgCompetitorScore
-                    ? `Vos concurrents ont ${avgCompetitorScore - result.score} pts d'avance sur vous.`
-                    : `Votre fiche vous fait perdre ~${result.lostRevenue}€/mois.`}
-                </p>
-                <p className="text-blue-200 text-sm mb-5">
-                  On corrige tout ça pour vous — photos, horaires, avis, description — chaque mois.
+              <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-6 border border-gray-700">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-red-400 text-xl">⚠️</span>
+                  <p className="text-white font-extrabold text-xl leading-tight">
+                    {result.lostRevenue > 0
+                      ? `~${result.lostRevenue}€ perdus ce mois-ci`
+                      : avgCompetitorScore !== null && result.score < avgCompetitorScore
+                        ? `${avgCompetitorScore - result.score} pts de retard sur vos concurrents`
+                        : `Score ${result.score}/100 — votre fiche perd des appels`}
+                  </p>
+                </div>
+                <p className="text-gray-300 text-sm mb-5 leading-relaxed">
+                  LocalBoost prépare votre post Google, vos réponses aux avis et vos corrections chaque semaine. Vous publiez en 5 minutes.
                 </p>
                 <a
                   href={pricingUrl}
@@ -447,11 +452,11 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     setCtaClicked(true)
                     track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city })
                   }}
-                  className="block w-full rounded-xl bg-white py-4 text-sm font-bold text-blue-600 hover:bg-blue-50 transition mb-3 text-center"
+                  className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-3 text-center shadow-lg shadow-green-900/30"
                 >
-                  Voir mon plan d'action — 29€/mois →
+                  Corriger ma fiche — 29€/mois →
                 </a>
-<p className="text-blue-200 text-xs text-center">Sans engagement · Annulation en 1 clic · Remboursé si pas de résultat</p>
+                <p className="text-gray-400 text-xs text-center">Sans engagement · Remboursé si pas de résultat en 30 jours</p>
               </div>
 
               {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
