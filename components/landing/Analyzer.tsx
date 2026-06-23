@@ -458,28 +458,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-              {/* Description générée par IA */}
-              {(generatingDesc || generatedDesc) && (
-                <div className="bg-white rounded-2xl border border-blue-100 p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-blue-600 text-sm">✦</span>
-                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Description Google rédigée par IA — aperçu</p>
-                  </div>
-                  {generatingDesc ? (
-                    <div className="space-y-2 animate-pulse">
-                      <div className="h-3 bg-gray-100 rounded w-full" />
-                      <div className="h-3 bg-gray-100 rounded w-5/6" />
-                      <div className="h-3 bg-gray-100 rounded w-4/6" />
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{generatedDesc}</p>
-                      <p className="text-xs text-gray-400 mt-3">On publiera la version complète sur votre fiche dans les 48h après activation.</p>
-                    </>
-                  )}
-                </div>
-              )}
-
               {/* BLOC — Ce que LocalBoost a déjà préparé */}
               {(generatingContent || generatedPost) && (
                 <div className="bg-white rounded-2xl border border-blue-100 p-6">
@@ -489,6 +467,26 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </div>
 
                   <div className="space-y-5">
+                    {/* Description Google */}
+                    {(generatingDesc || generatedDesc) && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                          <span>📍</span> Description Google à publier
+                        </p>
+                        {generatingDesc && !generatedDesc ? (
+                          <div className="space-y-2 animate-pulse">
+                            <div className="h-3 bg-gray-100 rounded w-full" />
+                            <div className="h-3 bg-gray-100 rounded w-5/6" />
+                            <div className="h-3 bg-gray-100 rounded w-4/6" />
+                          </div>
+                        ) : (
+                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                            <p className="text-sm text-gray-800 leading-relaxed">{generatedDesc}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Post Google */}
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
@@ -539,7 +537,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-400 mt-4 text-center">Débloque les prochaines semaines de contenu → 29€/mois</p>
+                  <p className="text-xs text-gray-400 mt-4 text-center">Publiez ce contenu en 5 minutes depuis votre tableau de bord → 29€/mois</p>
                 </div>
               )}
 

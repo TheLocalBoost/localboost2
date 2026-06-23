@@ -355,12 +355,14 @@ export async function POST(req: NextRequest) {
 
   const score = Math.round((Object.values(criteria).filter(Boolean).length / Object.keys(criteria).length) * 100)
 
-  // 6. Concurrents
-  const competitors: Competitor[] = results.slice(1, 3)
+  // 6. Concurrents — recherche par secteur+ville pour trouver les vrais concurrents locaux
+  const competitorResults = await textsearch(`${category} ${cityOut}`)
+  const competitors: Competitor[] = competitorResults
     .filter(r => r.name && r.place_id !== place.place_id)
+    .slice(0, 3)
     .map(r => ({
       name:           r.name,
-      vicinity:       r.formatted_address ?? r.vicinity ?? city,
+      vicinity:       r.formatted_address ?? r.vicinity ?? cityOut,
       rating:         r.rating ?? 0,
       reviewCount:    r.user_ratings_total ?? 0,
       estimatedScore: competitorScore(r.rating ?? 0, r.user_ratings_total ?? 0),
