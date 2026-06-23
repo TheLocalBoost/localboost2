@@ -15,11 +15,6 @@ const FEATURES = [
   'Historique de votre score sur 12 mois',
 ]
 
-const TESTIMONIALS = [
-  { name: 'Marc P.', job: 'Plombier — Lyon', text: '+4 appels la 2e semaine. Ma fiche était complètement vide, je savais même pas.', stars: 5 },
-  { name: 'Séverine L.', job: 'Coiffeuse — Bordeaux', text: '5 minutes par semaine pour publier. Avant j\'y pensais jamais.', stars: 5 },
-  { name: 'Karim B.', job: 'Électricien — Marseille', text: 'J\'ai monté de 2 positions sur Google Maps en 3 semaines. Concret.', stars: 5 },
-]
 
 function PricingContent() {
   const supabase     = createClient()
@@ -184,17 +179,6 @@ function PricingContent() {
                 </div>
               )
           )}
-
-          {/* Témoignages */}
-          <div className="space-y-3 mb-2">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                <p className="text-amber-400 text-xs mb-1">{'★'.repeat(t.stars)}</p>
-                <p className="text-sm text-gray-700 italic mb-1">"{t.text}"</p>
-                <p className="text-xs text-gray-400">{t.name} · {t.job}</p>
-              </div>
-            ))}
-          </div>
 
           <button
             onClick={handleCTA}

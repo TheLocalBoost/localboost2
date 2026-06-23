@@ -248,6 +248,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     ? Math.round(result.competitors.reduce((a, c) => a + c.estimatedScore, 0) / result.competitors.length)
     : null
 
+  const topCompetitor = result?.competitors.length
+    ? result.competitors.reduce((best, c) => c.estimatedScore > best.estimatedScore ? c : best, result.competitors[0])
+    : null
+
 
   return (
     <section id="analyzer" className="py-20 px-6 bg-gray-50">
@@ -309,6 +313,36 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
         <div id="analyzer-result">
           {result && (
             <div className="space-y-4">
+
+              {/* BLOC 0 — Concurrent le plus menaçant (hook principal) */}
+              {topCompetitor && (
+                <div className="bg-white rounded-2xl border-2 border-red-100 p-5">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
+                    Votre position sur Google Maps à {result.city}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-center">
+                      <p className="text-xs text-gray-400 mb-1.5">Vous</p>
+                      <p className="text-xs font-bold text-gray-800 leading-tight min-h-8 flex items-center justify-center text-center">{result.name}</p>
+                      <p className="text-2xl font-black text-gray-900 mt-2">{result.score}<span className="text-xs font-normal text-gray-400">/100</span></p>
+                      {result.rating > 0 && <p className="text-xs text-gray-400 mt-1">{result.rating}★ · {result.reviews} avis</p>}
+                    </div>
+                    <div className={`rounded-xl p-3 text-center border-2 ${topCompetitor.estimatedScore > result.score ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+                      <p className="text-xs text-gray-400 mb-1.5">Concurrent</p>
+                      <p className="text-xs font-bold text-gray-800 leading-tight min-h-8 flex items-center justify-center text-center">{topCompetitor.name}</p>
+                      <p className={`text-2xl font-black mt-2 ${topCompetitor.estimatedScore > result.score ? 'text-red-600' : 'text-amber-600'}`}>
+                        {topCompetitor.estimatedScore}<span className="text-xs font-normal text-gray-400">/100</span>
+                      </p>
+                      {topCompetitor.rating > 0 && <p className="text-xs text-gray-400 mt-1">{topCompetitor.rating}★ · {topCompetitor.reviewCount} avis</p>}
+                    </div>
+                  </div>
+                  <div className={`text-center text-sm font-bold rounded-xl py-2.5 px-4 ${topCompetitor.estimatedScore > result.score ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+                    {topCompetitor.estimatedScore > result.score
+                      ? `${topCompetitor.name} apparaît avant vous sur Google`
+                      : `Vous êtes en tête — mais ${topCompetitor.name} est à ${topCompetitor.estimatedScore} pts`}
+                  </div>
+                </div>
+              )}
 
               {/* BLOC 1 — Score + concurrents (toujours visible) */}
               <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -485,26 +519,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       ))}
                     </div>
                   </div>
-
-                  {/* Concurrents */}
-                  {result.competitors.length > 0 && (
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Vos concurrents directs</p>
-                      <div className="space-y-3">
-                        {result.competitors.map((c, i) => (
-                          <div key={i} className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                              <p className="text-xs text-gray-400">{c.rating > 0 ? `${c.rating}★ · ${c.reviewCount} avis` : 'Non noté'}</p>
-                            </div>
-                            <p className={`text-sm font-bold ${c.estimatedScore > result.score ? 'text-red-500' : 'text-green-600'}`}>
-                              {c.estimatedScore}/100
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Horaires */}
                   {result.weekdayHours.length > 0 && (
