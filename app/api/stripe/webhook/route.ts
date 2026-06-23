@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import Anthropic from '@anthropic-ai/sdk'
 import { sendTransactional } from '@/lib/email'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const supabaseAdmin = createClient(
@@ -30,6 +33,74 @@ export async function POST(req: NextRequest) {
       const email       = session.metadata?.email ?? session.customer_details?.email ?? session.customer_email
 
       if (!email) break
+
+      // ── One-shot 99€ : générer le contenu et envoyer par email ──
+      if (session.metadata?.type === 'oneshot') {
+        const nom   = session.metadata?.nom   ?? 'votre établissement'
+        const ville = session.metadata?.ville ?? 'votre ville'
+
+        try {
+          const prompt = `Tu es un expert en Google Business Profile. Génère le pack complet pour "${nom}", artisan à ${ville}.
+
+Réponds UNIQUEMENT avec ce format JSON (aucun texte avant ou après) :
+{
+  "description": "...",
+  "posts": ["post1", "post2", "post3", "post4"],
+  "conseil": "..."
+}
+
+Contraintes :
+- description : 150-200 mots, mentionne "${nom}" et "${ville}", ton artisan direct
+- posts : 4 posts Google distincts (60-90 mots chacun), angles variés : expertise, conseil pratique, disponibilité, saison/actualité. Chaque post termine par un appel à l'action + 2-3 hashtags
+- conseil : 1 phrase d'action prioritaire pour améliorer le classement Google cette semaine`
+
+          const msg = await anthropic.messages.create({
+            model:      'claude-haiku-4-5-20251001',
+            max_tokens: 1500,
+            messages:   [{ role: 'user', content: prompt }],
+          })
+
+          const raw  = (msg.content[0] as { text: string }).text.trim()
+          const pack = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
+
+          const postsHtml = pack.posts.map((p: string, i: number) => `
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 12px;">
+              <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;">Post ${i + 1}/4</p>
+              <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;white-space:pre-line;">${p}</p>
+            </div>`).join('')
+
+          await sendTransactional({
+            to:      email,
+            subject: `Votre optimisation Google est prête — ${nom}`,
+            html: `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
+  <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;">Votre pack Google Business est prêt ✅</h2>
+  <p style="color:#6b7280;font-size:14px;margin:0 0 28px;">${nom} · ${ville}</p>
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Description Google à publier</h3>
+  <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 24px;">
+    <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">${pack.description}</p>
+  </div>
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 4 posts Google prêts à publier</h3>
+  <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Publiez-en un par semaine depuis Google Business → Ajouter une mise à jour.</p>
+  ${postsHtml}
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Priorité cette semaine</h3>
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;margin:0 0 28px;">
+    <p style="font-size:14px;color:#92400e;margin:0;">${pack.conseil}</p>
+  </div>
+
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;">
+  <p style="color:#6b7280;font-size:13px;margin:0 0 4px;">Des questions sur comment publier ? Répondez directement à cet email.</p>
+  <p style="color:#6b7280;font-size:13px;margin:0;"><strong>Brian · LocalBoost</strong></p>
+</div>`,
+          })
+        } catch (err) {
+          console.error('Oneshot generation error:', err)
+        }
+        break
+      }
 
       // 1. Trouver ou créer le compte Supabase
       let userId = existingId
