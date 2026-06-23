@@ -89,14 +89,14 @@ function PricingContent() {
               </>
             ) : city ? (
               <>
-                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">On corrige votre fiche Google pour vous</h1>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Corrigez votre fiche Google en 10 minutes</h1>
                 <p className="text-gray-500 text-sm">
                   Rejoignez les artisans de <strong>{city}</strong> qui récupèrent des clients chaque semaine.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">On corrige votre fiche Google pour vous</h1>
+                <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Corrigez votre fiche Google en 10 minutes</h1>
                 <p className="text-gray-500 text-sm">
                   Rejoignez les artisans qui récupèrent des clients perdus chaque semaine.
                 </p>
@@ -121,13 +121,13 @@ function PricingContent() {
               <span className="text-sm font-normal text-red-500"> perdus/mois à cause des lacunes détectées</span>
             </p>
             <p className="text-xs text-red-400 mt-2">
-              Pour 29€/mois, on corrige tout ça automatiquement.
+              Pour 29€/mois, on vous guide pour corriger tout ça en moins de 10 minutes.
             </p>
           </div>
         )}
 
         {/* Carte pricing */}
-        <div className="rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-md mb-6">
+        <div className="rounded-2xl border-2 border-blue-500 bg-white p-5 sm:p-8 shadow-md mb-6">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 mb-5">
             Offre fondateur
           </div>
@@ -141,7 +141,7 @@ function PricingContent() {
             <div className="text-center">
               <p className="text-xs text-blue-600 font-semibold mb-0.5">Mensuel</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-extrabold text-gray-900">29€</span>
+                <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">29€</span>
                 <span className="text-gray-500 text-lg">/mois</span>
               </div>
             </div>
@@ -194,7 +194,7 @@ function PricingContent() {
           </div>
 
           {/* Réassurance */}
-          <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-around mt-4 pt-4 border-t border-gray-100 gap-2">
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="text-lg">🔒</span>
               <p className="text-xs text-gray-500">Paiement sécurisé<br />Stripe</p>
@@ -232,7 +232,7 @@ function PricingContent() {
               <span className="text-xs font-bold text-blue-600 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
               <div>
                 <p className="text-sm font-semibold text-gray-800">Chaque semaine</p>
-                <p className="text-xs text-gray-500 mt-0.5">Un rapport vous dit où en est votre fiche. On répond aux avis, on publie du contenu. Vous ne touchez à rien.</p>
+                <p className="text-xs text-gray-500 mt-0.5">Un post Google prêt à publier, des réponses aux avis rédigées, vos actions de la semaine. Vous publiez en 5 minutes depuis votre tableau de bord.</p>
               </div>
             </div>
           </div>

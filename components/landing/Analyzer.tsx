@@ -332,7 +332,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     <div className="flex items-start gap-2.5">
                       <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
                       <p className="text-sm text-gray-700">
-                        <strong>LocalBoost gère votre fiche Google à votre place</strong> — corrections, description, réponses aux avis, photos — chaque mois. Vous ne touchez à rien.
+                        <strong>LocalBoost vous aide à corriger votre fiche Google en moins de 10 minutes</strong> — posts prêts à publier, réponses aux avis, actions prioritaires — chaque semaine dans votre tableau de bord.
                       </p>
                     </div>
                     {result.lostCalls >= 2 && (

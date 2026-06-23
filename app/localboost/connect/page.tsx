@@ -404,14 +404,10 @@ function ConnectInner() {
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700">{decodeURIComponent(errorMsg)}</div>
         )}
 
-        <p className="text-xs text-gray-400 text-center mb-3">
-          Si vous avez déjà reçu la confirmation, cliquez directement :
-        </p>
-        <a href="/api/google-business/auth"
-          className="flex items-center justify-center gap-3 w-full rounded-xl bg-white border-2 border-gray-200 px-6 py-4 text-sm font-bold text-gray-800 hover:border-blue-400 hover:bg-blue-50 transition">
-          <GoogleIcon />
-          Connecter avec Google Business
-        </a>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 text-center">
+          <p className="font-semibold mb-1">⏳ Connexion directe en cours d'activation</p>
+          <p className="text-xs text-amber-700">La synchronisation automatique sera disponible dans quelques jours. Notre équipe s'occupe de la configuration.</p>
+        </div>
       </div>
     )
   }

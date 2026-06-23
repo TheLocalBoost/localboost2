@@ -33,16 +33,16 @@ export default function Modules() {
   return (
     <section id="features" className="py-20 px-6 bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Le travail qu'une bonne fiche exige — fait à votre place
+            Le travail qu'une bonne fiche exige — préparé chaque semaine pour vous
           </h2>
           <p className="text-gray-500">
-            Concrètement. Ce que vous feriez vous-même, versus ce que LocalBoost fait.
+            Concrètement. Ce que vous feriez vous-même, versus ce que LocalBoost prépare.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {FEATURES.map((f, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6">
               <div className="text-2xl mb-3">{f.icon}</div>

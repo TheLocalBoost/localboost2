@@ -9,9 +9,9 @@ const STEPS = [
   {
     n: '2',
     title: 'LocalBoost travaille pendant que vous travaillez',
-    time: 'Automatique, chaque semaine',
-    desc: 'Post Google rédigé et prêt, réponses personnalisées pour vos nouveaux avis, actions concrètes pour recevoir plus d\'appels — tout dans votre tableau de bord chaque lundi.',
-    detail: 'Pendant que vous êtes sur chantier, LocalBoost a déjà rédigé votre contenu de la semaine.',
+    time: 'Chaque lundi dans votre tableau de bord',
+    desc: 'Post Google rédigé et prêt à publier, réponses personnalisées pour vos nouveaux avis, actions concrètes pour recevoir plus d\'appels — tout dans votre tableau de bord chaque lundi.',
+    detail: 'Pendant que vous êtes sur chantier, LocalBoost a préparé votre contenu de la semaine.',
   },
   {
     n: '3',
@@ -28,16 +28,16 @@ export default function HowItWorks() {
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Ce que LocalBoost fait à votre place
+            Comment LocalBoost fonctionne
           </h2>
           <p className="text-gray-500">
-            Vous faites votre métier. LocalBoost s'occupe que des clients vous appellent.
+            Vous faites votre métier. LocalBoost prépare tout — vous publiez en 5 min.
           </p>
         </div>
 
         <div className="space-y-4">
           {STEPS.map(({ n, title, time, desc, detail }) => (
-            <div key={n} className="flex gap-5 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <div key={n} className="flex gap-3 sm:gap-5 bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
               <div className="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg">
                 {n}
               </div>

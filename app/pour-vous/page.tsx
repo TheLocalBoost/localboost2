@@ -3,18 +3,18 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 const INCLUS = [
-  { icon: '📊', title: 'Audit mensuel de votre fiche', desc: 'On vérifie chaque mois que votre fiche est à jour et optimisée.' },
-  { icon: '📸', title: 'Ajout de photos professionnelles', desc: 'On sélectionne et ajoute vos photos pour maximiser l\'engagement.' },
-  { icon: '💬', title: 'Réponses aux avis Google', desc: 'On répond à tous vos avis (bons et mauvais) dans les 48h.' },
-  { icon: '🕐', title: 'Mise à jour des horaires', desc: 'Jours fériés, fermetures exceptionnelles — tout est géré.' },
-  { icon: '🔍', title: 'Optimisation des mots-clés', desc: 'Votre fiche ressort sur les bonnes recherches dans votre ville.' },
-  { icon: '📈', title: 'Rapport mensuel chiffré', desc: 'Vous recevez chaque mois le nombre de vues, appels et itinéraires.' },
+  { icon: '📊', title: 'Audit mensuel de votre fiche', desc: 'Chaque mois, on analyse votre fiche et on vous dit exactement quoi corriger en priorité.' },
+  { icon: '📸', title: 'Guide photos optimisées', desc: 'On vous dit quelles photos ajouter et comment les présenter pour maximiser l\'engagement.' },
+  { icon: '💬', title: 'Réponses aux avis préparées', desc: 'On rédige les réponses à vos avis — vous les relisez et publiez en 1 clic.' },
+  { icon: '🕐', title: 'Rappels horaires et événements', desc: 'On vous alerte pour les jours fériés et fermetures à mettre à jour avant qu\'ils nuisent à votre fiche.' },
+  { icon: '🔍', title: 'Optimisation des mots-clés', desc: 'On identifie les termes recherchés dans votre ville et on vous guide pour les intégrer.' },
+  { icon: '📈', title: 'Rapport mensuel chiffré', desc: 'Vous recevez chaque mois le bilan : vues, appels, clics — et les actions du mois suivant.' },
 ]
 
 const FAQ = [
   {
     q: 'Est-ce que je dois faire quelque chose ?',
-    a: 'Non. Vous nous donnez accès à votre fiche Google (5 minutes, on vous guide), et on s\'occupe de tout. Vous pouvez continuer à faire votre métier.',
+    a: 'Très peu. On prépare tout — vous validez et publiez en quelques minutes par semaine. La plupart des artisans y passent moins de 10 minutes.',
   },
   {
     q: 'Combien de temps avant de voir des résultats ?',
@@ -25,8 +25,8 @@ const FAQ = [
     a: 'Vous annulez quand vous voulez depuis votre espace, sans justification. Zéro engagement, zéro frais cachés.',
   },
   {
-    q: 'C\'est quoi la différence avec LocalBoost en self-service ?',
-    a: 'On fait tout à votre place. Pas d\'outil à apprendre, pas de temps à y consacrer. Vous payez pour le résultat, pas pour un logiciel.',
+    q: 'C\'est quoi la différence avec LocalBoost en autonomie ?',
+    a: 'Avec cet accompagnement, on prépare tout le contenu à votre place et on vous guide étape par étape. Vous n\'avez qu\'à valider — pas besoin d\'apprendre l\'outil.',
   },
 ]
 
@@ -70,18 +70,18 @@ export default function PourVousPage() {
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5 text-sm font-medium text-green-700 mb-6">
-          Service géré — zéro effort de votre côté
+          Accompagnement mensuel — moins de 10 min par semaine
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
-          On gère votre fiche Google<br />
-          <span className="text-blue-600">pour vous.</span>
+          On prépare tout.<br />
+          <span className="text-blue-600">Vous publiez en 5 minutes.</span>
         </h1>
         <p className="text-xl text-gray-500 mb-8 max-w-xl mx-auto">
-          Vous avez un commerce à faire tourner. On s'occupe de votre visibilité Google — photos, avis, horaires, optimisation — chaque mois, sans que vous ayez à y penser.
+          Vous avez un commerce à faire tourner. On s'occupe de préparer votre visibilité Google chaque semaine — posts, réponses aux avis, optimisation — vous n'avez qu'à valider.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
           <a href="#contact" className="rounded-2xl bg-blue-600 px-8 py-4 text-base font-bold text-white hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-            Je veux que ce soit géré → 29€/mois
+            Je veux être accompagné → 29€/mois
           </a>
         </div>
         <p className="text-sm text-gray-400">Sans engagement · Annulation en 1 clic · Résultats en 30 jours</p>
@@ -105,8 +105,8 @@ export default function PourVousPage() {
 
       {/* Ce qui est inclus */}
       <section className="max-w-3xl mx-auto px-6 py-20">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">Ce qu'on fait pour vous chaque mois</h2>
-        <p className="text-gray-500 text-center mb-12">Tout ce qui améliore votre visibilité Google, géré par notre équipe.</p>
+        <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">Ce qu'on prépare pour vous chaque semaine</h2>
+        <p className="text-gray-500 text-center mb-12">Tout ce qui améliore votre visibilité Google, préparé et guidé par notre équipe.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {INCLUS.map(({ icon, title, desc }) => (
             <div key={title} className="rounded-2xl border border-gray-100 bg-white p-5 flex gap-4">
@@ -187,7 +187,7 @@ export default function PourVousPage() {
                 disabled={status === 'loading'}
                 className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-60"
               >
-                {status === 'loading' ? 'Envoi...' : 'Je veux que ce soit géré → 29€/mois'}
+                {status === 'loading' ? 'Envoi...' : 'Je veux être accompagné → 29€/mois'}
               </button>
               {status === 'error' && (
                 <p className="text-xs text-red-500 text-center">Erreur. Écrivez-nous à contact@thelocalboost.fr</p>
