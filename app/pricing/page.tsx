@@ -149,6 +149,30 @@ function PricingContent() {
           </div>
         )}
 
+        {/* Email partagé — visible si non connecté */}
+        {!user && !checking && (
+          <div className="mb-4">
+            {guestEmail ? (
+              <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 flex items-center gap-2">
+                <span className="text-green-500 text-sm font-bold">✓</span>
+                <span className="text-sm text-gray-700 flex-1 truncate">{guestEmail}</span>
+                <button onClick={() => setGuestEmail('')} className="text-xs text-gray-400 hover:text-gray-600 shrink-0">changer</button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={e => { setGuestEmail(e.target.value); setEmailError(false) }}
+                  placeholder="votre@email.fr"
+                  className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'}`}
+                />
+                {emailError && <p className="text-xs text-red-500 mt-1 ml-1">Entrez votre email pour continuer</p>}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Carte one-shot 99€ */}
         <div className="rounded-2xl border-2 border-green-500 bg-white p-5 sm:p-6 shadow-md mb-4">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-4">
@@ -200,29 +224,6 @@ function PricingContent() {
               </li>
             ))}
           </ul>
-
-          {!user && !checking && (
-            guestEmail
-              ? (
-                <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 mb-3 flex items-center gap-2">
-                  <span className="text-blue-600 text-sm font-bold">✓</span>
-                  <span className="text-sm text-blue-800 flex-1 truncate">{guestEmail}</span>
-                  <button onClick={() => setGuestEmail('')} className="text-xs text-blue-400 hover:text-blue-600 shrink-0">changer</button>
-                </div>
-              )
-              : (
-                <div className="mb-3">
-                  <input
-                    type="email"
-                    value={guestEmail}
-                    onChange={e => { setGuestEmail(e.target.value); setEmailError(false) }}
-                    placeholder="votre@email.fr"
-                    className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500/20'}`}
-                  />
-                  {emailError && <p className="text-xs text-red-500 mt-1 ml-1">Entrez votre email pour continuer</p>}
-                </div>
-              )
-          )}
 
           <button
             onClick={handleCTA}
