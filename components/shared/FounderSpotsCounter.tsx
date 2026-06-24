@@ -34,7 +34,7 @@ export default function FounderSpotsCounter() {
       className={isCritical ? 'animate-pulse' : ''}
     >
       <p style={{ color: text, fontWeight: 600, fontSize: 14, margin: 0 }}>
-        Offre fondateur — {data.remaining} place{data.remaining > 1 ? 's' : ''} restante{data.remaining > 1 ? 's' : ''} sur {data.total}
+        Offre fondateur — {data.remaining} place{data.remaining > 1 ? 's' : ''} restante{data.remaining > 1 ? 's' : ''}
       </p>
     </div>
   )

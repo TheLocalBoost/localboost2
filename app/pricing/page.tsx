@@ -183,13 +183,8 @@ function PricingContent() {
           </div>
 
           {/* Prix */}
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="text-center opacity-40">
-              <p className="text-xs text-gray-500 mb-0.5">Annuel</p>
-              <p className="text-lg font-bold text-gray-400 line-through">348€</p>
-            </div>
+          <div className="flex items-center justify-center mb-3">
             <div className="text-center">
-              <p className="text-xs text-blue-600 font-semibold mb-0.5">Mensuel</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">29€</span>
                 <span className="text-gray-500 text-lg">/mois</span>
