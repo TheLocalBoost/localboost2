@@ -9,19 +9,33 @@ const supabase = createClient(
 // 1x1 transparent GIF
 const PIXEL = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64')
 
-export async function GET(req: NextRequest) {
-  const t = req.nextUrl.searchParams.get('t')
+const BOT_UA = /bot|crawl|spider|scan|preview|proxy|fetcher|validator|check|curl|wget|python|java|ruby|go-http|okhttp|axios|node-fetch|microsoft.*safety|google.*image|googleimageproxy|yahoomail|apple.*mail|thunderbird.*feed|mailchimp|sendgrid|sparkpost|outlook.*clp/i
 
-  if (t) {
+export async function GET(req: NextRequest) {
+  const t  = req.nextUrl.searchParams.get('t')
+  const ua = req.headers.get('user-agent') ?? ''
+
+  if (t && !BOT_UA.test(ua)) {
     try {
       const [email, variant, sender] = Buffer.from(t, 'base64url').toString('utf8').split('|')
       if (email?.includes('@')) {
-        supabase.from('outreach_events').insert({
-          email:   email.toLowerCase().trim(),
-          event:   'open',
-          variant: variant ?? null,
-          sender:  sender ?? null,
-        }).then(() => {})
+        // Anti-doublon : max 1 open unique par token dans les 10 dernières minutes
+        const since = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+        const { count } = await supabase
+          .from('outreach_events')
+          .select('id', { count: 'exact', head: true })
+          .eq('email', email.toLowerCase().trim())
+          .eq('event', 'open')
+          .gte('created_at', since)
+
+        if ((count ?? 0) === 0) {
+          supabase.from('outreach_events').insert({
+            email:   email.toLowerCase().trim(),
+            event:   'open',
+            variant: variant ?? null,
+            sender:  sender ?? null,
+          }).then(() => {})
+        }
       }
     } catch {}
   }
