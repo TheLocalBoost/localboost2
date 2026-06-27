@@ -157,7 +157,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
 
     if (score) setEmailScore(parseInt(score))
 
-    const isOutreach = source === 'brevo' || source === 'ses'
+    const isOutreach = source === 'brevo' || source === 'ses' || source === 'ovh'
     if (nom && ville) {
       setForm({ name: nom, city: ville })
       if (isOutreach) track('email_click_landed', { nom, ville, score, secteur })
@@ -188,7 +188,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   useEffect(() => {
     if (!result || ctaClicked) return
     const src = searchParams.get('utm_source')
-    if (src !== 'brevo' && src !== 'ses') return
+    if (src !== 'brevo' && src !== 'ses' && src !== 'ovh') return
     const t = setTimeout(() => {
       track('email_no_convert', {
         score:   result.score,
@@ -553,8 +553,8 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                         : `Score ${result.score}/100 — votre fiche perd des appels`}
                   </p>
                 </div>
-                <p className="text-gray-300 text-sm mb-5 leading-relaxed">
-                  LocalBoost prépare votre post Google, vos réponses aux avis et vos corrections chaque semaine. Vous publiez en 5 minutes.
+                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                  On s'occupe de tout : description Google rédigée, 4 posts prêts à publier, réponses à vos avis. Livré par email sous 48h.
                 </p>
                 <a
                   href={pricingUrl}
@@ -562,11 +562,11 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     setCtaClicked(true)
                     track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city })
                   }}
-                  className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-3 text-center shadow-lg shadow-green-900/30"
+                  className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-2 text-center shadow-lg shadow-green-900/30"
                 >
-                  Récupérer mes appels perdus — 29€/mois →
+                  Je veux récupérer mes clients — 99€ →
                 </a>
-                <p className="text-gray-400 text-xs text-center">Sans engagement · Remboursé si pas de résultat en 30 jours</p>
+                <p className="text-gray-400 text-xs text-center">Paiement sécurisé · Satisfait ou remboursé sous 30 jours</p>
               </div>
 
               {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
