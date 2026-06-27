@@ -1,14 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Navbar     from './Navbar'
-import Hero       from './Hero'
-import PainPoints from './PainPoints'
-import HowItWorks from './HowItWorks'
+import Navbar      from './Navbar'
+import Hero        from './Hero'
+import GoogleLogic from './GoogleLogic'
+import PainPoints  from './PainPoints'
+import HowItWorks  from './HowItWorks'
 import Deliverables from './Deliverables'
-import Pricing    from './Pricing'
-import FAQ        from './FAQ'
-import Footer     from './Footer'
-import SeoLinks   from './SeoLinks'
+import Pricing     from './Pricing'
+import FAQ         from './FAQ'
+import Footer      from './Footer'
+import SeoLinks    from './SeoLinks'
 
 export default function LandingPage() {
   const [detectedCity, setDetectedCity] = useState('')
@@ -50,6 +51,8 @@ export default function LandingPage() {
       <div id="hero-anim">
         <Hero detectedCity={detectedCity} signupCount={signupCount} animScore={animScore} />
       </div>
+
+      <GoogleLogic />
 
       <PainPoints />
 

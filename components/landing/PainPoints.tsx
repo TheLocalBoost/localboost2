@@ -79,7 +79,7 @@ export default function PainPoints() {
         <div className="mt-8 text-center">
           <a
             href="/analyser"
-            className="inline-block rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white hover:bg-blue-700 transition shadow-md"
+            className="inline-block rounded-xl bg-green-500 px-8 py-4 text-sm font-bold text-white hover:bg-green-400 transition shadow-md"
           >
             Analyser ma fiche maintenant →
           </a>
