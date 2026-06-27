@@ -26,23 +26,23 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
 
           {/* Texte */}
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-red-50 border border-red-200 px-4 py-1.5 text-sm font-medium text-red-600 mb-6">
-              Il n'existe pas de fiche Google bien tenue sans effort hebdomadaire — ou sans délégation
+            <div className="inline-flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5 text-sm font-medium text-green-700 mb-6">
+              Ce que les agences facturent 150-500€ — livré en 48h pour 39€
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
-              Votre fiche Google Maps perd des clients.{' '}
-              <span className="text-blue-600">Découvrez combien — en 60 secondes.</span>
+              Vos concurrents vous passent devant sur Google.{' '}
+              <span className="text-green-600">Découvrez pourquoi — et réglez ça pour 39€.</span>
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              Entrez le nom de votre commerce. En 60 secondes, vous voyez à quelle place vous apparaissez sur Google,
-              vos problèmes précis, et ce que vous perdez chaque mois.{' '}
-              <strong className="text-gray-800">Votre vraie fiche. Vos vrais chiffres.</strong>
+              Entrez le nom de votre commerce. En 60 secondes, vous voyez qui vous devance sur Google Maps,
+              pourquoi, et ce que ça vous coûte chaque mois.{' '}
+              <strong className="text-gray-800">Données réelles issues de Google. Gratuit et sans inscription.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
-              Aucune inscription · Données issues de Google Maps en temps réel
+              Aucune inscription · Aucun engagement · Satisfait ou remboursé sous 30 jours
             </p>
 
             {/* Formulaire */}
@@ -66,13 +66,13 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white hover:bg-blue-700 transition whitespace-nowrap shadow-lg"
+                  className="rounded-xl bg-green-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-green-400 transition whitespace-nowrap shadow-lg"
                 >
-                  Voir ce que je perds — gratuit, 60 secondes →
+                  Analyser ma fiche — gratuit →
                 </button>
               </div>
               <p className="text-xs text-gray-400">
-                Aucune inscription requise pour l'analyse · <a href="/pricing" className="text-blue-500 hover:underline">Voir les offres Pro →</a>
+                Gratuit · Sans inscription · Résultat en 60 secondes
               </p>
             </form>
 

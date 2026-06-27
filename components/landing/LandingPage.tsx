@@ -1,18 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Navbar          from './Navbar'
-import Hero            from './Hero'
-import PainPoints      from './PainPoints'
-import HowItWorks      from './HowItWorks'
-import DashboardPreview from './DashboardPreview'
-import CTASection      from './CTASection'
-import Modules         from './Modules'
-import Pricing         from './Pricing'
-import Stats           from './Stats'
-import FAQ             from './FAQ'
-import CTAFinal        from './CTAFinal'
-import Footer          from './Footer'
-import SeoLinks        from './SeoLinks'
+import Navbar     from './Navbar'
+import Hero       from './Hero'
+import PainPoints from './PainPoints'
+import HowItWorks from './HowItWorks'
+import Deliverables from './Deliverables'
+import Pricing    from './Pricing'
+import FAQ        from './FAQ'
+import Footer     from './Footer'
+import SeoLinks   from './SeoLinks'
 
 export default function LandingPage() {
   const [detectedCity, setDetectedCity] = useState('')
@@ -59,19 +55,11 @@ export default function LandingPage() {
 
       <HowItWorks />
 
-      <DashboardPreview />
-
-      <CTASection />
-
-      <Modules />
+      <Deliverables />
 
       <Pricing />
 
-      <Stats signupCount={signupCount} />
-
       <FAQ />
-
-      <CTAFinal />
 
       <SeoLinks />
 

@@ -3,32 +3,28 @@ import { useState } from 'react'
 
 const FAQS = [
   {
-    q: 'Pourquoi je ne peux pas gérer ma fiche Google moi-même ?',
-    a: 'Vous pouvez. Mais maintenir une fiche qui génère des appels demande une discipline hebdomadaire sans faille : publier régulièrement, répondre à chaque avis, ajouter des photos récentes, mettre à jour vos horaires selon les saisons... En pratique, la plupart des artisans font une belle mise à jour, puis oublient pendant 4 à 6 mois. C\'est exactement à ce moment que Google passe votre fiche après celles de vos concurrents actifs. LocalBoost existe pour que ça n\'arrive jamais — indépendamment de votre emploi du temps.',
+    q: 'Pourquoi ma fiche Google perd-elle des clients si j\'ai de bonnes notes ?',
+    a: 'C\'est la surprise de la plupart des artisans. Google Maps ne classe pas le meilleur — il classe le plus actif. Un concurrent avec 3.9 étoiles qui publie un post par semaine et répond à ses avis apparaît AVANT vous si votre fiche est inactive depuis 2-3 mois. L\'algorithme interprète l\'inactivité comme un signal négatif. Ce n\'est pas une opinion — c\'est le fonctionnement documenté de Google Business.',
   },
   {
-    q: 'Combien de temps ça me prend vraiment avec LocalBoost ?',
-    a: 'Environ 5 minutes par semaine. Chaque lundi, vous recevez votre contenu prêt dans votre tableau de bord : un post rédigé, des réponses aux avis personnalisées, vos actions concrètes de la semaine. Vous publiez en copier-coller depuis votre téléphone. C\'est tout ce que LocalBoost vous demande.',
+    q: 'Qu\'est-ce que je reçois exactement pour 39€ ?',
+    a: 'Vous recevez par email sous 48h : une description Google optimisée pour votre métier et votre ville (prête à copier-coller), 4 posts Google hebdomadaires, des réponses personnalisées à vos avis récents, un QR code pour collecter plus d\'avis, un plan d\'action prioritaire et un script SMS pour demander des avis à vos clients. Tout est basé sur les vraies données de votre fiche Google — pas de contenu générique.',
   },
   {
-    q: 'Est-ce que ça marche vraiment pour un petit commerce avec peu de clients actuels ?',
-    a: 'C\'est précisément là que l\'effet est le plus fort. Un commerce qui reçoit peu d\'appels a souvent une fiche inactive ou incomplète — pas un problème de notoriété. En publiant régulièrement et en répondant aux avis, vous passez devant des concurrents mieux établis mais moins actifs. Les résultats apparaissent en 2 à 4 semaines sur le classement local.',
+    q: 'Pourquoi 39€ et pas 150€ comme une agence ?',
+    a: 'Les agences font ce travail manuellement — un consultant passe 2 à 4 heures sur votre dossier. Nous utilisons l\'IA pour analyser votre fiche, étudier vos concurrents et générer le contenu en quelques minutes. On vous fait passer le gain de productivité. Le résultat est identique, le prix est divisé par 5.',
   },
   {
-    q: 'Que se passe-t-il si mes concurrents ont déjà une bonne fiche ?',
-    a: 'Google ne classe pas en fonction de qui a la meilleure fiche à un instant T — il récompense la régularité. Un concurrent qui a publié il y a 3 mois sera dépassé par une fiche active, même moins parfaite. C\'est l\'avantage de LocalBoost : votre fiche ne s\'arrête jamais de travailler.',
+    q: 'Est-ce que ça marche vraiment pour mon type de commerce ?',
+    a: 'Si vos clients vous trouvent via Google Maps — oui. Coiffeurs, plombiers, électriciens, restaurants, boulangers, opticiens, garagistes, pharmacies, dentistes... Pour tous les commerces locaux, Google Maps est le principal point de contact avant un appel. L\'algorithme fonctionne de la même façon pour tous.',
   },
   {
-    q: 'Est-ce que LocalBoost publie automatiquement sur Google ?',
-    a: 'Non — Google Business ne permet pas la publication automatique via des outils externes. LocalBoost génère le contenu et vous le présente dans votre tableau de bord. Vous publiez en 30 secondes avec un simple copier-coller. Zéro effort de rédaction, vous gardez le contrôle.',
+    q: 'Et si ce n\'est pas assez bien ? Vous remboursez ?',
+    a: 'Oui, intégralement et sans question. Si dans les 30 jours vous n\'êtes pas satisfait du contenu reçu, on vous rembourse. Vous n\'avez rien à perdre à essayer — surtout face à des agences qui vous engagent sur 12 mois dès le départ.',
   },
   {
-    q: 'En quoi c\'est différent de faire ça moi-même avec ChatGPT ?',
-    a: 'ChatGPT génère du texte — vous devez encore penser aux sujets chaque semaine, rédiger le prompt, adapter au contexte de votre fiche, surveiller votre classement, analyser vos avis, planifier les photos... C\'est 1h de travail quand vous y êtes attentif. LocalBoost fait tout ça automatiquement, spécifiquement pour votre fiche, chaque lundi, sans que vous y pensiez.',
-  },
-  {
-    q: 'Est-ce que je suis engagé si je m\'abonne ?',
-    a: 'Non. Vous pouvez annuler à tout moment depuis votre espace client en un clic. Aucun préavis, aucune question posée. Vous restez actif jusqu\'à la fin de la période payée.',
+    q: 'Combien de temps avant de voir des résultats sur Google ?',
+    a: 'Les effets sur le classement Google Maps apparaissent généralement en 2 à 6 semaines selon la concurrence dans votre secteur et votre ville. La description optimisée est immédiate. Les 4 posts publiés semaine après semaine envoient un signal d\'activité à Google qui améliore progressivement votre position dans le Pack local.',
   },
 ]
 
