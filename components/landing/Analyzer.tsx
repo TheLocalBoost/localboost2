@@ -381,14 +381,14 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     <div className="flex items-start gap-2.5">
                       <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
                       <p className="text-sm text-gray-700">
-                        <strong>LocalBoost vous aide à corriger votre fiche Google en moins de 10 minutes</strong> — posts prêts à publier, réponses aux avis, actions prioritaires — chaque semaine dans votre tableau de bord.
+                        <strong>LocalBoost génère le pack complet basé sur vos vraies données</strong> — description optimisée, 4 posts, réponses aux avis, QR code, plan d'action — livré par email en 48h pour 39€.
                       </p>
                     </div>
                     {result.lostCalls >= 2 && (
                       <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3">
                         <p className="text-sm text-green-800">
                           <strong>ROI estimé :</strong> si on récupère 2 appels/mois sur les ~{result.lostCalls} perdus
-                          {' '}→ <strong>{2 * (result.lostRevenue > 0 ? Math.round(result.lostRevenue / result.lostCalls) : 150)}€ de CA</strong> pour 29€ investis.
+                          {' '}→ <strong>{2 * (result.lostRevenue > 0 ? Math.round(result.lostRevenue / result.lostCalls) : 150)}€ de CA</strong> pour 39€ investis.
                         </p>
                       </div>
                     )}
@@ -467,7 +467,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </div>
 
                   <div className="space-y-5">
-                    {/* Description Google */}
+                    {/* Description Google — tronquée après ~50 mots */}
                     {(generatingDesc || generatedDesc) && (
                       <div>
                         <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
@@ -480,17 +480,25 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                             <div className="h-3 bg-gray-100 rounded w-4/6" />
                           </div>
                         ) : (
-                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                            <p className="text-sm text-gray-800 leading-relaxed">{generatedDesc}</p>
+                          <div className="relative rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 overflow-hidden">
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              {generatedDesc?.split(' ').slice(0, 45).join(' ')}…
+                            </p>
+                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent" />
+                            <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+                              <span className="text-xs font-semibold text-gray-500 bg-white border border-gray-200 rounded-full px-3 py-1 shadow-sm">
+                                🔒 Description complète incluse dans le pack
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Post Google */}
+                    {/* Post Google — visible en entier */}
                     <div>
                       <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                        <span>📍</span> Post Google prêt à publier
+                        <span>📍</span> Post Google — exemple (1 sur 4)
                       </p>
                       {generatingContent && !generatedPost ? (
                         <div className="space-y-2 animate-pulse">
@@ -501,26 +509,24 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       ) : (
                         <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
                           <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPost}</p>
+                          <p className="text-xs text-gray-400 mt-2">+ 3 autres posts inclus dans le pack</p>
                         </div>
                       )}
                     </div>
 
-                    {/* Réponse à l'avis */}
+                    {/* Réponse à l'avis — masquée */}
                     {(generatingContent || generatedReview) && (
                       <div>
                         <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                          <span>📍</span> Réponse à votre dernier avis
+                          <span>📍</span> Réponses à vos avis clients
                         </p>
-                        {generatingContent && !generatedReview ? (
-                          <div className="space-y-2 animate-pulse">
-                            <div className="h-3 bg-gray-100 rounded w-full" />
-                            <div className="h-3 bg-gray-100 rounded w-3/4" />
+                        <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-4 flex items-center gap-3">
+                          <span className="text-lg">🔒</span>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-700">Réponses personnalisées incluses</p>
+                            <p className="text-xs text-gray-400 mt-0.5">On rédige une réponse pour chacun de vos avis récents — débloqué avec le pack.</p>
                           </div>
-                        ) : (
-                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                            <p className="text-sm text-gray-800 leading-relaxed">{generatedReview}</p>
-                          </div>
-                        )}
+                        </div>
                       </div>
                     )}
 
@@ -537,7 +543,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-400 mt-4 text-center">Publiez ce contenu en 5 minutes depuis votre tableau de bord → 29€/mois</p>
+                  <p className="text-xs text-gray-400 mt-4 text-center">Aperçu — le pack complet inclut 4 posts, toutes vos réponses aux avis, QR code et plan d'action prioritaire.</p>
                 </div>
               )}
 
