@@ -163,37 +163,10 @@ function PricingContent() {
           </div>
         )}
 
-        {/* Carte one-shot 99€ */}
-        <div className="rounded-2xl border-2 border-green-500 bg-white p-5 sm:p-6 shadow-md mb-4">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-4">
-            Résultat garanti sous 48h
-          </div>
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-4xl font-extrabold text-gray-900">99€</span>
-            <span className="text-gray-400 text-sm">une seule fois</span>
-          </div>
-          <p className="text-sm font-bold text-gray-800 mb-1">On optimise votre fiche Google cette semaine</p>
-          <p className="text-xs text-gray-500 mb-4">Description rédigée + 4 posts prêts à publier + réponses à vos avis — livré par email sous 48h. Sans abonnement.</p>
-          <button
-            onClick={handleOneshot}
-            disabled={loadingOneshot || checking}
-            className="w-full rounded-xl bg-green-500 hover:bg-green-400 py-3.5 text-sm font-extrabold text-white transition disabled:opacity-60 shadow-lg shadow-green-100"
-          >
-            {loadingOneshot ? 'Chargement...' : 'Je veux mes appels perdus — 99€ →'}
-          </button>
-          <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé · Satisfait ou remboursé</p>
-        </div>
-
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-gray-200" />
-          <p className="text-xs text-gray-400 shrink-0">ou continuez à améliorer chaque semaine</p>
-          <div className="flex-1 h-px bg-gray-200" />
-        </div>
-
-        {/* Carte pricing */}
-        <div className="rounded-2xl border-2 border-blue-500 bg-white p-5 sm:p-8 shadow-md mb-6">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 mb-5">
-            Offre fondateur
+        {/* Carte pricing 29€/mois — EN PREMIER */}
+        <div className="rounded-2xl border-2 border-green-500 bg-white p-5 sm:p-8 shadow-md mb-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-5">
+            Offre fondateur — sans engagement
           </div>
 
           {/* Prix */}
@@ -205,7 +178,7 @@ function PricingContent() {
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 text-center mb-2">sans engagement · résiliable en 1 clic</p>
+          <p className="text-sm text-gray-400 text-center mb-2">résiliable en 1 clic · aucun engagement</p>
 
           <ul className="space-y-3 mt-6 mb-8">
             {FEATURES.map(f => (
@@ -218,7 +191,7 @@ function PricingContent() {
           <button
             onClick={handleCTA}
             disabled={loading || checking}
-            className="w-full rounded-xl bg-blue-600 py-4 text-base font-extrabold text-white hover:bg-blue-700 transition disabled:opacity-60 shadow-lg shadow-blue-200"
+            className="w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition disabled:opacity-60 shadow-lg shadow-green-100"
           >
             {loading ? 'Chargement...' : checking ? 'Chargement...' : 'Je commence maintenant — 29€/mois →'}
           </button>
@@ -244,6 +217,30 @@ function PricingContent() {
               <p className="text-xs text-gray-500">Support<br />direct fondateur</p>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px bg-gray-200" />
+          <p className="text-xs text-gray-400 shrink-0">ou optimisation unique sans abonnement</p>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Carte one-shot 99€ — EN SECOND */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm mb-6">
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className="text-3xl font-extrabold text-gray-900">99€</span>
+            <span className="text-gray-400 text-sm">une seule fois</span>
+          </div>
+          <p className="text-sm font-bold text-gray-800 mb-1">Optimisation complète de votre fiche</p>
+          <p className="text-xs text-gray-500 mb-4">Description rédigée + 4 posts prêts à publier + réponses à vos avis — livré par email sous 48h. Sans abonnement.</p>
+          <button
+            onClick={handleOneshot}
+            disabled={loadingOneshot || checking}
+            className="w-full rounded-xl bg-gray-800 hover:bg-gray-700 py-3 text-sm font-bold text-white transition disabled:opacity-60"
+          >
+            {loadingOneshot ? 'Chargement...' : 'Optimisation unique — 99€ →'}
+          </button>
+          <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé · Satisfait ou remboursé</p>
         </div>
 
         {/* Ce qui se passe après */}
