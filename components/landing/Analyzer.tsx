@@ -396,6 +396,35 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 )}
               </div>
 
+              {/* BLOC 1b — Pourquoi ce score pénalise sur Google */}
+              <div className="bg-gray-900 rounded-2xl p-5">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
+                  Pourquoi ce score vous coûte des clients
+                </p>
+                <p className="text-sm text-gray-300 leading-relaxed mb-4">
+                  Google Maps ne classe pas la meilleure fiche — il classe la plus <strong className="text-white">active</strong>.
+                  {topCompetitor && topCompetitor.estimatedScore > result.score
+                    ? ` ${topCompetitor.name} vous devance non pas parce qu'il est meilleur, mais parce que sa fiche envoie plus de signaux d'activité à Google.`
+                    : ' Un concurrent avec une note inférieure à la vôtre peut apparaître avant vous si sa fiche est plus active.'}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Activité', detail: 'Posts & réponses aux avis', weight: '★★★' },
+                    { label: 'Complétude', detail: 'Description, horaires, photos', weight: '★★' },
+                    { label: 'Avis récents', detail: 'Fraîcheur & taux de réponse', weight: '★★' },
+                  ].map(({ label, detail, weight }) => (
+                    <div key={label} className="bg-gray-800 rounded-xl p-3 text-center">
+                      <p className="text-xs font-bold text-white mb-1">{label}</p>
+                      <p className="text-xs text-amber-400 mb-1.5">{weight}</p>
+                      <p className="text-xs text-gray-400 leading-tight">{detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3 text-center">
+                  Voici exactement ce que l'algorithme a trouvé sur votre fiche :
+                </p>
+              </div>
+
               {/* BLOC 2 — 1er problème visible, reste bloqué */}
               {result.problems.length > 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 p-6">
