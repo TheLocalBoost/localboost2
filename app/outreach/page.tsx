@@ -50,7 +50,7 @@ function pct(n: number, d: number) { return d === 0 ? '—' : (n / d * 100).toFi
 
 export default async function OutreachPage({ searchParams }: { searchParams: Promise<{ k?: string }> }) {
   const { k } = await searchParams
-  if (k !== process.env.ADMIN_SECRET) {
+  if (k !== process.env.ADMIN_SECRET_KEY) {
     return <div style={{ fontFamily: 'monospace', padding: 40, color: '#ef4444' }}>401 — clé invalide</div>
   }
 

@@ -8,7 +8,7 @@ const supabase = createClient(
 
 export async function GET(req: NextRequest) {
   const key = req.nextUrl.searchParams.get('k')
-  if (key !== process.env.ADMIN_SECRET) {
+  if (key !== process.env.ADMIN_SECRET_KEY) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
