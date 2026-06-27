@@ -140,8 +140,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [ctaClicked, setCtaClicked]               = useState(false)
   const [emailCaptured, setEmailCaptured]         = useState(false)
   const [capturedEmail, setCapturedEmail]         = useState('')
-  const [generatedDesc, setGeneratedDesc]         = useState<string | null>(null)
-  const [generatingDesc, setGeneratingDesc]       = useState(false)
+
   const [generatedPost, setGeneratedPost]         = useState<string | null>(null)
   const [generatedReview, setGeneratedReview]     = useState<string | null>(null)
   const [generatingContent, setGeneratingContent] = useState(false)
@@ -222,16 +221,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       track('analyzer_result', { score: data.score, city: data.city, category: data.category })
       onResult?.({ score: data.score, name: data.name, city: data.city, category: data.category })
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
-      // Génère la description en arrière-plan si la fiche a une description manquante
-      if (!data.criteria?.description) {
-        setGeneratingDesc(true)
-        fetch('/api/generate-description', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: data.name, city: data.city, category: data.category, problems: data.problems }),
-        }).then(r => r.json()).then(d => { if (d.description) setGeneratedDesc(d.description) }).catch(() => {}).finally(() => setGeneratingDesc(false))
-      }
-
       // Génère post Google + réponse à avis en arrière-plan
       setGeneratingContent(true)
       const bestReview = (data.recentReviews ?? []).find((r: { text: string }) => r.text?.length > 20) ?? null
@@ -496,33 +485,19 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </div>
 
                   <div className="space-y-5">
-                    {/* Description Google — tronquée après ~50 mots */}
-                    {(generatingDesc || generatedDesc) && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                          <span>📍</span> Description Google à publier
-                        </p>
-                        {generatingDesc && !generatedDesc ? (
-                          <div className="space-y-2 animate-pulse">
-                            <div className="h-3 bg-gray-100 rounded w-full" />
-                            <div className="h-3 bg-gray-100 rounded w-5/6" />
-                            <div className="h-3 bg-gray-100 rounded w-4/6" />
-                          </div>
-                        ) : (
-                          <div className="relative rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 overflow-hidden">
-                            <p className="text-sm text-gray-800 leading-relaxed">
-                              {generatedDesc?.split(' ').slice(0, 45).join(' ')}…
-                            </p>
-                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent" />
-                            <div className="absolute bottom-2 left-0 right-0 flex justify-center">
-                              <span className="text-xs font-semibold text-gray-500 bg-white border border-gray-200 rounded-full px-3 py-1 shadow-sm">
-                                🔒 Description complète incluse dans le pack
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                    {/* Description Google — carte statique verrouillée */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                        <span>📍</span> Description Google optimisée
+                      </p>
+                      <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-4 flex items-center gap-3">
+                        <span className="text-lg shrink-0">🔒</span>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Description rédigée pour {result.name}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">150-200 mots · optimisée pour {result.city} · copiez-collez en 30 secondes</p>
+                        </div>
                       </div>
-                    )}
+                    </div>
 
                     {/* Post Google — visible en entier */}
                     <div>
