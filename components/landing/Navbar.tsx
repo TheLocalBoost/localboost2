@@ -17,13 +17,13 @@ export default function Navbar() {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-4">
-          <a href="#pricing" className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a>
-          <a href="/login"   className="text-sm text-gray-500 hover:text-gray-900">Se connecter</a>
+          <a href="#comment-ca-marche" className="text-sm text-gray-500 hover:text-gray-900">Comment ça marche</a>
+          <a href="#pricing"           className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a>
           <button
             onClick={scrollToSearch}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition"
+            className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-400 transition"
           >
-            Analyser ma fiche →
+            Analyser ma fiche — gratuit →
           </button>
         </div>
 
@@ -39,13 +39,13 @@ export default function Navbar() {
       {/* Mobile menu */}
       {open && (
         <div className="md:hidden bg-white border-t border-gray-100 px-6 py-4 space-y-3">
-          <a href="#pricing" className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Tarifs</a>
-          <a href="/login"   className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Se connecter</a>
+          <a href="#comment-ca-marche" className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Comment ça marche</a>
+          <a href="#pricing"           className="block text-sm text-gray-700 py-1" onClick={() => setOpen(false)}>Tarifs</a>
           <button
             onClick={() => { setOpen(false); scrollToSearch() }}
-            className="block w-full text-center text-sm font-semibold text-white bg-blue-600 rounded-xl px-4 py-2.5"
+            className="block w-full text-center text-sm font-semibold text-white bg-green-500 rounded-xl px-4 py-2.5"
           >
-            Analyser ma fiche →
+            Analyser ma fiche — gratuit →
           </button>
         </div>
       )}

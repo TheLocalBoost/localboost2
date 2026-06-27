@@ -34,10 +34,26 @@ export async function POST(req: NextRequest) {
 
       if (!email) break
 
-      // ── One-shot 99€ : audit réel + génération contextualisée + envoi ──
+      // ── One-shot 39€ : audit réel + génération contextualisée + envoi ──
       if (session.metadata?.type === 'oneshot') {
         const nom   = session.metadata?.nom   ?? ''
         const ville = session.metadata?.ville ?? ''
+
+        // Notification interne — vente reçue
+        sendTransactional({
+          to:      'mandartbrian68@gmail.com',
+          subject: `💰 Nouvelle vente — ${nom || email}`,
+          html: `<div style="font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;">
+<h2 style="font-size:18px;margin:0 0 12px;">Nouvelle vente one-shot 39€</h2>
+<table style="font-size:14px;border-collapse:collapse;">
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;font-weight:700;">${email}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Établissement</td><td style="padding:4px 0;font-weight:700;">${nom || '—'}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Ville</td><td style="padding:4px 0;font-weight:700;">${ville || '—'}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Session Stripe</td><td style="padding:4px 0;font-family:monospace;font-size:12px;">${session.id}</td></tr>
+</table>
+<p style="margin:16px 0 0;color:#6b7280;font-size:13px;">La génération est en cours. Vérifiez la boîte email du client dans ~30 min.</p>
+</div>`,
+        }).catch(() => {})
 
         try {
           // 1. Récupérer les vraies données Google de la fiche

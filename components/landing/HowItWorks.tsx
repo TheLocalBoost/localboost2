@@ -24,7 +24,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <section id="how" className="py-20 px-6 bg-white">
+    <section id="comment-ca-marche" className="py-20 px-6 bg-white">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Comment ça marche</p>
