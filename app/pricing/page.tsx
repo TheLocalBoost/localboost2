@@ -111,7 +111,10 @@ function PricingContent() {
             <span className="text-5xl font-extrabold text-gray-900">39€</span>
             <span className="text-gray-400">une seule fois</span>
           </div>
-          <p className="text-sm text-gray-500 mb-6">Livré par email sous 48h · Satisfait ou remboursé sous 30 jours</p>
+          <p className="text-sm text-gray-500 mb-1">Livré par email sous 48h · Satisfait ou remboursé sous 30 jours</p>
+          <a href="/exemple" target="_blank" className="inline-block text-xs text-green-600 hover:underline mb-5">
+            Voir un exemple de livraison →
+          </a>
 
           <ul className="space-y-3 mb-8">
             {INCLUDES.map(f => (
