@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
           // Données réelles extraites de l'audit
           const realName       = audit?.name ?? nom
           const realCity       = audit?.city ?? ville
+          const category       = audit?.category ?? 'artisan'
           const realRating     = audit?.rating ?? 0
           const realReviews    = audit?.reviews ?? 0
           const realPhotos     = audit?.photos ?? 0
@@ -89,44 +90,74 @@ export async function POST(req: NextRequest) {
                 `- ${r.author} (${r.rating}★) : "${r.text.slice(0, 120)}"`).join('\n')
             : ''
 
+          // Calendrier éditorial daté — gratuit, calculé côté serveur
+          function buildCalendar(n: number): Array<{ date: string; postNum: number }> {
+            const now = new Date()
+            const daysUntilMon = ((8 - now.getDay()) % 7) || 7
+            const start = new Date(now)
+            start.setDate(start.getDate() + daysUntilMon)
+            return Array.from({ length: n }, (_, i) => {
+              const d = new Date(start)
+              d.setDate(d.getDate() + i * 7)
+              return { date: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), postNum: i + 1 }
+            })
+          }
+
+          // Appel 1 — contenu principal (description, posts, réponses, guide)
           const prompt = `Tu es un expert Google Business Profile. Génère le pack complet pour "${realName}", à ${realCity}.
 
-DONNÉES RÉELLES DE LA FICHE (utilise UNIQUEMENT ces données, n'invente rien) :
+DONNÉES RÉELLES DE LA FICHE :
 - Note Google : ${realRating > 0 ? `${realRating}/5` : 'non renseignée'}
 - Nombre d'avis : ${realReviews}
 - Photos : ${realPhotos}
-- Score de fiche : ${score}/100
-- CA estimé perdu/mois : ${lostRevenue > 0 ? `${lostRevenue}€` : 'non calculé'}
 ${competitorCtx ? `- ${competitorCtx}` : ''}
 ${realProblems.length > 0 ? `\nProblèmes détectés :\n${realProblems.map(p => `- ${p}`).join('\n')}` : ''}
 ${reviewsCtx ? `\nDerniers avis clients :\n${reviewsCtx}` : ''}
 
-Réponds UNIQUEMENT avec ce JSON valide (aucun texte avant ou après) :
+Réponds UNIQUEMENT avec ce JSON valide :
 {
   "description": "...",
   "posts": ["post1","post2","post3","post4","post5","post6","post7","post8","post9","post10","post11","post12"],
-  "reviewResponses": ["réponse à l'avis 1", "réponse à l'avis 2"],
-  "responseTemplates": ["template1","template2","template3","template4","template5","template6","template7","template8","template9","template10"],
+  "reviewResponses": [],
+  "responseTemplates": {"5etoiles":["t1","t2","t3","t4","t5","t6","t7","t8"],"sansTexte":["t1","t2","t3","t4","t5"],"mitige":["t1","t2","t3","t4","t5"],"negatif":["t1","t2","t3","t4","t5"],"incident":["t1","t2","t3"],"fidele":["t1","t2","t3","t4"]},
   "guideSteps": ["étape1","étape2","étape3","étape4","étape5","étape6"],
   "actionPlan": "..."
 }
 
 Contraintes STRICTES :
 - description : 150-200 mots, mentionne "${realName}" et "${realCity}", jamais de durée inventée, ton artisan direct
-- posts : 12 posts distincts (55-75 mots chacun). Couvrir : conseil pratique, saison (printemps/été/automne/hiver), fête des mères, rentrée, Noël, galette des rois, témoignage client, coulisses, disponibilité, promotion, urgence. Chaque post : appel à l'action + 2 hashtags locaux${realPhone ? `. Post 12 : inclure le numéro ${realPhone}` : ''}
-- reviewResponses : réponds à chaque avis fourni par son prénom et en citant un détail. Si aucun avis : []
-- responseTemplates : 10 modèles de réponses génériques réutilisables pour de futurs avis (4★ et 5★), ton chaleureux, mentionner "${realCity}" naturellement
-- guideSteps : 6 étapes concrètes pour publier le pack sur Google Business (où cliquer, quoi copier-coller, dans quel ordre)
-- actionPlan : 2-3 actions prioritaires concrètes basées sur les problèmes détectés, chiffrées si possible`
+- posts : 12 posts distincts (55-75 mots). Couvrir : conseil pratique, printemps, été, automne, hiver, fête des mères, rentrée, Noël, galette des rois, témoignage, coulisses, urgence. Appel à l'action + 2 hashtags locaux${realPhone ? `. Post 12 : numéro ${realPhone}` : ''}
+- reviewResponses : réponds aux avis fournis par prénom en citant un détail. Si aucun avis : []
+- responseTemplates : 30 modèles classés par situation (5★, sans texte, mitigé, négatif, incident, fidèle), ton chaleureux, mentionner "${realCity}"
+- guideSteps : 6 étapes concrètes pour publier sur Google Business
+- actionPlan : 2-3 actions prioritaires chiffrées basées sur les problèmes détectés`
 
-          const msg = await anthropic.messages.create({
-            model:      'claude-haiku-4-5-20251001',
-            max_tokens: 5000,
-            messages:   [{ role: 'user', content: prompt }],
-          })
+          // Appel 2 — FAQ, services, idées photos (parallèle)
+          const prompt2 = `Tu es un expert Google Business Profile. Génère des contenus complémentaires pour "${realName}" (${category}) à ${realCity}.
+
+Réponds UNIQUEMENT avec ce JSON valide :
+{
+  "faq": [{"q":"...","a":"..."}],
+  "services": [{"name":"...","description":"..."}],
+  "photoIdeas": ["idée1","idée2"]
+}
+
+Contraintes :
+- faq : 20 questions/réponses que les clients posent à un ${category} à ${realCity}. Questions concrètes (horaires, tarifs, zones, urgences, devis...). Réponses 1-2 phrases directes.
+- services : 5 services phares du secteur ${category} avec nom court + description 2 lignes. Concrets et locaux.
+- photoIdeas : 20 idées de photos à publier sur Google (avant/après, équipe, matériel, client satisfait, coulisses...). Adaptées au métier ${category}.`
+
+          const [msg, msg2] = await Promise.all([
+            anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 6000, messages: [{ role: 'user', content: prompt }] }),
+            anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 3000, messages: [{ role: 'user', content: prompt2 }] }),
+          ])
 
           const raw  = (msg.content[0] as { text: string }).text.trim()
-          const pack = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
+          const raw2 = (msg2.content[0] as { text: string }).text.trim()
+          const pack  = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
+          const pack2 = JSON.parse(raw2.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
+
+          const calendar = buildCalendar(12)
 
           const postsHtml = (pack.posts as string[]).map((p, i) => `
 <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 10px;">
@@ -143,14 +174,63 @@ ${(pack.reviewResponses as string[]).map((r: string, i: number) => `
 </div>`).join('')}`
             : ''
 
-          const templatesHtml = (pack.responseTemplates ?? []).length > 0
-            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 20 modèles de réponses réutilisables</h3>
-<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Copiez-collez ces réponses pour tous vos futurs avis positifs.</p>
-${(pack.responseTemplates as string[]).map((r: string, i: number) => `
-<div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin:0 0 8px;">
-  <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">Modèle ${i + 1}</p>
+          // 30 réponses classées
+          const tpl = pack.responseTemplates ?? {}
+          const LABELS: Record<string, string> = { '5etoiles': 'Avis 5★', sansTexte: 'Avis sans commentaire', mitige: 'Avis mitigé (3-4★)', negatif: 'Avis négatif (1-2★)', incident: 'Incident / erreur', fidele: 'Client fidèle' }
+          const templatesHtml = Object.keys(tpl).length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 30 réponses types classées par situation</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Utilisez ces modèles pour tous vos futurs avis. Adaptez le prénom et le détail.</p>
+${Object.entries(tpl).map(([key, arr]) => `
+<div style="margin:0 0 16px;">
+  <p style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin:0 0 6px;">${LABELS[key] ?? key}</p>
+  ${(arr as string[]).map((r: string, i: number) => `
+<div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin:0 0 6px;">
   <p style="font-size:13px;color:#374151;line-height:1.6;margin:0;">${r}</p>
+</div>`).join('')}
 </div>`).join('')}`
+            : ''
+
+          // Calendrier éditorial
+          const calendarHtml = calendar.length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📅 Calendrier éditorial — 3 mois</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Publiez une publication par semaine selon ce calendrier.</p>
+<table style="width:100%;border-collapse:collapse;font-size:13px;">
+${calendar.map(c => `<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:8px 0;color:#6b7280;">${c.date}</td><td style="padding:8px 0;font-weight:600;color:#374151;text-align:right;">Publication n°${c.postNum}</td></tr>`).join('')}
+</table>`
+            : ''
+
+          // FAQ
+          const faqItems = (pack2.faq ?? []) as Array<{ q: string; a: string }>
+          const faqHtml = faqItems.length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">❓ FAQ Google Business — 20 questions/réponses</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Ajoutez ces questions dans la section "Questions & Réponses" de votre fiche Google.</p>
+${faqItems.map((item: { q: string; a: string }, i: number) => `
+<div style="border-bottom:1px solid #f3f4f6;padding:10px 0;">
+  <p style="font-size:13px;font-weight:700;color:#374151;margin:0 0 4px;">${i + 1}. ${item.q}</p>
+  <p style="font-size:13px;color:#6b7280;margin:0;">${item.a}</p>
+</div>`).join('')}`
+            : ''
+
+          // Descriptions services
+          const serviceItems = (pack2.services ?? []) as Array<{ name: string; description: string }>
+          const servicesHtml = serviceItems.length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">🛠️ Descriptions de vos services Google</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Ajoutez ces services dans Google Business → Infos → Services.</p>
+${serviceItems.map((s: { name: string; description: string }) => `
+<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin:0 0 8px;">
+  <p style="font-size:13px;font-weight:700;color:#374151;margin:0 0 4px;">${s.name}</p>
+  <p style="font-size:13px;color:#6b7280;margin:0;">${s.description}</p>
+</div>`).join('')}`
+            : ''
+
+          // Idées photos
+          const photoItems = (pack2.photoIdeas ?? []) as string[]
+          const photosHtml = photoItems.length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📸 20 idées de photos à publier</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Prenez ces photos avec votre téléphone et publiez-les sur votre fiche Google.</p>
+<div style="display:grid;gap:4px;">
+${photoItems.map((idea: string, i: number) => `<p style="font-size:13px;color:#374151;margin:0;padding:6px 0;border-bottom:1px solid #f9fafb;">${i + 1}. ${idea}</p>`).join('')}
+</div>`
             : ''
 
           const guideHtml = (pack.guideSteps ?? []).length > 0
@@ -195,7 +275,15 @@ ${(pack.guideSteps as string[]).map((step: string, i: number) => `
 
   ${reviewsHtml}
 
+  ${calendarHtml}
+
   ${templatesHtml}
+
+  ${faqHtml}
+
+  ${servicesHtml}
+
+  ${photosHtml}
 
   ${guideHtml}
 
