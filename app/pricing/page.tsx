@@ -4,14 +4,23 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 
-const INCLUDES = [
-  'Description Google optimisée pour votre métier et votre ville',
-  '12 publications prêtes — 1 par semaine pendant 3 mois',
-  'Réponses personnalisées à vos avis récents',
-  '10 modèles de réponses réutilisables pour vos futurs avis',
-  'QR code collecte d\'avis + script SMS après prestation',
-  'Plan d\'action prioritaire basé sur vos vrais concurrents',
-  'Guide de mise en ligne pas à pas',
+const SECTIONS = [
+  {
+    title: 'Rendre votre fiche plus convaincante',
+    items: ['Nouvelle description professionnelle', 'Services rédigés pour votre fiche Google', 'FAQ métier — 20 questions/réponses prêtes'],
+  },
+  {
+    title: 'Montrer que votre entreprise est active',
+    items: ['12 publications prêtes à diffuser — 1 par semaine', 'Calendrier de publication avec dates réelles', '20 idées de photos adaptées à votre métier'],
+  },
+  {
+    title: 'Donner confiance avant le premier appel',
+    items: ['Réponses personnalisées à vos derniers avis', '30 réponses prêtes pour vos futurs avis (classées par situation)', 'QR code collecte d\'avis + script SMS'],
+  },
+  {
+    title: 'Gagner plusieurs heures',
+    items: ['Guide de mise en ligne pas à pas', 'Plan d\'action personnalisé basé sur vos concurrents'],
+  },
 ]
 
 function PricingContent() {
@@ -73,19 +82,19 @@ function PricingContent() {
                 Travail prêt · En attente de validation
               </div>
               <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-                L'optimisation de {nomParam} est prête.
+                Votre dossier pour {nomParam} est prêt.
               </h1>
               <p className="text-gray-500 text-sm">
-                Il ne reste plus qu'à la valider pour la recevoir et la mettre en ligne.
+                Il ne reste plus qu'à le valider pour le recevoir et le mettre en ligne.
               </p>
             </>
           ) : (
             <>
               <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-                Votre optimisation Google est prête.
+                Votre dossier d'optimisation est prêt.
               </h1>
               <p className="text-gray-500 text-sm">
-                Il ne reste plus qu'à la valider pour la recevoir et la mettre en ligne.
+                Il ne reste plus qu'à le valider pour le recevoir et le mettre en ligne.
               </p>
             </>
           )}
@@ -139,10 +148,10 @@ function PricingContent() {
               type="email"
               value={guestEmail}
               onChange={e => { setGuestEmail(e.target.value); setEmailError(false) }}
-              placeholder="votre@email.fr — on vous envoie le pack ici"
+              placeholder="votre@email.fr — on vous envoie le dossier ici"
               className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:ring-red-500/20' : guestEmail.includes('@') ? 'border-green-400 focus:ring-green-500/20' : 'border-gray-200 focus:ring-blue-500/20'}`}
             />
-            {emailError && <p className="text-xs text-red-500 mt-1 ml-1">Entrez votre email pour recevoir le pack</p>}
+            {emailError && <p className="text-xs text-red-500 mt-1 ml-1">Entrez votre email pour recevoir le dossier</p>}
           </div>
         )}
 
@@ -157,13 +166,20 @@ function PricingContent() {
             Voir un exemple de livraison →
           </a>
 
-          <ul className="space-y-3 mb-8">
-            {INCLUDES.map(f => (
-              <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
-                <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{f}
-              </li>
+          <div className="space-y-5 mb-8">
+            {SECTIONS.map(({ title, items }) => (
+              <div key={title}>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{title}</p>
+                <ul className="space-y-1.5">
+                  {items.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
 
           <button
             onClick={handlePay}

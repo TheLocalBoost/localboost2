@@ -258,7 +258,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     'Rédaction de votre description',
     'Création de vos publications',
     'Préparation des réponses et catégories',
-    'Finalisation du pack',
+    'Finalisation du dossier',
   ]
   const realStepsDone = [
     !!result,
@@ -404,7 +404,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               <div className="max-w-sm w-full">
                 <div className="text-center mb-8">
                   <p className="text-lg font-bold text-gray-900">
-                    Préparation du pack {form.name ? `de ${form.name}` : ''}
+                    Préparation du dossier {form.name ? `de ${form.name}` : ''}
                   </p>
                   {form.city && <p className="text-sm text-gray-400 mt-1">{form.city}</p>}
                 </div>
@@ -508,7 +508,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 <div className="bg-white rounded-2xl border border-blue-100 p-6">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-blue-600 text-sm">✦</span>
-                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Pack préparé pour {result.name}</p>
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Dossier préparé pour {result.name}</p>
                   </div>
                   <p className="text-xs text-gray-400 mb-5 ml-5">Personnalisé pour votre activité à {result.city}</p>
 
@@ -550,7 +550,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                           )}
                           {/* Aperçu des 11 autres thèmes */}
                           <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 px-4 py-3">
-                            <p className="text-xs font-semibold text-gray-500 mb-2">11 autres publications incluses dans le pack :</p>
+                            <p className="text-xs font-semibold text-gray-500 mb-2">11 autres publications incluses dans le dossier :</p>
                             <div className="space-y-1.5">
                               {[
                                 `Conseil de saison pour vos clients à ${result.city}`,
@@ -597,7 +597,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   {/* Vous voyez un aperçu — le pack livre beaucoup plus */}
                   <div className="mt-6 pt-5 border-t border-gray-100">
                     <p className="text-xs text-gray-500 italic mb-3">Vous voyez ici un aperçu. Après validation, vous récupérez l'ensemble des contenus et outils préparés pour votre entreprise.</p>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ce que contient le pack complet</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Votre dossier complet</p>
                     <div className="space-y-4">
                       {[
                         {
@@ -668,7 +668,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     </div>
                   </div>
                   <div className="p-4 bg-green-50">
-                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le pack</p>
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le dossier</p>
                     <div className="space-y-1.5">
                       {[
                         'Activité bien expliquée',
@@ -715,7 +715,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       </p>
                     </blockquote>
 
-                    {/* Ce qui est livré dans le pack — pas l'aperçu gratuit */}
+                    {/* Ce qui est livré dans le dossier — pas l'aperçu gratuit */}
                     {(() => {
                       const packItems = [
                         '1 description premium',

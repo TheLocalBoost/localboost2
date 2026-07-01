@@ -255,10 +255,10 @@ ${(pack.guideSteps as string[]).map((step: string, i: number) => `
 
           await sendTransactional({
             to:      email,
-            subject: `Votre optimisation Google est prête — ${realName}`,
+            subject: `Votre dossier d'optimisation — ${realName}`,
             html: `
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#1a1a1a;">
-  <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;">Votre pack Google Business est prêt ✅</h2>
+  <h2 style="font-size:20px;font-weight:800;margin:0 0 6px;">Votre dossier Google est prêt ✅</h2>
   <p style="color:#6b7280;font-size:14px;margin:0 0 20px;">${realName} · ${realCity}</p>
 
   ${situationHtml}
