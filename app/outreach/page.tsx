@@ -7,8 +7,8 @@ const sb = createClient(
 
 export const revalidate = 60
 
-// Depuis la dernière grosse refonte (daemon continu + dossier enrichi)
-const SINCE = '2026-07-02T00:00:00.000Z'
+// Depuis la dernière grosse refonte (daemon continu + dossier enrichi — 01/07 20h40)
+const SINCE = '2026-07-01T18:40:00.000Z'
 
 // Sujets réels des variantes dans send_ovh.mjs
 const SUBJECTS: Record<string, string> = {
@@ -29,7 +29,7 @@ function pct(n: number, d: number) {
 
 async function getData() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-  const FUNNEL_SINCE = '2026-07-02T00:00:00.000Z'
+  const FUNNEL_SINCE = '2026-07-01T18:40:00.000Z'
 
   const [
     // outreach_events — source réelle des envois (send_ovh.mjs)
