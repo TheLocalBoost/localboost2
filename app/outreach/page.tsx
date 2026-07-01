@@ -161,7 +161,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
             { label: 'Ouvertures', val: d.opens.toLocaleString('fr'), sub: pct(d.opens, d.sends) + ' taux ouv.', color: '#16a34a' },
             { label: 'Clics email', val: d.clicks.toLocaleString('fr'), sub: pct(d.clicks, d.sends) + ' CTR', color: '#7c3aed' },
             { label: 'Bounces', val: d.bounces, sub: pct(d.bounces, d.sends), color: '#dc2626' },
-            { label: 'Ventes', val: d.sales, sub: `${d.sales * 39}€ MRR`, color: '#16a34a' },
+            { label: 'Ventes (one-shot)', val: d.sales, sub: d.sales > 0 ? `~${d.sales * 39}€ CA` : 'aucune vente', color: d.sales > 0 ? '#16a34a' : '#9ca3af' },
             { label: 'Waitlist', val: d.waitlist, sub: '', color: '#d97706' },
           ].map(({ label, val, sub, color }) => (
             <div key={label} style={{ background: '#fff', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}>
