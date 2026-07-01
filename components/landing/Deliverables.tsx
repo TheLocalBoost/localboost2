@@ -2,32 +2,32 @@ const ITEMS = [
   {
     icon: '📝',
     title: 'Description Google optimisée',
-    desc: 'Rédigée spécifiquement pour votre métier et votre ville. Les mots que Google lit pour vous classer. Prête à coller en 30 secondes.',
+    desc: 'Rédigée pour votre métier et votre ville. Prête à publier directement dans votre fiche Google en quelques minutes.',
   },
   {
     icon: '📅',
-    title: '4 posts Google — 1 par semaine',
-    desc: 'Un post par semaine pendant un mois. Basés sur vos vrais problèmes de fiche. Google récompense les fiches actives — votre fiche le sera.',
+    title: '12 publications — 1 par semaine pendant 3 mois',
+    desc: 'Saisonnières, conseils, promotions, témoignages... Votre fiche reste active 3 mois sans que vous ayez à y penser.',
   },
   {
     icon: '⭐',
     title: 'Réponses personnalisées à vos avis',
-    desc: 'Chaque réponse cite le prénom du client et un détail de son avis. Pas de modèle générique. Ça inspire confiance et améliore votre positionnement.',
+    desc: 'Chaque réponse cite le prénom du client et un détail de son avis. Plus 10 modèles réutilisables pour vos futurs avis.',
   },
   {
     icon: '📲',
-    title: 'QR code pour collecter des avis',
-    desc: 'À imprimer et poser en caisse, sur vos factures ou en vitrine. Vos clients scannent et laissent un avis en 30 secondes. Plus d\'avis = mieux classé.',
+    title: 'QR code collecte d\'avis + script SMS',
+    desc: 'À afficher en boutique ou à envoyer après chaque prestation. Vos clients laissent un avis en 30 secondes.',
   },
   {
     icon: '🎯',
-    title: 'Plan d\'action prioritaire',
-    desc: 'L\'action #1 à faire cette semaine sur votre fiche pour gagner le plus de terrain sur vos concurrents. Concrète et chiffrée.',
+    title: 'Plan d\'action concurrentiel',
+    desc: 'Basé sur l\'analyse de vos vrais concurrents locaux. Les priorités concrètes pour dépasser ceux qui vous devancent.',
   },
   {
-    icon: '💬',
-    title: 'Script SMS pour demander des avis',
-    desc: 'Un message SMS prêt à envoyer à vos clients après chaque prestation. Testé et formulé pour maximiser les retours sans être intrusif.',
+    icon: '📋',
+    title: 'Guide de mise en ligne pas à pas',
+    desc: 'Tout mettre en ligne en moins de 10 minutes. Instructions claires, dans le bon ordre.',
   },
 ]
 

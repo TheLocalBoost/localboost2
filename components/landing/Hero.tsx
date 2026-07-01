@@ -31,14 +31,14 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
             </div>
 
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
-              Vos concurrents vous passent devant sur Google.{' '}
-              <span className="text-green-600">Découvrez pourquoi — et réglez ça pour 39€.</span>
+              Votre fiche Google laisse partir des clients.{' '}
+              <span className="text-green-600">Nous avons déjà commencé à corriger ça.</span>
             </h1>
 
             <p className="text-lg text-gray-500 mb-4 leading-relaxed">
-              Entrez le nom de votre commerce. En 60 secondes, vous voyez qui vous devance sur Google Maps,
-              pourquoi, et ce que ça vous coûte chaque mois.{' '}
-              <strong className="text-gray-800">Données réelles issues de Google. Gratuit et sans inscription.</strong>
+              Entrez le nom de votre commerce. En 60 secondes, nous identifions ce qui bloque votre visibilité
+              et préparons les corrections — description, publications, réponses aux avis.{' '}
+              <strong className="text-gray-800">Gratuit et sans inscription.</strong>
             </p>
 
             <p className="text-sm text-gray-400 mb-8">
@@ -68,7 +68,7 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
                   type="submit"
                   className="rounded-xl bg-green-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-green-400 transition whitespace-nowrap shadow-lg"
                 >
-                  Analyser ma fiche — gratuit →
+                  Voir ce qui bloque ma fiche — gratuit →
                 </button>
               </div>
               <p className="text-xs text-gray-400">
@@ -143,20 +143,15 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
               </div>
 
               {/* Mini résultat analyzer */}
-              <div className="mx-4 mb-4 rounded-xl bg-blue-50 border border-blue-100 p-3">
-                <p className="text-xs text-blue-700 font-semibold mb-1">Résultat de l'analyse — exemple réel</p>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-xl font-extrabold text-red-500">34</p>
-                    <p className="text-xs text-gray-400">/100</p>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-red-600">~7 appels perdus/mois</span>
-                      <span className="text-red-600 font-bold">~315€ non réalisés</span>
+              <div className="mx-4 mb-4 rounded-xl bg-green-50 border border-green-100 p-3">
+                <p className="text-xs text-green-700 font-semibold mb-2">Ce que LocalBoost a préparé — exemple réel</p>
+                <div className="space-y-1.5">
+                  {['Description Google optimisée — prête', '12 publications prêtes à publier', 'Réponses aux avis rédigées', 'Plan d\'action concurrentiel'].map((item, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <span className="text-green-500 text-xs">✓</span>
+                      <p className="text-xs text-gray-700">{item}</p>
                     </div>
-                    <p className="text-xs text-gray-400">4 problèmes détectés sur cette fiche</p>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>

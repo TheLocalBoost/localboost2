@@ -3,11 +3,11 @@ import { redirect } from 'next/navigation'
 import LandingPage from '@/components/landing/LandingPage'
 
 export const metadata: Metadata = {
-  title: 'LocalBoost — Google Business & Devis IA pour artisans',
-  description: 'Optimisez votre fiche Google Business en 10 minutes et recevez plus d\'appels. Posts, avis, optimisation — préparés chaque semaine. Sans engagement.',
+  title: 'LocalBoost — Votre fiche Google optimisée pour recevoir plus d\'appels',
+  description: 'Découvrez pourquoi votre fiche Google laisse partir des clients et récupérez tout le travail de correction en 48h pour 39€. Gratuit et sans inscription.',
   openGraph: {
-    title: 'LocalBoost — Google Business & Devis IA pour artisans',
-    description: 'Optimisez votre fiche Google Business en 10 minutes et recevez plus d\'appels.',
+    title: 'LocalBoost — Votre fiche Google optimisée pour recevoir plus d\'appels',
+    description: 'Découvrez pourquoi votre fiche Google laisse partir des clients et récupérez tout le travail de correction en 48h pour 39€.',
     url: 'https://thelocalboost.fr',
     siteName: 'LocalBoost',
     locale: 'fr_FR',
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LocalBoost — Google Business & Devis IA pour artisans',
-    description: 'Optimisez votre fiche Google Business en 10 minutes et recevez plus d\'appels.',
+    title: 'LocalBoost — Votre fiche Google optimisée pour recevoir plus d\'appels',
+    description: 'Découvrez pourquoi votre fiche Google laisse partir des clients et récupérez tout le travail de correction en 48h pour 39€.',
   },
 }
 

@@ -1,23 +1,23 @@
 const STEPS = [
   {
     n: '1',
-    title: 'Analysez votre fiche gratuitement',
+    title: 'Diagnostic gratuit en 60 secondes',
     time: '60 secondes',
-    desc: 'Entrez le nom de votre commerce et votre ville. On récupère vos vraies données Google en temps réel : score, concurrents qui vous devancent, problèmes détectés, clients perdus estimés.',
-    detail: 'Aucune inscription. Aucune carte bancaire. Juste la réalité de votre fiche Google.',
+    desc: 'Entrez le nom de votre commerce. Nous récupérons vos vraies données Google : concurrents qui vous devancent, problèmes sur votre fiche, opportunités que vous manquez chaque semaine.',
+    detail: 'Aucune inscription. Aucune carte bancaire. Résultat immédiat.',
   },
   {
     n: '2',
-    title: 'On génère votre pack d\'optimisation',
-    time: 'Automatique — basé sur vos vraies données',
-    desc: 'Dès votre paiement, notre système analyse votre fiche en profondeur, étudie vos concurrents, et génère un pack 100% personnalisé : description optimisée, posts, réponses aux avis. Rien de générique.',
-    detail: 'Ce qu\'une agence fait en 2 semaines pour 300€ — on le fait en quelques minutes pour 39€.',
+    title: 'Nous préparons votre nouvelle fiche',
+    time: 'Quelques secondes — basé sur vos vraies données',
+    desc: 'Nous analysons votre fiche, étudions vos concurrents et préparons un dossier 100% personnalisé : description, 12 publications, réponses aux avis, guide et plan d\'action. Rien de générique.',
+    detail: 'Ce qu\'une agence fait en 2 semaines pour 300€ — préparé en quelques secondes pour 39€.',
   },
   {
     n: '3',
     title: 'Vous recevez tout par email en 48h',
     time: 'Livraison sous 48h garantie',
-    desc: 'Description Google prête à coller, 4 posts hebdomadaires, réponses personnalisées à vos avis, QR code pour collecter plus d\'avis, plan d\'action prioritaire. Vous publiez en 5 minutes depuis votre téléphone.',
+    desc: 'Description Google, 12 publications prêtes, réponses personnalisées à vos avis, 10 modèles réutilisables, QR code, guide et plan d\'action. Tout est prêt à mettre en ligne.',
     detail: 'Satisfait ou remboursé sous 30 jours — aucune question posée.',
   },
 ]

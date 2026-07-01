@@ -2,11 +2,12 @@
 
 const INCLUDES = [
   'Description Google optimisée pour votre métier et votre ville',
-  '4 posts Google hebdomadaires — prêts à copier-coller',
-  'Réponses personnalisées à vos avis clients',
-  'QR code pour collecter plus d\'avis — à imprimer',
+  '12 publications prêtes — 1 par semaine pendant 3 mois',
+  'Réponses personnalisées à vos avis récents',
+  '10 modèles de réponses réutilisables pour vos futurs avis',
+  'QR code collecte d\'avis + script SMS après prestation',
   'Plan d\'action prioritaire basé sur vos vrais concurrents',
-  'Script SMS pour demander des avis après chaque prestation',
+  'Guide de mise en ligne pas à pas',
 ]
 
 export default function Pricing() {
