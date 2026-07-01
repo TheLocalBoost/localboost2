@@ -116,6 +116,13 @@ function ScoreRing({ score }: { score: number }) {
 
 const STEPS = ['Recherche de votre fiche...', 'Analyse de votre présence...', 'Calcul du score...']
 
+const PRIORITIES_CONFIG = [
+  { id: 'convince', label: 'Mieux convaincre les visiteurs de ma fiche' },
+  { id: 'reviews',  label: 'Répondre plus facilement à mes avis clients' },
+  { id: 'publish',  label: 'Avoir du contenu à publier sans y passer des heures' },
+  { id: 'time',     label: 'Gagner du temps sur tout ce qui concerne Google' },
+]
+
 // Bug 2 fix — recentReview ajouté avec libellé lisible
 const CRITERIA_LABELS: Record<string, string> = {
   telephone:    'Numéro de téléphone',
@@ -409,7 +416,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   />
                 </div>
 
-                <div className="space-y-3.5">
+                <div className="space-y-3.5 mb-6">
                   {STEP_LABELS.map((label, i) => {
                     const done = i < revealedCount
                     return (
@@ -428,6 +435,38 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                     )
                   })}
                 </div>
+
+                {/* Question priorité pendant le chargement — dès que l'analyse est prête */}
+                {revealedCount >= 3 && (
+                  <div className="border-t border-gray-100 pt-5 animate-[fadeIn_0.4s_ease]">
+                    <p className="text-sm font-semibold text-gray-800 mb-1">Pendant que nous préparons votre fiche…</p>
+                    <p className="text-xs text-gray-500 mb-3">Quelle est votre priorité principale ?</p>
+                    <div className="space-y-2">
+                      {PRIORITIES_CONFIG.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            setSelectedPriority(p.id)
+                            track('priority_selected', { priority: p.id, during: 'loading' })
+                          }}
+                          className={`w-full text-left rounded-xl border px-3 py-2.5 text-sm transition ${
+                            selectedPriority === p.id
+                              ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
+                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {selectedPriority === p.id && <span className="mr-1.5">✓</span>}
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedPriority && (
+                      <p className="text-xs text-green-600 mt-2 text-center">
+                        Nous intégrons cet objectif dans votre préparation.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )
@@ -491,21 +530,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       )}
                     </div>
 
-                    {/* CTA rapide immédiatement après la description */}
-                    {generatedDescription && (() => {
-                      const quickCtaLabel = selectedPriority
-                        ? `Je récupère tout le travail préparé — 39€ →`
-                        : `Je récupère tout le travail préparé — 39€ →`
-                      return (
-                        <a
-                          href={pricingUrl}
-                          onClick={() => { setCtaClicked(true); track('cta_click_early', { score: result.score, category: result.category }) }}
-                          className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-3.5 text-sm font-bold text-white text-center transition shadow-md"
-                        >
-                          {quickCtaLabel}
-                        </a>
-                      )
-                    })()}
 
                     {/* 1 post complet + aperçu des thèmes saisonniers */}
                     <div ref={postsRef}>
@@ -662,46 +686,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-              {/* Question d'engagement — personnalise le CTA */}
-              {(() => {
-                const PRIORITIES = [
-                  { id: 'convince', label: 'Mieux convaincre les visiteurs de ma fiche' },
-                  { id: 'reviews',  label: 'Répondre plus facilement à mes avis clients' },
-                  { id: 'publish',  label: 'Avoir du contenu à publier sans y passer des heures' },
-                  { id: 'time',     label: 'Gagner du temps sur tout ce qui concerne Google' },
-                ]
-                return (
-                  <div className="rounded-xl bg-white border border-gray-100 p-5 mb-3">
-                    <p className="text-sm font-bold text-gray-900 mb-4">
-                      Quelle est votre priorité principale ?
-                    </p>
-                    <div className="space-y-2">
-                      {PRIORITIES.map(p => (
-                        <button
-                          key={p.id}
-                          onClick={() => {
-                            setSelectedPriority(p.id)
-                            track('priority_selected', { priority: p.id, score: result.score, category: result.category })
-                          }}
-                          className={`w-full text-left rounded-xl border px-4 py-3 text-sm transition ${
-                            selectedPriority === p.id
-                              ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {selectedPriority === p.id && <span className="mr-2">✓</span>}
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedPriority && (
-                      <p className="text-xs text-green-700 mt-3 text-center">
-                        Nous avons mis l'accent sur cet objectif dans votre préparation.
-                      </p>
-                    )}
-                  </div>
-                )
-              })()}
 
               {/* CTA — mission à finaliser, avec valeur du travail intégrée */}
               {(() => {
