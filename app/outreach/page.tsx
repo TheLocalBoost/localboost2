@@ -13,8 +13,8 @@ async function getStats() {
     supabase.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'open'),
     supabase.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'click'),
     supabase.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'bounce'),
-    supabase.from('outreach_events').select('variant, event').not('variant', 'is', null),
-    supabase.from('outreach_events').select('sender, event').not('sender', 'is', null),
+    supabase.from('outreach_events').select('variant, event').not('variant', 'is', null).limit(100000),
+    supabase.from('outreach_events').select('sender, event').not('sender', 'is', null).limit(100000),
   ])
 
   const totalSends   = sends.count   ?? 0

@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     .from('outreach_events')
     .select('variant, event')
     .not('variant', 'is', null)
+    .limit(100000)
 
   const variantStats: Record<string, { sends: number; opens: number; clicks: number }> = {}
   for (const row of byVariant ?? []) {
@@ -44,6 +45,7 @@ export async function GET(req: NextRequest) {
     .from('outreach_events')
     .select('sender, event')
     .not('sender', 'is', null)
+    .limit(100000)
 
   const senderStats: Record<string, { sends: number; opens: number }> = {}
   for (const row of bySender ?? []) {
