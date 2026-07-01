@@ -1,13 +1,10 @@
 'use client'
 
-const INCLUDES = [
-  'Description Google optimisée pour votre métier et votre ville',
-  '12 publications prêtes — 1 par semaine pendant 3 mois',
-  'Réponses personnalisées à vos avis récents',
-  '10 modèles de réponses réutilisables pour vos futurs avis',
-  'QR code collecte d\'avis + script SMS après prestation',
-  'Plan d\'action prioritaire basé sur vos vrais concurrents',
-  'Guide de mise en ligne pas à pas',
+const SECTIONS = [
+  { title: 'Rendre votre fiche plus convaincante', items: ['Nouvelle description professionnelle', 'Services rédigés pour votre fiche Google', 'FAQ métier — 20 questions/réponses'] },
+  { title: 'Montrer que votre entreprise est active', items: ['12 publications prêtes — 1 par semaine pendant 3 mois', 'Calendrier de publication avec dates réelles', '20 idées de photos adaptées à votre métier'] },
+  { title: 'Donner confiance avant le premier appel', items: ['Réponses personnalisées à vos avis récents', '30 réponses prêtes pour vos futurs avis', 'QR code collecte d\'avis + script SMS'] },
+  { title: 'Gagner plusieurs heures', items: ['Guide de mise en ligne pas à pas', 'Plan d\'action personnalisé basé sur vos concurrents'] },
 ]
 
 export default function Pricing() {
@@ -27,13 +24,20 @@ export default function Pricing() {
           </div>
           <p className="text-sm text-gray-500 mb-6">Livré par email sous 48h · Satisfait ou remboursé sous 30 jours</p>
 
-          <ul className="space-y-3 mb-8">
-            {INCLUDES.map(f => (
-              <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
-                <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{f}
-              </li>
+          <div className="space-y-4 mb-8">
+            {SECTIONS.map(({ title, items }) => (
+              <div key={title}>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">{title}</p>
+                <ul className="space-y-1.5">
+                  {items.map(item => (
+                    <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                      <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
 
           <a
             href="/analyser"
@@ -41,7 +45,7 @@ export default function Pricing() {
           >
             Analyser ma fiche gratuitement →
           </a>
-          <p className="text-xs text-gray-400 text-center mt-2">L'analyse est gratuite · Vous payez seulement si vous voulez le pack</p>
+          <p className="text-xs text-gray-400 text-center mt-2">L'analyse est gratuite · Vous payez seulement si vous voulez le dossier</p>
 
           <div className="mt-6 pt-5 border-t border-gray-100">
             <div className="flex items-center justify-around gap-2">
