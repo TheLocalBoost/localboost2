@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { track } from '@/lib/track'
 import { createClient } from '@/lib/supabase-browser'
@@ -32,6 +32,7 @@ interface AnalysisResult {
   lostCalls: number
   lostRevenue: number
   competitors: Competitor[]
+  commercialScores?: { found: number; trust: number; desire: number; activity: number; vsCompetitors: number }
 }
 
 // Correction 1 — 6 paliers de score avec message correspondant au score réel
@@ -141,9 +142,24 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [emailCaptured, setEmailCaptured]         = useState(false)
   const [capturedEmail, setCapturedEmail]         = useState('')
 
-  const [generatedPost, setGeneratedPost]         = useState<string | null>(null)
-  const [generatedReview, setGeneratedReview]     = useState<string | null>(null)
-  const [generatingContent, setGeneratingContent] = useState(false)
+  const [generatedDescription, setGeneratedDescription] = useState<string | null>(null)
+  const [generatedPosts, setGeneratedPosts]             = useState<string[]>([])
+  const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
+  const [generatedCategories, setGeneratedCategories]   = useState<string[]>([])
+  const [generatingContent, setGeneratingContent]       = useState(false)
+  const [generatedAt, setGeneratedAt]                   = useState<Date | null>(null)
+  const [scoreBreakdownOpen, setScoreBreakdownOpen]     = useState(false)
+  const generationStartRef                              = useRef<number>(0)
+  const [generationSeconds, setGenerationSeconds]       = useState<number | null>(null)
+  const [selectedPriority, setSelectedPriority]         = useState<string | null>(null)
+  const [revealedCount, setRevealedCount]               = useState(0)
+  const [searchStarted, setSearchStarted]               = useState(false)
+
+  const descriptionRef = useRef<HTMLDivElement>(null)
+  const postsRef       = useRef<HTMLDivElement>(null)
+  const beforeAfterRef = useRef<HTMLDivElement>(null)
+  const ctaRef         = useRef<HTMLDivElement>(null)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -183,6 +199,29 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     }
   }, [])
 
+  // Visibility tracking — mesure quelles sections sont réellement vues
+  useEffect(() => {
+    if (!result) return
+    const pairs: [React.RefObject<HTMLDivElement>, string][] = [
+      [descriptionRef, 'saw_description'],
+      [postsRef,       'saw_posts'],
+      [beforeAfterRef, 'saw_before_after'],
+      [ctaRef,         'saw_cta'],
+    ]
+    const observers = pairs.map(([ref, event]) => {
+      if (!ref.current) return null
+      const o = new IntersectionObserver(([e]) => {
+        if (e.isIntersecting) {
+          track(event, { score: result.score, category: result.category, city: result.city })
+          o.disconnect()
+        }
+      }, { threshold: 0.3 })
+      o.observe(ref.current)
+      return o
+    })
+    return () => observers.forEach(o => o?.disconnect())
+  }, [result])
+
   // tracker non-converti : arrivé depuis email, résultat vu, pas de CTA cliqué après 20s
   useEffect(() => {
     if (!result || ctaClicked) return
@@ -204,10 +243,54 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     return () => clearInterval(iv)
   }, [loading])
 
+  // Étapes réelles du chargement plein écran
+  const STEP_LABELS = [
+    'Recherche de votre fiche Google',
+    'Analyse des concurrents locaux',
+    'Calcul du score de visibilité',
+    'Rédaction de votre description',
+    'Création de vos publications',
+    'Préparation des réponses et catégories',
+    'Finalisation du pack',
+  ]
+  const realStepsDone = [
+    !!result,
+    !!result,
+    !!result,
+    !!generatedDescription,
+    generatedPosts.length > 0,
+    !!generatedReview || generatedCategories.length > 0,
+    !generatingContent && !!generatedAt,
+  ]
+  const realDoneCount = realStepsDone.filter(Boolean).length
+
+  // Réinitialise la révélation à chaque nouvelle recherche
+  useEffect(() => {
+    if (loading) setRevealedCount(0)
+  }, [loading])
+
+  // Révèle les étapes une par une, à un rythme minimum perceptible —
+  // même si le travail réel est instantané, on ne saute jamais d'étape.
+  useEffect(() => {
+    if (revealedCount >= realDoneCount || revealedCount >= STEP_LABELS.length) return
+    const t = setTimeout(() => setRevealedCount(c => c + 1), 650)
+    return () => clearTimeout(t)
+  }, [revealedCount, realDoneCount])
+
+  const showLoadingOverlay = searchStarted && (loading || generatingContent || revealedCount < STEP_LABELS.length)
+
   async function runAnalysis(name: string, city: string) {
+    setSearchStarted(true)
     setLoading(true)
     setResult(null)
     setError('')
+    setGeneratedDescription(null)
+    setGeneratedPosts([])
+    setGeneratedReview(null)
+    setGeneratedCategories([])
+    setGeneratedAt(null)
+    setGenerationSeconds(null)
+    generationStartRef.current = Date.now()
     track('analyzer_search', { name, city })
     try {
       const res  = await fetch('/api/analyse-public', {
@@ -229,8 +312,12 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: data.name, city: data.city, category: data.category, recentReview: bestReview }),
       }).then(r => r.json()).then(d => {
-        if (d.post) setGeneratedPost(d.post)
+        if (d.description)    setGeneratedDescription(d.description)
+        if (d.posts?.length)  setGeneratedPosts(d.posts)
         if (d.reviewResponse) setGeneratedReview(d.reviewResponse)
+        if (d.categories)     setGeneratedCategories(d.categories)
+        setGeneratedAt(new Date())
+        setGenerationSeconds(Math.round((Date.now() - generationStartRef.current) / 1000))
       }).catch(() => {}).finally(() => setGeneratingContent(false))
     } catch {
       setError('Erreur de connexion. Réessayez.')
@@ -265,9 +352,9 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
             Diagnostic de votre fiche Google
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Analysez votre fiche Google gratuitement
+            Découvrez pourquoi votre fiche Google laisse partir des clients
           </h2>
-          <p className="text-gray-500">Entrez votre établissement — découvrez ce qui vous coûte des clients.</p>
+          <p className="text-gray-500">Entrez le nom de votre établissement — le diagnostic est gratuit et immédiat.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 mb-8">
@@ -300,283 +387,396 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           </div>
         )}
 
-        {/* Teaser score email — visible pendant le chargement */}
-        {loading && emailScore !== null && (
-          <div className="rounded-xl bg-orange-50 border border-orange-200 p-4 mb-4 flex items-center gap-4">
-            <div className="text-center shrink-0">
-              <p className="text-3xl font-black text-orange-600 leading-none">{emailScore}</p>
-              <p className="text-xs text-gray-400">/100</p>
+        {/* Chargement plein écran — révélation progressive, jamais instantanée */}
+        {showLoadingOverlay && (() => {
+          const progressPct  = Math.round((revealedCount / STEP_LABELS.length) * 100)
+          const currentIndex = revealedCount
+
+          return (
+            <div className="fixed inset-0 z-50 bg-white flex items-center justify-center px-6">
+              <div className="max-w-sm w-full">
+                <div className="text-center mb-8">
+                  <p className="text-lg font-bold text-gray-900">
+                    Préparation du pack {form.name ? `de ${form.name}` : ''}
+                  </p>
+                  {form.city && <p className="text-sm text-gray-400 mt-1">{form.city}</p>}
+                </div>
+
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-8">
+                  <div
+                    className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+
+                <div className="space-y-3.5">
+                  {STEP_LABELS.map((label, i) => {
+                    const done = i < revealedCount
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className={`flex items-center justify-center w-5 h-5 rounded-full text-xs shrink-0 transition-colors duration-300 ${
+                          done ? 'bg-green-500 text-white' : i === currentIndex ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-300'
+                        }`}>
+                          {done ? '✓' : i === currentIndex ? <span className="inline-block animate-spin">◌</span> : '·'}
+                        </span>
+                        <p className={`text-sm transition-colors duration-300 ${
+                          done ? 'text-gray-400 line-through' : i === currentIndex ? 'text-gray-900 font-semibold' : 'text-gray-300'
+                        }`}>
+                          {label}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Score estimé détecté dans votre email</p>
-              <p className="text-xs text-gray-500">Calcul du score réel en cours…</p>
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
         <div id="analyzer-result">
           {result && (
-            <div className="space-y-4">
+            <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
 
-              {/* BLOC 0 — Concurrent le plus menaçant (hook principal) */}
-              {topCompetitor && (
-                <div className="bg-white rounded-2xl border-2 border-red-100 p-5">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                    Votre position sur Google Maps à {result.city}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-center">
-                      <p className="text-xs text-gray-400 mb-1.5">Vous</p>
-                      <p className="text-xs font-bold text-gray-800 leading-tight min-h-8 flex items-center justify-center text-center">{result.name}</p>
-                      <p className="text-2xl font-black text-gray-900 mt-2">{result.score}<span className="text-xs font-normal text-gray-400">/100</span></p>
-                      {result.rating > 0 && <p className="text-xs text-gray-400 mt-1">{result.rating}★ · {result.reviews} avis</p>}
-                    </div>
-                    <div className={`rounded-xl p-3 text-center border-2 ${topCompetitor.estimatedScore > result.score ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
-                      <p className="text-xs text-gray-400 mb-1.5">Concurrent</p>
-                      <p className="text-xs font-bold text-gray-800 leading-tight min-h-8 flex items-center justify-center text-center">{topCompetitor.name}</p>
-                      <p className={`text-2xl font-black mt-2 ${topCompetitor.estimatedScore > result.score ? 'text-red-600' : 'text-amber-600'}`}>
-                        {topCompetitor.estimatedScore}<span className="text-xs font-normal text-gray-400">/100</span>
-                      </p>
-                      {topCompetitor.rating > 0 && <p className="text-xs text-gray-400 mt-1">{topCompetitor.rating}★ · {topCompetitor.reviewCount} avis</p>}
-                    </div>
-                  </div>
-                  <div className={`text-center text-sm font-bold rounded-xl py-2.5 px-4 ${topCompetitor.estimatedScore > result.score ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
-                    {topCompetitor.estimatedScore > result.score
-                      ? `${topCompetitor.name} apparaît avant vous sur Google`
-                      : `Vous êtes en tête — mais ${topCompetitor.name} est à ${topCompetitor.estimatedScore} pts`}
-                  </div>
-                </div>
-              )}
+              {/* ═══ HOOK COURT — immédiat ═══ */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <p className="text-xs text-gray-400 mb-3">{result.name} · {result.address}</p>
+                <p className="text-2xl font-extrabold text-gray-900 leading-tight">
+                  {result.problems.length + (!result.criteria.description ? 1 : 0)} améliorations identifiées.
+                </p>
+                <p className="text-lg font-semibold text-green-600 mt-1">4 sont déjà prêtes pour vous.</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Basé sur {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} local{result.competitors.length > 1 ? 'ux' : ''} analysés{result.reviews > 0 ? ` · ${result.reviews} avis clients` : ''}.
+                </p>
+              </div>
 
-              {/* BLOC 1 — Score + concurrents (toujours visible) */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <p className="text-xs text-gray-400 mb-4">{result.name} · {result.address}</p>
-                <div className="flex items-center justify-between">
-                  <ScoreRing score={result.score} />
-                  {avgCompetitorScore !== null && (
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400 mb-1">Concurrents proches</p>
-                      <p className="text-2xl font-bold text-gray-500">{avgCompetitorScore}<span className="text-sm font-normal text-gray-400">/100</span></p>
-                      <p className={`text-xs font-semibold mt-1 ${result.score >= avgCompetitorScore ? 'text-green-600' : 'text-red-500'}`}>
-                        {result.score >= avgCompetitorScore
-                          ? `+${result.score - avgCompetitorScore} pts d'avance`
-                          : `${avgCompetitorScore - result.score} pts de retard`}
-                      </p>
-                    </div>
+              {/* ═══ PREUVE IMMÉDIATE + CTA HAUT ═══ */}
+              {(generatingContent || generatedDescription || generatedPosts.length > 0) && (
+              <div>
+                <div className="bg-gray-900 text-white rounded-2xl px-5 py-4 mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-green-400 uppercase tracking-wide mb-0.5">Votre nouvelle fiche est prête</p>
+                    <p className="text-base font-bold leading-snug">Nous avons déjà commencé les corrections pour {result.name}.</p>
+                  </div>
+                  {generationSeconds !== null && generationSeconds <= 120 && (
+                    <span className="text-xs text-gray-400 shrink-0 ml-3">⚡ {generationSeconds}s</span>
                   )}
                 </div>
-                {result.score < 86 && (
-                  <div className="mt-4 pt-4 border-t border-gray-50 space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <span className="text-blue-500 text-base shrink-0 mt-0.5">→</span>
-                      <p className="text-sm text-gray-700">
-                        <strong>LocalBoost génère le pack complet basé sur vos vraies données</strong> — description optimisée, 4 posts, réponses aux avis, QR code, plan d'action — livré par email en 48h pour 39€.
-                      </p>
-                    </div>
-                    {result.lostCalls >= 2 && (
-                      <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3">
-                        <p className="text-sm text-green-800">
-                          <strong>ROI estimé :</strong> si on récupère 2 appels/mois sur les ~{result.lostCalls} perdus
-                          {' '}→ <strong>{2 * (result.lostRevenue > 0 ? Math.round(result.lostRevenue / result.lostCalls) : 150)}€ de CA</strong> pour 39€ investis.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* BLOC 1b — Pourquoi ce score pénalise sur Google */}
-              <div className="bg-gray-900 rounded-2xl p-5">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
-                  Pourquoi ce score vous coûte des clients
-                </p>
-                <p className="text-sm text-gray-300 leading-relaxed mb-4">
-                  Google Maps ne classe pas la meilleure fiche — il classe la plus <strong className="text-white">active</strong>.
-                  {topCompetitor && topCompetitor.estimatedScore > result.score
-                    ? ` ${topCompetitor.name} vous devance non pas parce qu'il est meilleur, mais parce que sa fiche envoie plus de signaux d'activité à Google.`
-                    : ' Un concurrent avec une note inférieure à la vôtre peut apparaître avant vous si sa fiche est plus active.'}
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'Activité', detail: 'Posts & réponses aux avis', weight: '★★★' },
-                    { label: 'Complétude', detail: 'Description, horaires, photos', weight: '★★' },
-                    { label: 'Avis récents', detail: 'Fraîcheur & taux de réponse', weight: '★★' },
-                  ].map(({ label, detail, weight }) => (
-                    <div key={label} className="bg-gray-800 rounded-xl p-3 text-center">
-                      <p className="text-xs font-bold text-white mb-1">{label}</p>
-                      <p className="text-xs text-amber-400 mb-1.5">{weight}</p>
-                      <p className="text-xs text-gray-400 leading-tight">{detail}</p>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3 text-center">
-                  Voici exactement ce que l'algorithme a trouvé sur votre fiche :
-                </p>
-              </div>
-
-              {/* BLOC 2 — 1er problème visible, reste bloqué */}
-              {result.problems.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                    {result.problems.length} problème{result.problems.length > 1 ? 's' : ''} détecté{result.problems.length > 1 ? 's' : ''} sur votre fiche
-                  </p>
-                  <div className="space-y-3">
-                    {/* 2 premiers problèmes visibles */}
-                    {result.problems.slice(0, 2).map((problem, idx) => (
-                      <div key={idx} className="rounded-xl bg-red-50 border border-red-100 p-4">
-                        <div className="flex items-start gap-3">
-                          <span className="text-red-500 font-bold text-sm shrink-0 mt-0.5">✗</span>
-                          <p className="text-sm text-gray-800 leading-snug">{problem.text}</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-3 pl-6">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{problem.calls} appel{problem.calls > 1 ? 's' : ''} perdu{problem.calls > 1 ? 's' : ''}/mois
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                            ~{problem.revenue}€ non réalisé/mois
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Reste bloqué à partir du 3ème */}
-                    {result.problems.length > 2 && (
-                      <div className="relative">
-                        <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 p-4 blur-[2px] select-none pointer-events-none">
-                          <div className="flex items-start gap-3">
-                            <span className="text-red-400 font-bold text-sm shrink-0">✗</span>
-                            <p className="text-sm text-gray-400">••••••••••••••••••••••••</p>
-                          </div>
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-bold text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-                            +{result.problems.length - 2} problème{result.problems.length > 3 ? 's' : ''} masqué{result.problems.length > 3 ? 's' : ''}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* BLOC 3 — Impact total */}
-              <div className="bg-white rounded-2xl border border-red-100 p-6">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                  Impact total mensuel estimé
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="rounded-xl bg-red-50 py-4">
-                    <p className="text-3xl font-extrabold text-red-500">~{result.lostCalls}</p>
-                    <p className="text-xs text-gray-500 mt-1">appels perdus/mois</p>
-                  </div>
-                  <div className="rounded-xl bg-red-50 py-4">
-                    <p className="text-3xl font-extrabold text-red-500">~{result.lostRevenue}€</p>
-                    <p className="text-xs text-gray-500 mt-1">CA non réalisé/mois</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* BLOC — Ce que LocalBoost a déjà préparé */}
-              {(generatingContent || generatedPost) && (
                 <div className="bg-white rounded-2xl border border-blue-100 p-6">
-                  <div className="flex items-center gap-2 mb-5">
-                    <span className="text-blue-600 text-sm">✦</span>
-                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Ce que LocalBoost a déjà préparé pour vous</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600 text-sm">✦</span>
+                      <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Pack préparé pour {result.name}</p>
+                    </div>
+                    {generationSeconds !== null && (
+                      <span className="text-xs text-gray-400">
+                        {generationSeconds <= 120 ? `⚡ ${generationSeconds}s` : 'Préparé aujourd\'hui'}
+                      </span>
+                    )}
                   </div>
+                  <p className="text-xs text-gray-400 mb-5 ml-5">Personnalisé pour votre activité à {result.city}</p>
 
                   <div className="space-y-5">
-                    {/* Description Google — carte statique verrouillée */}
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                        <span>📍</span> Description Google optimisée
-                      </p>
-                      <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-4 flex items-center gap-3">
-                        <span className="text-lg shrink-0">🔒</span>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700">Description rédigée pour {result.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">150-200 mots · optimisée pour {result.city} · copiez-collez en 30 secondes</p>
+                    {/* Description complète */}
+                    <div ref={descriptionRef}>
+                      <p className="text-xs font-semibold text-gray-500 mb-2">📝 Ce que les gens lisent pendant les 5 premières secondes</p>
+                      {generatingContent && !generatedDescription ? (
+                        <div className="space-y-2 animate-pulse">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className={`h-3 bg-gray-100 rounded ${i === 4 ? 'w-3/5' : i === 3 ? 'w-4/5' : 'w-full'}`} />
+                          ))}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+                          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedDescription}</p>
+                          <p className="text-xs text-gray-400 mt-2">Prêt à publier dans votre fiche Google</p>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Post Google — visible en entier */}
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                        <span>📍</span> Post Google — exemple (1 sur 4)
-                      </p>
-                      {generatingContent && !generatedPost ? (
+                    {/* CTA rapide immédiatement après la description */}
+                    {generatedDescription && (() => {
+                      const quickCtaLabel = selectedPriority
+                        ? `Je récupère tout le travail préparé — 39€ →`
+                        : `Je récupère tout le travail préparé — 39€ →`
+                      return (
+                        <a
+                          href={pricingUrl}
+                          onClick={() => { setCtaClicked(true); track('cta_click_early', { score: result.score, category: result.category }) }}
+                          className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-3.5 text-sm font-bold text-white text-center transition shadow-md"
+                        >
+                          {quickCtaLabel}
+                        </a>
+                      )
+                    })()}
+
+                    {/* 1 post complet + aperçu des thèmes saisonniers */}
+                    <div ref={postsRef}>
+                      <p className="text-xs font-semibold text-gray-500 mb-2">📅 Exemple de publication — 1 sur 12 préparées</p>
+                      {generatingContent && generatedPosts.length === 0 ? (
                         <div className="space-y-2 animate-pulse">
                           <div className="h-3 bg-gray-100 rounded w-full" />
                           <div className="h-3 bg-gray-100 rounded w-5/6" />
                           <div className="h-3 bg-gray-100 rounded w-4/6" />
                         </div>
                       ) : (
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPost}</p>
-                          <p className="text-xs text-gray-400 mt-2">+ 3 autres posts inclus dans le pack</p>
+                        <div className="space-y-2">
+                          {generatedPosts.length > 0 && (
+                            <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                              <p className="text-xs text-gray-400 mb-1">Publication n°1</p>
+                              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPosts[0]}</p>
+                            </div>
+                          )}
+                          {/* Aperçu des 11 autres thèmes */}
+                          <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 px-4 py-3">
+                            <p className="text-xs font-semibold text-gray-500 mb-2">11 autres publications incluses dans le pack :</p>
+                            <div className="space-y-1.5">
+                              {[
+                                `Conseil de saison pour vos clients à ${result.city}`,
+                                'Publication spéciale Noël — message & offre',
+                                'Publication rentrée — reprise & disponibilités',
+                                'Témoignage client — retour positif en image',
+                                'Fête des mères / Fête des pères — idée cadeau',
+                                'Coulisses de votre activité — journée type',
+                                'Conseil pratique de votre métier',
+                                'Disponibilités & délais ce mois-ci',
+                                'Présentation d\'un service spécifique',
+                                'Offre ou promotion du moment',
+                                'Publication vacances d\'été',
+                              ].map((theme, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <span className="text-gray-300 text-xs shrink-0">🔒</span>
+                                  <p className="text-xs text-gray-400">{theme}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
 
-                    {/* Réponse à l'avis — masquée */}
+                    {/* Réponse à l'avis */}
                     {(generatingContent || generatedReview) && (
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                          <span>📍</span> Réponses à vos avis clients
-                        </p>
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-4 flex items-center gap-3">
-                          <span className="text-lg">🔒</span>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-700">Réponses personnalisées incluses</p>
-                            <p className="text-xs text-gray-400 mt-0.5">On rédige une réponse pour chacun de vos avis récents — débloqué avec le pack.</p>
+                        <p className="text-xs font-semibold text-gray-500 mb-2">⭐ Ce que les futurs clients liront avant de vous choisir</p>
+                        {generatingContent && !generatedReview ? (
+                          <div className="space-y-2 animate-pulse">
+                            <div className="h-3 bg-gray-100 rounded w-full" />
+                            <div className="h-3 bg-gray-100 rounded w-4/6" />
                           </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Priorité détectée */}
-                    {result.problems.length > 0 && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                          <span>📍</span> Priorité détectée
-                        </p>
-                        <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-                          <p className="text-sm text-amber-800 leading-snug">{result.problems[0].text}</p>
-                        </div>
+                        ) : (
+                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedReview}</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
 
-                  <p className="text-xs text-gray-400 mt-4 text-center">Aperçu — le pack complet inclut 4 posts, toutes vos réponses aux avis, QR code et plan d'action prioritaire.</p>
+                  {/* Vous voyez un aperçu — le pack livre beaucoup plus */}
+                  <div className="mt-6 pt-5 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 italic mb-3">Vous voyez ici un aperçu. Après validation, vous récupérez l'ensemble des contenus et outils préparés pour votre entreprise.</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ce que contient le pack complet</p>
+                    <div className="space-y-4">
+                      {[
+                        {
+                          icon: '📍', title: 'Convaincre les visiteurs',
+                          items: ['Description Google optimisée', 'Catégories secondaires suggérées', 'Présentation claire de vos services']
+                        },
+                        {
+                          icon: '📅', title: 'Animer votre fiche 3 mois',
+                          items: ['12 publications prêtes (saisonnières, conseils, promos)', 'Calendrier de publication mensuel']
+                        },
+                        {
+                          icon: '⭐', title: 'Renforcer la confiance',
+                          items: ['Réponses à vos avis récents', '10 modèles réutilisables pour vos futurs avis', 'QR code + script SMS demande d\'avis']
+                        },
+                        {
+                          icon: '📈', title: 'Passer devant vos concurrents',
+                          items: [`Plan d'action basé sur les ${result.competitors.length} concurrents analysés`, 'Guide de mise en ligne pas à pas']
+                        },
+                      ].map(({ icon, title, items }, i) => (
+                        <div key={i}>
+                          <p className="text-xs font-bold text-gray-700 mb-1.5">{icon} {title}</p>
+                          <div className="space-y-1 pl-5">
+                            {items.map((item, j) => (
+                              <div key={j} className="flex items-center gap-1.5">
+                                <span className="text-green-500 text-xs shrink-0">✓</span>
+                                <p className="text-xs text-gray-600">{item}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Temps économisé */}
+                  <div className="mt-5 flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
+                    <div>
+                      <p className="text-xs text-gray-500 line-through">À faire soi-même : 6 à 7 heures — à condition de savoir quoi écrire</p>
+                      <p className="text-sm font-bold text-green-700">LocalBoost : quelques secondes ⚡</p>
+                    </div>
+                  </div>
                 </div>
+              </div>
               )}
 
-              {/* CTA — immédiatement après l'impact, avant le reste */}
-              <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-6 border border-gray-700">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-red-400 text-xl">⚠️</span>
-                  <p className="text-white font-extrabold text-xl leading-tight">
-                    {result.lostRevenue > 0
-                      ? `~${result.lostRevenue}€ perdus ce mois-ci`
-                      : avgCompetitorScore !== null && result.score < avgCompetitorScore
-                        ? `${avgCompetitorScore - result.score} pts de retard sur vos concurrents`
-                        : `Score ${result.score}/100 — votre fiche perd des appels`}
-                  </p>
+              {/* ═══ ACTE 3 — LA DÉCISION ═══ */}
+              <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">3. Finaliser</p>
+
+              {/* Avant/Après — pas de score chiffré, juste les items */}
+              <div ref={beforeAfterRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+                <div className="grid grid-cols-2">
+                  <div className="p-4 bg-red-50 border-r border-gray-100">
+                    <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-3">Votre fiche aujourd'hui</p>
+                    <div className="space-y-1.5">
+                      {([
+                        !result.criteria.description && 'Activité pas expliquée',
+                        !result.criteria.recentReview && 'Fiche paraît inactive',
+                        !result.criteria.avis20 && 'Peu d\'éléments rassurants',
+                        !result.criteria.note4 && 'Note peu convaincante',
+                        topCompetitor && topCompetitor.estimatedScore > result.score && `${topCompetitor.name} en avant`,
+                      ] as (string | false)[]).filter((x): x is string => Boolean(x)).slice(0, 4).map((item, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <span className="text-red-400 text-xs">✗</span>
+                          <p className="text-xs text-gray-600">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-green-50">
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le pack</p>
+                    <div className="space-y-1.5">
+                      {[
+                        'Activité bien expliquée',
+                        'Fiche active 3 mois',
+                        'Avis avec réponses',
+                        'Plan d\'action clair',
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <span className="text-green-500 text-xs">✓</span>
+                          <p className="text-xs text-gray-700">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-                  Ce que les agences facturent 150-500€ — description optimisée, 4 posts, réponses aux avis, QR code. Livré par email en 48h.
-                </p>
-                <a
-                  href={pricingUrl}
-                  onClick={() => {
-                    setCtaClicked(true)
-                    track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city })
-                  }}
-                  className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-2 text-center shadow-lg shadow-green-900/30"
-                >
-                  Même résultat qu'une agence — en 48h pour 39€ →
-                </a>
-                <p className="text-gray-400 text-xs text-center">Paiement sécurisé · Satisfait ou remboursé sous 30 jours · Sans engagement</p>
+              </div>
+
+              {/* Question d'engagement — personnalise le CTA */}
+              {(() => {
+                const PRIORITIES = [
+                  { id: 'convince', label: 'Mieux convaincre les visiteurs de ma fiche' },
+                  { id: 'reviews',  label: 'Répondre plus facilement à mes avis clients' },
+                  { id: 'publish',  label: 'Avoir du contenu à publier sans y passer des heures' },
+                  { id: 'time',     label: 'Gagner du temps sur tout ce qui concerne Google' },
+                ]
+                return (
+                  <div className="rounded-xl bg-white border border-gray-100 p-5 mb-3">
+                    <p className="text-sm font-bold text-gray-900 mb-4">
+                      Quelle est votre priorité principale ?
+                    </p>
+                    <div className="space-y-2">
+                      {PRIORITIES.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => {
+                            setSelectedPriority(p.id)
+                            track('priority_selected', { priority: p.id, score: result.score, category: result.category })
+                          }}
+                          className={`w-full text-left rounded-xl border px-4 py-3 text-sm transition ${
+                            selectedPriority === p.id
+                              ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
+                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {selectedPriority === p.id && <span className="mr-2">✓</span>}
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    {selectedPriority && (
+                      <p className="text-xs text-green-700 mt-3 text-center">
+                        Nous avons mis l'accent sur cet objectif dans votre préparation.
+                      </p>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* CTA — mission à finaliser, avec valeur du travail intégrée */}
+              {(() => {
+                const PRIORITY_CTAS: Record<string, string> = {
+                  convince: `Je récupère la nouvelle présentation de ${result.name}`,
+                  reviews:  `Je récupère les réponses aux avis de ${result.name}`,
+                  publish:  `Je récupère les publications de ${result.name}`,
+                  time:     `Je récupère tout le travail préparé`,
+                }
+                const ctaLabel = selectedPriority
+                  ? `${PRIORITY_CTAS[selectedPriority]} — 39€ →`
+                  : `Je récupère tout le travail préparé — 39€ →`
+
+                return (
+                  <div ref={ctaRef} className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-6 border border-gray-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-green-400 text-xs font-bold uppercase tracking-wide">Travail prêt · En attente de validation</p>
+                      <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-full">Réservé 24h</span>
+                    </div>
+                    {/* Pull quote — le client se projette */}
+                    <blockquote className="border-l-2 border-green-500 pl-4 mb-4">
+                      <p className="text-white font-semibold text-base leading-snug">
+                        Imaginez un habitant de {result.city} qui cherche un {result.category} sur Google.
+                      </p>
+                      <p className="text-gray-300 text-sm mt-1">
+                        Nous avons préparé ce qu'il verra — pour lui donner davantage de raisons de vous choisir plutôt qu'un concurrent.
+                      </p>
+                    </blockquote>
+
+                    {/* Ce qui est livré dans le pack — pas l'aperçu gratuit */}
+                    {(() => {
+                      const packItems = [
+                        '1 description premium',
+                        '12 publications prêtes (3 mois)',
+                        'Réponses aux avis récents',
+                        '10 modèles de réponses réutilisables',
+                        '1 QR Code + script SMS',
+                        '1 plan d\'action prioritaire',
+                        '1 guide de mise en ligne',
+                      ]
+                      const total = 1 + 12 + (result.recentReviews?.length || 0) + 10 + 2 + 1 + 1
+                      return (
+                        <div className="bg-gray-800/60 rounded-xl px-4 py-4 mb-4">
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Ce que vous recevez après validation</p>
+                          <div className="grid grid-cols-2 gap-1.5 mb-3">
+                            {packItems.map((item, i) => (
+                              <div key={i} className="flex items-center gap-1.5">
+                                <span className="text-green-400 text-xs shrink-0">✓</span>
+                                <p className="text-xs text-gray-300">{item}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs font-bold text-green-400 text-center border-t border-gray-700 pt-2">
+                            {total}+ éléments livrés — contre 3 visibles en aperçu
+                          </p>
+                        </div>
+                      )
+                    })()}
+
+                    <a
+                      href={pricingUrl}
+                      onClick={() => {
+                        setCtaClicked(true)
+                        track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city, priority: selectedPriority })
+                      }}
+                      className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-2 text-center shadow-lg shadow-green-900/30"
+                    >
+                      {ctaLabel}
+                    </a>
+                    <p className="text-gray-400 text-xs text-center">Paiement sécurisé · Si le contenu ne vous convient pas, nous le retravaillons ou remboursons · Sans engagement</p>
+                  </div>
+                )
+              })()}
               </div>
 
               {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
@@ -655,6 +855,19 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
           )}
         </div>
       </div>
+
+      {/* CTA flottant — toujours visible une fois le résultat chargé */}
+      {result && !showLoadingOverlay && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-xl sm:hidden">
+          <a
+            href={pricingUrl}
+            onClick={() => { setCtaClicked(true); track('cta_click_floating', { score: result.score, category: result.category }) }}
+            className="block w-full rounded-xl bg-green-500 py-3.5 text-sm font-bold text-white text-center"
+          >
+            Je récupère tout le travail préparé — 39€ →
+          </a>
+        </div>
+      )}
     </section>
   )
 }

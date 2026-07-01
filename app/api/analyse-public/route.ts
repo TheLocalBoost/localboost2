@@ -353,7 +353,18 @@ export async function POST(req: NextRequest) {
     recentReview,
   }
 
-  const score = Math.round((Object.values(criteria).filter(Boolean).length / Object.keys(criteria).length) * 100)
+  // Scoring pondéré : description et activité récente sont les 2 signaux
+  // les plus importants pour l'algorithme Google Maps — chacun vaut 3x plus
+  // que les critères de complétude basique. nom/adresse exclus (toujours vrais).
+  const SCORE_WEIGHTS: Record<string, number> = {
+    telephone: 7, horaires: 8, site: 6,
+    description: 22, photos: 7, avis20: 8, note4: 8, recentReview: 22,
+  }
+  const totalW  = 88
+  const earnedW = Object.entries(SCORE_WEIGHTS).reduce(
+    (sum, [k, w]) => sum + (criteria[k] ? w : 0), 0
+  )
+  const score = Math.round(earnedW / totalW * 100)
 
   // 6. Concurrents — recherche par secteur+ville pour trouver les vrais concurrents locaux
   const competitorResults = await textsearch(`${category} ${cityOut}`)
@@ -370,6 +381,16 @@ export async function POST(req: NextRequest) {
 
   // 7. Problèmes enrichis avec impact individuel + total plafonnéselon score
   const { problems, lostCalls, lostRevenue } = generateRichProblems(p, criteria, competitors, category, score)
+
+  // Score Commercial — 5 dimensions en langage artisan, pas SEO
+  const beating = competitors.filter(c => c.estimatedScore < score).length
+  const commercialScores = {
+    found:          Math.round((Number(criteria.description)*3 + Number(criteria.horaires)*2.5 + Number(criteria.site)*2 + Number(criteria.telephone)*2 + 0.5) / 10 * 10),
+    trust:          Math.round((Number(criteria.note4)*4 + Number(criteria.avis20)*3.5 + Number(criteria.photos)*2.5) / 10 * 10),
+    desire:         Math.round((Number(criteria.recentReview)*5 + Number(criteria.description)*5) / 10 * 10),
+    activity:       Math.round((Number(criteria.recentReview)*7 + Number(criteria.photos)*3) / 10 * 10),
+    vsCompetitors:  competitors.length ? Math.max(1, Math.round(2 + beating / competitors.length * 8)) : 5,
+  }
 
   // 8. Données annexes
   const recentReviews = (p.reviews ?? []).slice(0, 3).map((r: any) => ({
@@ -405,6 +426,7 @@ export async function POST(req: NextRequest) {
     lostCalls,
     lostRevenue,
     competitors,
+    commercialScores,
   }
 
   toCache(commerce_name, city, responseData)

@@ -61,33 +61,77 @@ function PricingContent() {
     <div className="min-h-screen bg-gray-50 py-16 px-4 pb-28 sm:pb-16">
       <div className="max-w-lg mx-auto">
 
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <a href="/" className="inline-flex items-center gap-2 text-xl font-bold text-gray-900 mb-6">
+        {/* Header — continuité de la mission */}
+        <div className="text-center mb-6">
+          <a href="/" className="inline-flex items-center gap-2 text-xl font-bold text-gray-900 mb-4">
             <span>📍</span><span>LocalBoost</span>
           </a>
-          <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-            Votre pack Google — livré en 48h
-          </h1>
-          <p className="text-gray-500 text-sm">
-            {city
-              ? `Ce que les agences facturent 150-500€ pour ${city} — pour 39€, sans engagement.`
-              : 'Ce que les agences facturent 150-500€ — pour 39€, livré en 48h, sans engagement.'}
-          </p>
+          {nomParam ? (
+            <>
+              <div className="inline-block bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full mb-3">
+                Travail prêt · En attente de validation
+              </div>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
+                L'optimisation de {nomParam} est prête.
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Il ne reste plus qu'à la valider pour la recevoir et la mettre en ligne.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
+                Votre optimisation Google est prête.
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Il ne reste plus qu'à la valider pour la recevoir et la mettre en ligne.
+              </p>
+            </>
+          )}
         </div>
 
-        {/* Bandeau score si connu */}
-        {scoreParam > 0 && (
-          <div className="rounded-2xl bg-red-50 border border-red-200 p-5 mb-4 text-center">
-            <p className="text-sm text-red-700 font-semibold mb-1">
-              {nomParam ? `${nomParam} — score ${scoreParam}/100` : `Votre score : ${scoreParam}/100`}
+        {/* Ce qui a déjà été préparé */}
+        <div className="rounded-2xl bg-gray-900 text-white p-5 mb-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Déjà préparé pour {nomParam || 'votre entreprise'}</p>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {[
+              'Description Google (150-200 mots)',
+              '2 publications prêtes à publier',
+              'Réponse à votre dernier avis',
+              'Catégories Google suggérées',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="text-green-400 text-xs">✓</span>
+                <p className="text-xs text-gray-300">{item}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Il reste à préparer</p>
+          <div className="space-y-1">
+            {[
+              '2 publications supplémentaires (4 au total)',
+              'Réponses à tous vos avis récents',
+              'QR code collecte d\'avis + script SMS',
+              'Plan d\'action basé sur vos concurrents',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="text-gray-500 text-xs">○</span>
+                <p className="text-xs text-gray-400">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Score si connu */}
+        {scoreParam > 0 && revenueParam > 0 && (
+          <div className="rounded-2xl bg-red-50 border border-red-200 p-4 mb-4 flex items-center gap-4">
+            <div className="text-center shrink-0">
+              <p className="text-2xl font-extrabold text-red-500">{scoreParam}<span className="text-sm text-red-400">/100</span></p>
+              <p className="text-xs text-gray-400">score actuel</p>
+            </div>
+            <p className="text-sm text-red-700">
+              <strong>~{revenueParam}€/mois</strong> d'opportunités clients que votre fiche actuelle ne capte pas.
             </p>
-            {revenueParam > 0 && (
-              <p className="text-2xl font-extrabold text-red-600">
-                ~{revenueParam}€
-                <span className="text-sm font-normal text-red-500"> perdus/mois à cause des lacunes détectées</span>
-              </p>
-            )}
           </div>
         )}
 
@@ -152,7 +196,7 @@ function PricingContent() {
             </div>
           </div>
           <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-            On utilise l'IA pour faire en 5 minutes ce qu'une agence fait en 2 semaines. Même résultat. Prix divisé par 10.
+            Tout est préparé en quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez immédiatement. Même résultat. Prix divisé par 10.
           </p>
         </div>
 

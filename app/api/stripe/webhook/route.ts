@@ -104,38 +104,61 @@ ${reviewsCtx ? `\nDerniers avis clients :\n${reviewsCtx}` : ''}
 Réponds UNIQUEMENT avec ce JSON valide (aucun texte avant ou après) :
 {
   "description": "...",
-  "posts": ["post1", "post2", "post3", "post4"],
+  "posts": ["post1","post2","post3","post4","post5","post6","post7","post8","post9","post10","post11","post12"],
   "reviewResponses": ["réponse à l'avis 1", "réponse à l'avis 2"],
-  "priorite": "..."
+  "responseTemplates": ["template1","template2","template3","template4","template5","template6","template7","template8","template9","template10"],
+  "guideSteps": ["étape1","étape2","étape3","étape4","étape5","étape6"],
+  "actionPlan": "..."
 }
 
 Contraintes STRICTES :
-- description : 150-200 mots, mentionne "${realName}" et "${realCity}", jamais de durée inventée ("depuis X ans"), jamais de garantie inventée, ton artisan direct
-- posts : 4 posts distincts (60-80 mots), basés sur les vrais problèmes et données ci-dessus${realPhone ? `, termine le dernier post avec le vrai numéro ${realPhone}` : ', ne mets jamais de numéro fictif'}. Chaque post : appel à l'action + 2 hashtags locaux
-- reviewResponses : réponds à chaque avis listé ci-dessus par son prénom et en citant un détail de son avis. Si aucun avis : tableau vide []
-- priorite : 1 action concrète basée sur le problème #1 détecté, chiffrée si possible`
+- description : 150-200 mots, mentionne "${realName}" et "${realCity}", jamais de durée inventée, ton artisan direct
+- posts : 12 posts distincts (55-75 mots chacun). Couvrir : conseil pratique, saison (printemps/été/automne/hiver), fête des mères, rentrée, Noël, galette des rois, témoignage client, coulisses, disponibilité, promotion, urgence. Chaque post : appel à l'action + 2 hashtags locaux${realPhone ? `. Post 12 : inclure le numéro ${realPhone}` : ''}
+- reviewResponses : réponds à chaque avis fourni par son prénom et en citant un détail. Si aucun avis : []
+- responseTemplates : 10 modèles de réponses génériques réutilisables pour de futurs avis (4★ et 5★), ton chaleureux, mentionner "${realCity}" naturellement
+- guideSteps : 6 étapes concrètes pour publier le pack sur Google Business (où cliquer, quoi copier-coller, dans quel ordre)
+- actionPlan : 2-3 actions prioritaires concrètes basées sur les problèmes détectés, chiffrées si possible`
 
           const msg = await anthropic.messages.create({
             model:      'claude-haiku-4-5-20251001',
-            max_tokens: 2000,
+            max_tokens: 5000,
             messages:   [{ role: 'user', content: prompt }],
           })
 
           const raw  = (msg.content[0] as { text: string }).text.trim()
           const pack = JSON.parse(raw.replace(/^```json\n?/, '').replace(/\n?```$/, ''))
 
-          const postsHtml = pack.posts.map((p: string, i: number) => `
-<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 12px;">
-  <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;">Post ${i + 1}/4 — Semaine ${i + 1}</p>
+          const postsHtml = (pack.posts as string[]).map((p, i) => `
+<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin:0 0 10px;">
+  <p style="font-size:11px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;">Publication ${i + 1}/12</p>
   <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;white-space:pre-line;">${p}</p>
 </div>`).join('')
 
           const reviewsHtml = (pack.reviewResponses ?? []).length > 0
-            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 Réponses à vos avis</h3>
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 Réponses à vos avis récents</h3>
 ${(pack.reviewResponses as string[]).map((r: string, i: number) => `
-<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin:0 0 12px;">
-  <p style="font-size:11px;color:#16a34a;font-weight:700;margin:0 0 8px;">Réponse à l'avis ${i + 1}</p>
+<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;margin:0 0 10px;">
+  <p style="font-size:11px;color:#16a34a;font-weight:700;margin:0 0 8px;">Réponse ${i + 1}</p>
   <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">${r}</p>
+</div>`).join('')}`
+            : ''
+
+          const templatesHtml = (pack.responseTemplates ?? []).length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 20 modèles de réponses réutilisables</h3>
+<p style="font-size:13px;color:#6b7280;margin:0 0 12px;">Copiez-collez ces réponses pour tous vos futurs avis positifs.</p>
+${(pack.responseTemplates as string[]).map((r: string, i: number) => `
+<div style="background:#fafafa;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin:0 0 8px;">
+  <p style="font-size:11px;color:#9ca3af;margin:0 0 4px;">Modèle ${i + 1}</p>
+  <p style="font-size:13px;color:#374151;line-height:1.6;margin:0;">${r}</p>
+</div>`).join('')}`
+            : ''
+
+          const guideHtml = (pack.guideSteps ?? []).length > 0
+            ? `<h3 style="font-size:14px;font-weight:700;color:#374151;margin:24px 0 10px;">📍 Guide de mise en ligne — étape par étape</h3>
+${(pack.guideSteps as string[]).map((step: string, i: number) => `
+<div style="display:flex;gap:12px;margin:0 0 10px;">
+  <span style="flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#2563eb;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">${i + 1}</span>
+  <p style="font-size:13px;color:#374151;line-height:1.6;margin:0;">${step}</p>
 </div>`).join('')}`
             : ''
 
@@ -166,15 +189,19 @@ ${(pack.reviewResponses as string[]).map((r: string, i: number) => `
     <p style="font-size:14px;color:#1a1a1a;line-height:1.7;margin:0;">${pack.description}</p>
   </div>
 
-  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 4 posts Google — 1 par semaine</h3>
-  <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Google Business → Ajouter une mise à jour → Copier/coller.</p>
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 12 publications Google — 1 par semaine pendant 3 mois</h3>
+  <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Google Business → Ajouter une mise à jour → Copier/coller. Publiez-en une par semaine.</p>
   ${postsHtml}
 
   ${reviewsHtml}
 
-  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Priorité cette semaine</h3>
+  ${templatesHtml}
+
+  ${guideHtml}
+
+  <h3 style="font-size:14px;font-weight:700;color:#374151;margin:0 0 10px;">📍 Plan d'action prioritaire</h3>
   <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:16px;margin:0 0 28px;">
-    <p style="font-size:14px;color:#92400e;margin:0;">${pack.priorite}</p>
+    <p style="font-size:14px;color:#92400e;margin:0;white-space:pre-line;">${pack.actionPlan ?? pack.priorite}</p>
   </div>
 
   ${qrUrl ? `

@@ -19,59 +19,81 @@ export async function POST(req: NextRequest) {
   const { name, city, category, recentReview } = await req.json()
   if (!name || !city) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
 
-  const postPrompt = `Tu es un expert en Google Business Profile. Rédige le prochain post Google de "${name}", ${category ?? 'artisan'} à ${city}.
+  const cat = category ?? 'artisan'
 
-Ce post sera publié cette semaine sur la vraie fiche Google de "${name}".
+  const descriptionPrompt = `Tu es un expert SEO Google Business Profile. Rédige la description Google optimisée de "${name}", ${cat} à ${city}.
 
 Contraintes strictes :
-- 60 à 90 mots exactement
-- Commence par une accroche directe liée au métier ou à une situation concrète (intervention, saison, conseil pratique)
-- Mentionne "${city}" naturellement dans le texte
-- Ton humain, authentique, comme si l'artisan écrit lui-même — pas de jargon marketing
-- Termine par un appel à l'action court (appel ou devis)
-- 2 ou 3 hashtags locaux à la fin (#${city.replace(/\s+/g, '')} #${category ?? 'artisan'})
-- Aucun emoji excessif, au maximum 1
+- 150 à 200 mots
+- 1ère phrase : mentionne le métier ET la ville (ex: "Plombier à Lyon depuis 2008, ...")
+- Intègre naturellement : services principaux, zone d'intervention, atouts différenciants
+- Utilise 2 ou 3 expressions de recherche locale (ex: "plombier urgence Lyon", "dépannage Lyon 69")
+- Ton professionnel mais humain, pas de jargon marketing
+- Dernière phrase : appel à l'action (devis gratuit, contact, etc.)
+- Aucun emoji
 
-Réponds uniquement avec le post rédigé, rien d'autre.`
+Réponds uniquement avec la description, rien d'autre.`
 
-  const reviewPrompt = recentReview?.text ? `Tu es un expert en gestion de réputation Google. Rédige la réponse de "${name}" à cet avis client :
+  const makePostPrompt = (angle: string) => `Tu es un expert Google Business Profile. Rédige un post Google pour "${name}", ${cat} à ${city}.
+
+Angle : ${angle}
+
+Contraintes :
+- 60 à 90 mots
+- Accroche directe liée au métier ou à une situation concrète
+- Mentionne "${city}" naturellement
+- Ton humain, authentique — comme si le professionnel écrit lui-même
+- Fin : appel à l'action court (appel ou devis)
+- 2 hashtags locaux (#${city.replace(/\s+/g, '')} #${cat.replace(/\s+/g, '')})
+- Maximum 1 emoji
+
+Réponds uniquement avec le post, rien d'autre.`
+
+  const categoriesPrompt = `Pour "${name}", ${cat} à ${city}, liste 5 catégories Google Business Profile secondaires pertinentes à ajouter (pas la catégorie principale).
+
+Utilise les libellés officiels Google Business en français.
+Réponds avec uniquement 5 catégories, une par ligne, sans numérotation ni tiret.`
+
+  const reviewPrompt = recentReview?.text
+    ? `Tu es un expert réputation Google. Rédige la réponse de "${name}" à cet avis :
 
 Auteur : ${recentReview.author}
 Note : ${recentReview.rating}/5
 Avis : "${recentReview.text}"
-Date : ${recentReview.time}
 
-Contraintes strictes :
+Contraintes :
 - 40 à 70 mots
 - Commence par remercier par le prénom si possible
-- Mentionne un détail spécifique de l'avis pour montrer qu'on l'a lu
-- Ton chaleureux, professionnel, humain
-- Si note < 4 : reconnaître, ne pas justifier, proposer de recontacter
-- Si note >= 4 : remercier, valoriser la confiance, inviter à revenir
-- Signe avec le prénom du gérant ou le nom de l'établissement
+- Mentionne un détail spécifique de l'avis
+- Ton chaleureux et professionnel
+- Si note < 4 : reconnaître sans justifier, proposer de recontacter
+- Signe avec le nom de l'établissement
 
-Réponds uniquement avec la réponse rédigée, rien d'autre.` : null
+Réponds uniquement avec la réponse, rien d'autre.`
+    : null
 
   try {
-    const [postMsg, reviewMsg] = await Promise.all([
-      anthropic.messages.create({
-        model:    'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: postPrompt }],
-      }),
-      reviewPrompt ? anthropic.messages.create({
-        model:    'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{ role: 'user', content: reviewPrompt }],
-      }) : Promise.resolve(null),
-    ])
+    const calls = [
+      anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: descriptionPrompt }] }),
+      anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: makePostPrompt('conseil pratique de saison ou situation du quotidien') }] }),
+      anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: makePostPrompt('prestation réalisée récemment ou témoignage client') }] }),
+      anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: categoriesPrompt }] }),
+      reviewPrompt
+        ? anthropic.messages.create({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: reviewPrompt }] })
+        : Promise.resolve(null),
+    ] as const
 
-    const post = (postMsg.content[0] as { text: string }).text.trim()
-    const reviewResponse = reviewMsg
-      ? (reviewMsg.content[0] as { text: string }).text.trim()
-      : null
+    const [descMsg, post1Msg, post2Msg, catMsg, reviewMsg] = await Promise.all(calls)
 
-    return NextResponse.json({ post, reviewResponse })
+    const description    = (descMsg.content[0]   as { text: string }).text.trim()
+    const post1          = (post1Msg.content[0]  as { text: string }).text.trim()
+    const post2          = (post2Msg.content[0]  as { text: string }).text.trim()
+    const categoriesRaw  = (catMsg.content[0]    as { text: string }).text.trim()
+    const reviewResponse = reviewMsg ? (reviewMsg.content[0] as { text: string }).text.trim() : null
+
+    const categories = categoriesRaw.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 5)
+
+    return NextResponse.json({ description, posts: [post1, post2], reviewResponse, categories })
   } catch (e) {
     console.error('Claude API error:', e)
     return NextResponse.json({ error: 'Génération impossible' }, { status: 500 })
