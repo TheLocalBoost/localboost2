@@ -123,15 +123,11 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Score si connu */}
-        {scoreParam > 0 && revenueParam > 0 && (
-          <div className="rounded-2xl bg-red-50 border border-red-200 p-4 mb-4 flex items-center gap-4">
-            <div className="text-center shrink-0">
-              <p className="text-2xl font-extrabold text-red-500">{scoreParam}<span className="text-sm text-red-400">/100</span></p>
-              <p className="text-xs text-gray-400">score actuel</p>
-            </div>
-            <p className="text-sm text-red-700">
-              <strong>~{revenueParam}€/mois</strong> d'opportunités clients que votre fiche actuelle ne capte pas.
+        {/* Opportunité sans score */}
+        {revenueParam > 0 && (
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 mb-4">
+            <p className="text-sm text-amber-800">
+              D'après notre analyse, votre fiche actuelle peut laisser partir environ <strong>~{revenueParam}€/mois</strong> d'opportunités clients vers vos concurrents.
             </p>
           </div>
         )}
