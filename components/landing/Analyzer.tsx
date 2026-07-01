@@ -254,19 +254,13 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const STEP_LABELS = [
     'Recherche de votre fiche Google',
     'Analyse des concurrents locaux',
-    'Calcul du score de visibilité',
-    'Rédaction de votre description',
-    'Création de vos publications',
-    'Préparation des réponses et catégories',
-    'Finalisation du dossier',
+    'Calcul du score et des améliorations',
+    'Préparation de votre dossier',
   ]
   const realStepsDone = [
     !!result,
     !!result,
     !!result,
-    !!generatedDescription,
-    generatedPosts.length > 0,
-    !!generatedReview || generatedCategories.length > 0,
     !generatingContent && !!generatedAt,
   ]
   const realDoneCount = realStepsDone.filter(Boolean).length
@@ -280,7 +274,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   // même si le travail réel est instantané, on ne saute jamais d'étape.
   useEffect(() => {
     if (revealedCount >= realDoneCount || revealedCount >= STEP_LABELS.length) return
-    const t = setTimeout(() => setRevealedCount(c => c + 1), 650)
+    const t = setTimeout(() => setRevealedCount(c => c + 1), 300)
     return () => clearTimeout(t)
   }, [revealedCount, realDoneCount])
 
@@ -436,8 +430,8 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   })}
                 </div>
 
-                {/* Question priorité pendant le chargement — dès que l'analyse est prête */}
-                {revealedCount >= 3 && (
+                {/* Question priorité pendant le chargement — dès que l'analyse est prête (étape 2/4) */}
+                {revealedCount >= 2 && (
                   <div className="border-t border-gray-100 pt-5 animate-[fadeIn_0.4s_ease]">
                     <p className="text-sm font-semibold text-gray-800 mb-1">Pendant que nous préparons votre fiche…</p>
                     <p className="text-xs text-gray-500 mb-3">Quelle est votre priorité principale ?</p>

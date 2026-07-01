@@ -324,8 +324,14 @@ export async function POST(req: NextRequest) {
     'reviews', 'price_level', 'vicinity', 'place_id', 'geometry',
   ].join(',')
 
-  const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=${fields}&language=fr&key=${GOOGLE_API_KEY}`
-  const detailData = await fetch(detailUrl).then(r => r.json())
+  // Détection préliminaire de catégorie depuis les types textsearch (pour lancer les concurrents en parallèle)
+  const prelimCategory = detectCategory(place.types ?? [], commerce_name)
+
+  // Détails + concurrents en parallèle — économise ~400ms
+  const [detailData, competitorResults] = await Promise.all([
+    fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=${fields}&language=fr&key=${GOOGLE_API_KEY}`).then(r => r.json()),
+    textsearch(`${prelimCategory} ${city}`),
+  ])
   const p = detailData.result ?? {}
 
   // 3. Catégorie et ville
@@ -366,8 +372,7 @@ export async function POST(req: NextRequest) {
   )
   const score = Math.round(earnedW / totalW * 100)
 
-  // 6. Concurrents — recherche par secteur+ville pour trouver les vrais concurrents locaux
-  const competitorResults = await textsearch(`${category} ${cityOut}`)
+  // 6. Concurrents — déjà récupérés en parallèle avec les détails
   const competitors: Competitor[] = competitorResults
     .filter(r => r.name && r.place_id !== place.place_id)
     .slice(0, 3)
