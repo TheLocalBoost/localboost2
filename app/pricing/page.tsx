@@ -6,11 +6,12 @@ import { createClient } from '@/lib/supabase-browser'
 
 const INCLUDES = [
   'Description Google optimisée pour votre métier et votre ville',
-  '4 posts Google — 1 par semaine pendant 4 semaines',
-  'Réponses personnalisées à vos avis clients',
-  'QR code pour collecter plus d\'avis — à imprimer',
+  '12 publications prêtes — 1 par semaine pendant 3 mois',
+  'Réponses personnalisées à vos avis récents',
+  '10 modèles de réponses réutilisables pour vos futurs avis',
+  'QR code collecte d\'avis + script SMS après prestation',
   'Plan d\'action prioritaire basé sur vos vrais concurrents',
-  'Script SMS pour demander des avis après chaque prestation',
+  'Guide de mise en ligne pas à pas',
 ]
 
 function PricingContent() {
@@ -173,7 +174,7 @@ function PricingContent() {
             disabled={loading || checking}
             className="w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition disabled:opacity-60 shadow-lg shadow-green-100"
           >
-            {loading ? 'Chargement...' : 'Je veux mon pack Google — 39€ →'}
+            {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 39€ →'}
           </button>
           <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé Stripe · Remboursé si insatisfait</p>
         </div>
@@ -212,8 +213,8 @@ function PricingContent() {
           <div className="space-y-4">
             {[
               { t: 'Maintenant', d: 'Vous recevez une confirmation. Notre système analyse votre fiche Google en temps réel.' },
-              { t: 'Dans 48h maximum', d: 'Votre pack complet arrive par email : description, posts, réponses aux avis, QR code, plan d\'action.' },
-              { t: 'Vous publiez', d: 'Copiez-collez en 5 minutes depuis votre téléphone. Votre fiche devient active. Google vous remonte.' },
+              { t: 'Dans 48h maximum', d: 'Votre pack complet arrive par email : description, 12 publications, réponses aux avis, 10 modèles, QR code, guide et plan d\'action.' },
+              { t: 'Vous mettez en ligne', d: 'Tout est prêt à publier. Votre fiche devient active et convaincante pour vos prochains clients.' },
             ].map(({ t, d }, i) => (
               <div key={i} className="flex gap-3">
                 <span className="text-xs font-bold text-green-700 bg-green-50 rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
@@ -238,7 +239,7 @@ function PricingContent() {
           disabled={loading || checking}
           className="w-full rounded-xl bg-green-500 py-3.5 text-sm font-bold text-white hover:bg-green-400 transition disabled:opacity-60"
         >
-          {loading ? 'Chargement...' : 'Je veux mon pack — 39€ →'}
+          {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 39€ →'}
         </button>
       </div>
     </div>
