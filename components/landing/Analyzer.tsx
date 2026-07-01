@@ -440,12 +440,17 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               {/* ═══ HOOK COURT — immédiat ═══ */}
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <p className="text-xs text-gray-400 mb-3">{result.name} · {result.address}</p>
-                <p className="text-2xl font-extrabold text-gray-900 leading-tight">
-                  {result.problems.length + (!result.criteria.description ? 1 : 0)} améliorations identifiées.
-                </p>
+                {(() => {
+                  const n = result.problems.length + (!result.criteria.description ? 1 : 0)
+                  return (
+                    <p className="text-2xl font-extrabold text-gray-900 leading-tight">
+                      {n} amélioration{n > 1 ? 's' : ''} identifiée{n > 1 ? 's' : ''}.
+                    </p>
+                  )
+                })()}
                 <p className="text-lg font-semibold text-green-600 mt-1">4 sont déjà prêtes pour vous.</p>
                 <p className="text-xs text-gray-400 mt-2">
-                  Basé sur {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} local{result.competitors.length > 1 ? 'ux' : ''} analysés{result.reviews > 0 ? ` · ${result.reviews} avis clients` : ''}.
+                  Basé sur {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} {result.competitors.length > 1 ? 'locaux' : 'local'} analysés{result.reviews > 0 ? ` · ${result.reviews} avis clients` : ''}.
                 </p>
               </div>
 
@@ -462,16 +467,9 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   )}
                 </div>
                 <div className="bg-white rounded-2xl border border-blue-100 p-6">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-600 text-sm">✦</span>
-                      <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Pack préparé pour {result.name}</p>
-                    </div>
-                    {generationSeconds !== null && (
-                      <span className="text-xs text-gray-400">
-                        {generationSeconds <= 120 ? `⚡ ${generationSeconds}s` : 'Préparé aujourd\'hui'}
-                      </span>
-                    )}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-blue-600 text-sm">✦</span>
+                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Pack préparé pour {result.name}</p>
                   </div>
                   <p className="text-xs text-gray-400 mb-5 ml-5">Personnalisé pour votre activité à {result.city}</p>
 
