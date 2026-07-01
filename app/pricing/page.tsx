@@ -123,8 +123,8 @@ function PricingContent() {
           </div>
         </div>
 
-        {/* Opportunité sans score */}
-        {revenueParam > 0 && (
+        {/* Opportunité — seulement si suffisamment significative */}
+        {revenueParam > 150 && (
           <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 mb-4">
             <p className="text-sm text-amber-800">
               D'après notre analyse, votre fiche actuelle peut laisser partir environ <strong>~{revenueParam}€/mois</strong> d'opportunités clients vers vos concurrents.

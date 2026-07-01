@@ -20,7 +20,7 @@ const PANIER_MOYEN: Record<string, number> = {
   electricien: 180,
   coiffeur:    55,
   boulanger:   75,
-  restaurateur: 25,
+  restaurateur: 70,
   garagiste:   300,
   serrurier:   150,
   kine:        70,
