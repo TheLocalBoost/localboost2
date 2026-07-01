@@ -7,6 +7,9 @@ const sb = createClient(
 
 export const revalidate = 60
 
+// Depuis la dernière grosse refonte (daemon continu + dossier enrichi)
+const SINCE = '2026-07-02T00:00:00.000Z'
+
 // Sujets réels des variantes dans send_ovh.mjs
 const SUBJECTS: Record<string, string> = {
   '0': 'une observation sur la fiche de {nom}',
@@ -26,7 +29,7 @@ function pct(n: number, d: number) {
 
 async function getData() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-  const FUNNEL_SINCE = '2026-06-29T21:00:00.000Z'
+  const FUNNEL_SINCE = '2026-07-02T00:00:00.000Z'
 
   const [
     // outreach_events — source réelle des envois (send_ovh.mjs)
@@ -51,13 +54,13 @@ async function getData() {
     // Activité par jour (depuis outreach_events)
     { data: dailyRaw },
   ] = await Promise.all([
-    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'sent'),
-    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'open'),
-    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'click'),
-    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'bounce'),
-    sb.from('outreach_events').select('variant, event').not('variant', 'is', null),
-    sb.from('outreach_events').select('sender, event').not('sender', 'is', null),
-    sb.from('outreach_events').select('email, variant, created_at').eq('event', 'sent').order('created_at', { ascending: false }).limit(15),
+    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'sent').gte('created_at', SINCE),
+    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'open').gte('created_at', SINCE),
+    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'click').gte('created_at', SINCE),
+    sb.from('outreach_events').select('*', { count: 'exact', head: true }).eq('event', 'bounce').gte('created_at', SINCE),
+    sb.from('outreach_events').select('variant, event').not('variant', 'is', null).gte('created_at', SINCE),
+    sb.from('outreach_events').select('sender, event').not('sender', 'is', null).gte('created_at', SINCE),
+    sb.from('outreach_events').select('email, variant, created_at').eq('event', 'sent').gte('created_at', SINCE).order('created_at', { ascending: false }).limit(15),
     sb.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
     sb.from('waitlist').select('*', { count: 'exact', head: true }),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'email_click_landed').gte('created_at', FUNNEL_SINCE),
