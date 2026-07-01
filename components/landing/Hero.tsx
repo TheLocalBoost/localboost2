@@ -20,17 +20,17 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
   }
 
   return (
-    <section className="pt-24 pb-16 px-6 bg-white">
+    <section className="pt-24 pb-16 px-4 sm:px-6 bg-white overflow-x-hidden">
       <div className="max-w-5xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
 
           {/* Texte */}
-          <div>
+          <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full bg-green-50 border border-green-200 px-4 py-1.5 text-sm font-medium text-green-700 mb-6">
               Ce que les agences facturent 150-500€ — livré en 48h pour 39€
             </div>
 
-            <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-5">
               Votre fiche Google laisse partir des clients.{' '}
               <span className="text-green-600">Nous avons déjà commencé à corriger ça.</span>
             </h1>
@@ -156,8 +156,8 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
               </div>
             </div>
 
-            <div className="absolute -bottom-3 -right-3 bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
-              Votre score vous attend ↑
+            <div className="absolute -bottom-3 -right-3 bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
+              Votre dossier vous attend ↑
             </div>
           </div>
 
