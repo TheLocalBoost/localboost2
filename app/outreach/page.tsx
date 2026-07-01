@@ -95,6 +95,7 @@ async function getData() {
     if (r.event === 'open') sm[s].opens++
   }
   const senders = Object.entries(sm)
+    .filter(([s]) => s.includes('@thelocalboost.fr') || s.includes('@fichelocal.net'))
     .map(([s, v]) => ({ s, ...v }))
     .sort((a, b) => b.sends - a.sends)
     .slice(0, 10)
