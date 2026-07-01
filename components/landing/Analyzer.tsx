@@ -180,7 +180,15 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     if (score) setEmailScore(parseInt(score))
 
     const isOutreach = source === 'brevo' || source === 'ses' || source === 'ovh'
-    if (nom && ville) {
+
+    // Rejeter les params encodés/corrompus par les scanners de sécurité
+    // Un nom/ville lisible contient des voyelles et des caractères ASCII
+    const looksReal = (s: string) =>
+      s.length > 1 && s.length < 80 &&
+      /[aeiouyéèêëàâîïôùûü]/i.test(s) &&   // contient au moins une voyelle
+      !/[^a-zA-ZÀ-ÿ0-9\s\-'&.]/u.test(s)   // pas de caractères suspects
+
+    if (nom && ville && looksReal(nom) && looksReal(ville)) {
       setForm({ name: nom, city: ville })
       if (isOutreach) track('email_click_landed', { nom, ville, score, secteur })
       runAnalysis(nom, ville)
