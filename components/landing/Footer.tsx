@@ -23,7 +23,7 @@ export default function Footer() {
                   onClick={() => document.getElementById('hero-search')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-sm text-gray-500 hover:text-gray-900 text-left"
                 >
-                  Analyser ma fiche
+                  Voir ma fiche
                 </button>
               </li>
               <li><a href="/pricing" className="text-sm text-gray-500 hover:text-gray-900">Tarifs</a></li>

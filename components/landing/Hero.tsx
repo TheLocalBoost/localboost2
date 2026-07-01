@@ -156,8 +156,8 @@ export default function Hero({ detectedCity, signupCount, animScore }: Props) {
               </div>
             </div>
 
-            <div className="absolute -bottom-3 -right-3 bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
-              Votre dossier vous attend ↑
+            <div className="absolute -top-3 -right-3 bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
+              Votre dossier vous attend →
             </div>
           </div>
 

@@ -43,7 +43,7 @@ export default function Pricing() {
             href="/analyser"
             className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition text-center shadow-lg shadow-green-100"
           >
-            Analyser ma fiche gratuitement →
+            Voir ce qui bloque ma fiche — gratuit →
           </a>
           <p className="text-xs text-gray-400 text-center mt-2">L'analyse est gratuite · Vous payez seulement si vous voulez le dossier</p>
 

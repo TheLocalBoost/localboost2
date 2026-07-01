@@ -23,7 +23,7 @@ export default function Navbar() {
             onClick={scrollToSearch}
             className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-400 transition"
           >
-            Analyser ma fiche — gratuit →
+            Voir ce qui bloque ma fiche — gratuit →
           </button>
         </div>
 
@@ -45,7 +45,7 @@ export default function Navbar() {
             onClick={() => { setOpen(false); scrollToSearch() }}
             className="block w-full text-center text-sm font-semibold text-white bg-green-500 rounded-xl px-4 py-2.5"
           >
-            Analyser ma fiche — gratuit →
+            Voir ce qui bloque ma fiche — gratuit →
           </button>
         </div>
       )}

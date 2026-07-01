@@ -81,7 +81,7 @@ export default function PainPoints() {
             href="/analyser"
             className="inline-block rounded-xl bg-green-500 px-8 py-4 text-sm font-bold text-white hover:bg-green-400 transition shadow-md"
           >
-            Analyser ma fiche maintenant →
+            Voir ce qui bloque ma fiche →
           </a>
           <p className="text-xs text-gray-400 mt-2">Résultat personnalisé · Données réelles</p>
         </div>
