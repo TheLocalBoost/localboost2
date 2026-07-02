@@ -69,7 +69,7 @@ async function getData() {
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_cta').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'cta_click_subscribe').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'priority_selected').gte('created_at', FUNNEL_SINCE),
-    sb.from('outreach_events').select('created_at').eq('event', 'sent').gte('created_at', sevenDaysAgo),
+    sb.from('outreach_events').select('created_at').eq('event', 'sent').gte('created_at', SINCE),
   ])
 
   // Stats par variante
@@ -179,15 +179,14 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         {/* Funnel */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20, padding: '20px 24px' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel analyser</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Depuis le 29/06 21h (nouveau funnel) · analytics_events</p>
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Depuis le 01/07 20h40 (VPS OVH, IP propre) · analytics_events</p>
           <div style={{ display: 'flex', gap: 0 }}>
             {[
               { label: 'Email → /analyser', n: d.funnel.landed, ref: d.sends, color: '#3b82f6' },
               { label: 'Analyse réussie', n: d.funnel.analysed, ref: d.funnel.landed, color: '#8b5cf6' },
               { label: 'Vu description', n: d.funnel.sawDesc, ref: d.funnel.analysed, color: '#f59e0b' },
               { label: 'Vu CTA', n: d.funnel.sawCta, ref: d.funnel.analysed, color: '#f97316' },
-              { label: 'Clic CTA', n: d.funnel.ctaClick, ref: d.funnel.sawCta, color: '#ef4444' },
-              { label: 'Ventes', n: d.sales, ref: d.funnel.ctaClick, color: '#10b981' },
+              { label: 'Clic CTA→pricing', n: d.funnel.ctaClick, ref: d.funnel.sawCta, color: '#ef4444' },
             ].map(({ label, n, ref, color }) => (
               <div key={label} style={{ flex: 1, textAlign: 'center', borderRight: '1px solid #f3f4f6', padding: '0 8px' }}>
                 <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color }}>{n}</p>
