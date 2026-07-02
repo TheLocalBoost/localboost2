@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ville = unslugify(villeSlug)
   if (!secteur || !ville) return {}
 
-  const title = `Fiche Google ${secteur.label} à ${ville} — Analysez votre visibilité gratuit`
-  const description = `Votre fiche Google ${secteur.label} à ${ville} est-elle visible ? Analysez gratuitement en 30 secondes : score, points faibles, clients perdus. Sans inscription.`
+  const title = `${secteur.label} à ${ville} — Pourquoi votre fiche Google laisse partir des clients`
+  const description = `Votre fiche Google ${secteur.label} à ${ville} est-elle convaincante ? En 30 secondes, découvrez ce qui bloque votre visibilité et recevez les corrections déjà préparées. Gratuit, sans inscription.`
 
   return {
     title,
@@ -61,7 +61,7 @@ export default async function SeoPage({ params }: Props) {
             ⚠️ Diagnostic gratuit — résultat en 30 secondes
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-            Votre fiche Google <span className="text-blue-600">{secteur.label} à {ville}</span> est-elle visible ?
+            Pourquoi votre fiche Google <span className="text-blue-600">{secteur.label} à {ville}</span> laisse partir des clients
           </h1>
           <p className="text-xl text-gray-500 mb-8">
             {secteur.description} {secteur.urgence}
@@ -70,7 +70,7 @@ export default async function SeoPage({ params }: Props) {
             href={analyserUrl}
             className="inline-flex items-center gap-2 bg-green-600 text-white font-bold text-lg px-8 py-4 rounded-xl hover:bg-green-700 transition shadow-lg"
           >
-            Analyser ma fiche Google gratuitement →
+            Voir ce qui bloque ma fiche — gratuit →
           </Link>
           <p className="text-sm text-gray-400 mt-3">Aucune inscription · Aucune carte bancaire · Résultat immédiat</p>
         </div>
@@ -107,8 +107,8 @@ export default async function SeoPage({ params }: Props) {
           <div className="grid sm:grid-cols-3 gap-6">
             {[
               { step: '1', title: 'Entrez votre nom', desc: `Saisissez le nom de votre ${secteur.label} et la ville de ${ville}` },
-              { step: '2', title: 'Analyse en 30s', desc: 'LocalBoost analyse votre fiche Google Maps en temps réel' },
-              { step: '3', title: 'Votre score', desc: 'Recevez un score sur 100 et la liste des points à corriger' },
+              { step: '2', title: 'Analyse en 30s', desc: 'LocalBoost analyse votre fiche et compare avec vos concurrents locaux en temps réel' },
+              { step: '3', title: 'Corrections préparées', desc: 'Recevez les améliorations déjà rédigées pour votre fiche — description, publications, réponses aux avis' },
             ].map(({ step, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-3">{step}</div>
@@ -122,14 +122,14 @@ export default async function SeoPage({ params }: Props) {
         {/* CTA final */}
         <section className="bg-blue-600 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-3">
-            Analysez votre {secteur.label} à {ville} maintenant
+            Voyez ce qui bloque votre {secteur.label} à {ville}
           </h2>
-          <p className="text-blue-100 mb-6">Gratuit · Sans inscription · Résultat immédiat</p>
+          <p className="text-blue-100 mb-6">Gratuit · Sans inscription · Corrections déjà préparées</p>
           <Link
             href={analyserUrl}
             className="inline-flex items-center gap-2 bg-white text-blue-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-blue-50 transition"
           >
-            Voir mon score Google →
+            Voir ce qui bloque ma fiche — gratuit →
           </Link>
         </section>
 
@@ -139,16 +139,16 @@ export default async function SeoPage({ params }: Props) {
           <div className="space-y-6">
             {[
               {
-                q: `Comment améliorer la visibilité de mon ${secteur.label} sur Google Maps à ${ville} ?`,
-                a: `Pour améliorer la visibilité de votre ${secteur.label} sur Google Maps à ${ville}, commencez par vérifier que votre fiche Google Business est complète : horaires à jour, photos récentes, description, catégorie principale correcte et réponses aux avis. LocalBoost analyse ces points en 30 secondes.`,
+                q: `Comment faire apparaître mon ${secteur.label} en premier sur Google Maps à ${ville} ?`,
+                a: `Google Maps classe les fiches selon leur activité récente (publications, réponses aux avis), leur complétude (description, horaires, photos) et la confiance des avis. Un ${secteur.label} avec une fiche active et bien renseignée à ${ville} apparaît avant ses concurrents, même moins bien notés. LocalBoost identifie ce qui manque et prépare les corrections en 30 secondes.`,
               },
               {
-                q: `Pourquoi mon ${secteur.label} n'apparaît pas en premier sur Google Maps à ${ville} ?`,
-                a: `Google Maps classe les commerces selon l'activité de leur fiche, la proximité et la pertinence. Un ${secteur.label} avec une fiche inactive peut être dépassé par des concurrents moins bien notés mais plus actifs. Notre outil identifie précisément ce qui limite votre classement.`,
+                q: `Pourquoi des concurrents moins bien notés apparaissent avant mon ${secteur.label} à ${ville} ?`,
+                a: `C'est l'algorithme Google Maps. La note ne suffit pas — une fiche sans publications récentes ni réponses aux avis est considérée comme inactive et descend dans les résultats. À ${ville}, un concurrent moins bien noté mais plus actif sur sa fiche vous devance chaque semaine. Notre diagnostic identifie précisément ce qui vous freine.`,
               },
               {
-                q: `L'analyse de fiche Google est-elle vraiment gratuite ?`,
-                a: `Oui, l'analyse de base est 100% gratuite et sans inscription. Vous obtenez un score sur 100 et les principaux points à corriger immédiatement.`,
+                q: `Qu'est-ce que LocalBoost prépare concrètement pour ma fiche ?`,
+                a: `Après l'analyse gratuite, LocalBoost génère un dossier complet personnalisé : nouvelle description optimisée pour votre ${secteur.label} à ${ville}, 12 publications prêtes à publier, réponses à vos avis clients, QR code collecte d'avis et plan d'action. Tout est prêt à mettre en ligne en 10 minutes.`,
               },
             ].map(({ q, a }, i) => (
               <div key={i} className="border-b border-gray-100 pb-6">
