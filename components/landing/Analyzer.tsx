@@ -263,7 +263,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     'Recherche de votre fiche Google',
     'Analyse des concurrents locaux',
     'Calcul du score et des améliorations',
-    'Préparation de votre dossier',
+    selectedPriority ? 'Préparation de votre dossier...' : 'En attente de votre réponse',
   ]
   const realStepsDone = [
     !!result,
@@ -278,13 +278,17 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     if (loading) setRevealedCount(0)
   }, [loading])
 
-  // Révèle les étapes une par une, à un rythme minimum perceptible —
-  // même si le travail réel est instantané, on ne saute jamais d'étape.
+  // Révèle les étapes une par une, à un rythme minimum perceptible.
+  // L'étape 4 ("Préparation du dossier") est bloquée jusqu'à ce que
+  // le client ait choisi sa priorité — ça rend la question indispensable.
   useEffect(() => {
     if (revealedCount >= realDoneCount || revealedCount >= STEP_LABELS.length) return
+    // Bloquer à l'étape 3 (index 3 = "Préparation de votre dossier")
+    // jusqu'à ce que la priorité soit sélectionnée
+    if (revealedCount === 3 && !selectedPriority) return
     const t = setTimeout(() => setRevealedCount(c => c + 1), 300)
     return () => clearTimeout(t)
-  }, [revealedCount, realDoneCount])
+  }, [revealedCount, realDoneCount, selectedPriority])
 
   const showLoadingOverlay = searchStarted && (loading || generatingContent || revealedCount < STEP_LABELS.length)
 
