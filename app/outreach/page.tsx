@@ -12,15 +12,18 @@ const SINCE = '2026-07-01T18:40:00.000Z'
 
 // Sujets réels des variantes dans send_ovh.mjs
 const SUBJECTS: Record<string, string> = {
-  '0': 'une observation sur la fiche de {nom}',
-  '1': "ce que voit un client avant d'appeler {nom}",
-  '2': 'pourquoi certains {s}s à {ville} reçoivent plus d\'appels',
-  '3': 'quelque chose de prêt pour {nom}',
-  '4': "donner plus envie d'appeler {nom}",
-  '5': 'ce que nous avons trouvé sur la fiche de {nom}',
-  '6': 'nous avons fait quelque chose en quelques secondes pour {nom}',
-  '7': '30 secondes pour {nom} à {ville}',
-  '8': 'nous avons commencé à préparer quelque chose pour {nom}',
+  // Catégorie A — Curiosité (futur client)
+  '0': 'un habitant de {ville} cherche un {s} demain',
+  '1': 'ce que verront vos prochains clients sur Google',
+  '2': 'avant que vos prochains clients ne cherchent un {s} à {ville}',
+  // Catégorie B — Travail déjà fait
+  '3': 'votre dossier Google est déjà prêt',
+  '4': '6 heures de travail déjà faites pour {nom}',
+  '5': 'nous avons commencé à travailler sur la fiche de {nom}',
+  // Catégorie C — Résultat métier
+  '6': "pourquoi certains {s}s à {ville} reçoivent plus d'appels",
+  '7': "votre fiche peut donner envie d'appeler davantage de personnes",
+  '8': 'un {s} moins bien noté que vous reçoit vos prochains clients',
 }
 
 function pct(n: number, d: number) {
