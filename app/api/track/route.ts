@@ -6,7 +6,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const OWNER_IPS = (process.env.OWNER_IPS ?? '').split(',').map(s => s.trim()).filter(Boolean)
+
+function isOwner(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? ''
+  return OWNER_IPS.some(o => ip.startsWith(o))
+}
+
 export async function POST(req: NextRequest) {
+  if (isOwner(req)) return NextResponse.json({ ok: true })
   const { event, properties } = await req.json()
   if (!event) return NextResponse.json({ ok: false })
   await supabase.from('analytics_events').insert({ name: event, meta: properties ?? {} })
