@@ -263,7 +263,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     'Recherche de votre fiche Google',
     'Analyse des concurrents locaux',
     'Calcul du score et des améliorations',
-    selectedPriority ? 'Préparation de votre dossier...' : 'En attente de votre réponse',
+    'Préparation de votre dossier',
   ]
   const realStepsDone = [
     !!result,
@@ -279,16 +279,11 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   }, [loading])
 
   // Révèle les étapes une par une, à un rythme minimum perceptible.
-  // L'étape 4 ("Préparation du dossier") est bloquée jusqu'à ce que
-  // le client ait choisi sa priorité — ça rend la question indispensable.
   useEffect(() => {
     if (revealedCount >= realDoneCount || revealedCount >= STEP_LABELS.length) return
-    // Bloquer à l'étape 3 (index 3 = "Préparation de votre dossier")
-    // jusqu'à ce que la priorité soit sélectionnée
-    if (revealedCount === 3 && !selectedPriority) return
     const t = setTimeout(() => setRevealedCount(c => c + 1), 300)
     return () => clearTimeout(t)
-  }, [revealedCount, realDoneCount, selectedPriority])
+  }, [revealedCount, realDoneCount])
 
   const showLoadingOverlay = searchStarted && (loading || generatingContent || revealedCount < STEP_LABELS.length)
 
@@ -442,37 +437,6 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   })}
                 </div>
 
-                {/* Question priorité pendant le chargement — dès que l'analyse est prête (étape 2/4) */}
-                {revealedCount >= 2 && (
-                  <div className="border-t border-gray-100 pt-5 animate-[fadeIn_0.4s_ease]">
-                    <p className="text-sm font-semibold text-gray-800 mb-1">Pendant que nous préparons votre fiche…</p>
-                    <p className="text-xs text-gray-500 mb-3">Quelle est votre priorité principale ?</p>
-                    <div className="space-y-2">
-                      {PRIORITIES_CONFIG.map(p => (
-                        <button
-                          key={p.id}
-                          onClick={() => {
-                            setSelectedPriority(p.id)
-                            track('priority_selected', { priority: p.id, during: 'loading' })
-                          }}
-                          className={`w-full text-left rounded-xl border px-3 py-2.5 text-sm transition ${
-                            selectedPriority === p.id
-                              ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
-                              : 'border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {selectedPriority === p.id && <span className="mr-1.5">✓</span>}
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedPriority && (
-                      <p className="text-xs text-green-600 mt-2 text-center">
-                        Nous intégrons cet objectif dans votre préparation.
-                      </p>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )
@@ -536,6 +500,19 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       )}
                     </div>
 
+                    {/* CTA immédiat après la description */}
+                    {generatedDescription && (
+                      <div ref={ctaRef}>
+                        <p className="text-xs text-gray-500 text-center mb-2">Votre dossier est prêt. Le paiement sert uniquement à le débloquer.</p>
+                        <a
+                          href={pricingUrl}
+                          onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city, position: 'early' }) }}
+                          className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white text-center transition shadow-lg"
+                        >
+                          Oui, je récupère tout le travail préparé — 39€ →
+                        </a>
+                      </div>
+                    )}
 
                     {/* 1 post complet + aperçu des thèmes saisonniers */}
                     <div ref={postsRef}>
