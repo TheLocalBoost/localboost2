@@ -6,6 +6,7 @@ interface Props {
   result: AnalysisResult
   totalElements: number
   pricingUrl: string
+  selectedPriority: string | null
 }
 
 const DELIVERABLES = [
@@ -16,7 +17,15 @@ const DELIVERABLES = [
   'Guide de mise en ligne',
 ]
 
-export default function ScreenCTA({ result, totalElements, pricingUrl }: Props) {
+const CTA_LABELS: Record<string, string> = {
+  convince: 'Accéder à ma nouvelle présentation',
+  reviews:  'Accéder aux réponses aux avis',
+  publish:  'Accéder aux publications préparées',
+  time:     'Accéder au rapport complet',
+}
+
+export default function ScreenCTA({ result, totalElements, pricingUrl, selectedPriority }: Props) {
+  const ctaLabel = (selectedPriority && CTA_LABELS[selectedPriority]) ?? 'Accéder au rapport complet'
   return (
     <ScreenLayout>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
@@ -53,7 +62,7 @@ export default function ScreenCTA({ result, totalElements, pricingUrl }: Props) 
         href={pricingUrl}
         className="block w-full rounded-xl bg-[#16a34a] hover:bg-[#15803d] px-5 py-4 text-sm font-bold text-white text-center transition"
       >
-        Accéder au rapport — 39€
+        {ctaLabel} — 39€
       </a>
 
       <p className="text-xs text-gray-400 text-center mt-3">

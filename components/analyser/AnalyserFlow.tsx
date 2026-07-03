@@ -8,6 +8,7 @@ import ScreenInput    from './ScreenInput'
 import ScreenLoading  from './ScreenLoading'
 import ScreenSynthese from './ScreenSynthese'
 import ScreenPreuve   from './ScreenPreuve'
+import ScreenPriorite from './ScreenPriorite'
 import ScreenTemps    from './ScreenTemps'
 import ScreenCTA      from './ScreenCTA'
 
@@ -48,8 +49,9 @@ export interface AnalysisResult {
 // 1 = loading
 // 2 = synthese
 // 3 = preuve
-// 4 = temps
-// 5 = cta
+// 4 = priorite
+// 5 = temps
+// 6 = cta
 
 export default function AnalyserFlow() {
   const [screen, setScreen]   = useState(0)
@@ -63,6 +65,7 @@ export default function AnalyserFlow() {
   const [generatedPosts, setGeneratedPosts]             = useState<string[]>([])
   const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
+  const [selectedPriority, setSelectedPriority]         = useState<string | null>(null)
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
     setNom(paramNom)
@@ -170,13 +173,21 @@ export default function AnalyserFlow() {
             totalElements={totalElements}
           />
         )}
-        {screen === 4 && <ScreenTemps key="screen-4" onNext={() => setScreen(5)} />}
-        {screen === 5 && result && (
+        {screen === 4 && result && (
+          <ScreenPriorite
+            key="screen-4"
+            nom={result.name}
+            onNext={(priority) => { setSelectedPriority(priority); setScreen(5) }}
+          />
+        )}
+        {screen === 5 && <ScreenTemps key="screen-5" onNext={() => setScreen(6)} />}
+        {screen === 6 && result && (
           <ScreenCTA
-            key="screen-5"
+            key="screen-6"
             result={result}
             totalElements={totalElements}
             pricingUrl={pricingUrl}
+            selectedPriority={selectedPriority}
           />
         )}
       </AnimatePresence>

@@ -8,11 +8,34 @@ interface Props {
   onNext: () => void
 }
 
-export default function ScreenSynthese({ result, onNext }: Props) {
-  const improvementCount =
-    result.problems.length + (!result.criteria.description ? 1 : 0)
+const AXES = [
+  { key: 'found',         label: 'Visibilité' },
+  { key: 'trust',         label: 'Confiance' },
+  { key: 'desire',        label: 'Attractivité' },
+  { key: 'activity',      label: 'Activité' },
+  { key: 'vsCompetitors', label: 'Vs concurrents' },
+] as const
 
+function AxisBar({ label, value }: { label: string; value: number }) {
+  const pct = Math.min(100, Math.max(0, value * 10))
+  const color = pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626'
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xs font-semibold text-gray-700">{value}/10</p>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  )
+}
+
+export default function ScreenSynthese({ result, onNext }: Props) {
+  const improvementCount = result.problems.length + (!result.criteria.description ? 1 : 0)
   const plural = improvementCount > 1
+  const scores = result.commercialScores
 
   return (
     <ScreenLayout>
@@ -34,6 +57,14 @@ export default function ScreenSynthese({ result, onNext }: Props) {
           sur la fiche de {result.name}. Un rapport personnalisé a été généré.
         </p>
       </div>
+
+      {scores && (
+        <div className="rounded-xl border border-gray-200 bg-white px-4 py-4 mb-6 space-y-3">
+          {AXES.map(({ key, label }) => (
+            <AxisBar key={key} label={label} value={scores[key]} />
+          ))}
+        </div>
+      )}
 
       <p className="text-sm text-gray-400 mb-10">
         {result.competitors.length} établissement
