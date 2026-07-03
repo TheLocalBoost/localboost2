@@ -44,7 +44,7 @@ export default function ScreenEnjeu({ city, category, onNext }: Props) {
         onClick={onNext}
         className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition"
       >
-        Voir ce qui a été préparé →
+        Personnaliser mon rapport →
       </button>
     </ScreenLayout>
   )

@@ -14,6 +14,13 @@ const OPTIONS = [
   { id: 'time',     label: 'Gagner du temps sur tout ce qui touche à Google' },
 ]
 
+const CONTINUE_LABELS: Record<string, string> = {
+  convince: 'Continuer — présentation de mon activité →',
+  reviews:  'Continuer — réponses aux avis →',
+  publish:  'Continuer — publications préparées →',
+  time:     'Continuer — gain de temps →',
+}
+
 export default function ScreenPriorite({ nom, onNext }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -51,7 +58,7 @@ export default function ScreenPriorite({ nom, onNext }: Props) {
         disabled={!selected}
         className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 disabled:opacity-40 transition"
       >
-        Continuer →
+        {selected ? (CONTINUE_LABELS[selected] ?? 'Continuer →') : 'Continuer →'}
       </button>
     </ScreenLayout>
   )

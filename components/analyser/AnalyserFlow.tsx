@@ -143,6 +143,14 @@ export default function AnalyserFlow() {
     }
   }
 
+  // 1 description
+  // + 12 publications
+  // + N réponses avis personnalisées (max 3, selon recentReviews renvoyés par l'API)
+  // + 10 modèles de réponses futures (aperçu — 30 au total dans le pack livré)
+  // + 2 = QR code + script SMS
+  // + 1 plan d'action
+  // + 1 guide de mise en ligne
+  // max = 1+12+3+10+2+1+1 = 30
   const totalElements =
     1 + 12 + (result?.recentReviews?.length || 0) + 10 + 2 + 1 + 1
 

@@ -12,7 +12,9 @@ interface Props {
 const DELIVERABLES = [
   'Description Google optimisée',
   '12 publications prêtes (3 mois)',
-  'Réponses aux avis',
+  'Réponses personnalisées à vos avis',
+  '30 modèles de réponses futures',
+  'QR code collecte d\'avis + script SMS',
   'Plan d\'action basé sur vos concurrents',
   'Guide de mise en ligne',
 ]
