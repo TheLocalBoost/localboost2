@@ -2,81 +2,64 @@ const STEPS = [
   {
     n: '1',
     title: 'Diagnostic gratuit en 60 secondes',
-    time: '60 secondes',
-    desc: 'Entrez le nom de votre commerce. Nous récupérons vos vraies données Google : concurrents qui vous devancent, problèmes sur votre fiche, opportunités que vous manquez chaque semaine.',
-    detail: 'Aucune inscription. Aucune carte bancaire. Résultat immédiat.',
+    desc: 'Entrez le nom de votre commerce. On analyse votre fiche, vos concurrents, et on identifie ce qui vous fait perdre des appels.',
+    badge: '60 secondes',
   },
   {
     n: '2',
-    title: 'Nous préparons votre nouvelle fiche',
-    time: 'Quelques secondes — basé sur vos vraies données',
-    desc: 'Nous analysons votre fiche, étudions vos concurrents et préparons un dossier 100% personnalisé : description, 12 publications, réponses aux avis, guide et plan d\'action. Rien de générique.',
-    detail: 'Ce qu\'une agence fait en 2 semaines pour 300€ — préparé en quelques secondes pour 39€.',
+    title: 'Votre dossier est préparé',
+    desc: 'Description, 12 publications, réponses aux avis, plan d\'action. Tout est personnalisé — rien de générique.',
+    badge: 'Quelques secondes',
   },
   {
     n: '3',
-    title: 'Vous recevez tout par email en 48h',
-    time: 'Livraison sous 48h garantie',
-    desc: 'Description Google, 12 publications prêtes, réponses personnalisées à vos avis, 10 modèles réutilisables, QR code, guide et plan d\'action. Tout est prêt à mettre en ligne.',
-    detail: 'Satisfait ou remboursé sous 30 jours — aucune question posée.',
+    title: 'Vous recevez tout par email',
+    desc: 'Prêt à publier. Vous mettez en ligne en moins de 10 minutes.',
+    badge: 'Livré en 48h',
   },
 ]
 
 export default function HowItWorks() {
   return (
     <section id="comment-ca-marche" className="py-20 px-6 bg-white">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Comment ça marche</p>
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Simple. Rapide. Fait pour vous.
-          </h2>
-          <p className="text-gray-500">
-            Pas de contrat. Pas de réunion. Pas de formation. Juste des résultats.
-          </p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Comment ça marche</p>
+          <h2 className="text-3xl font-extrabold text-gray-900">Simple. Rapide. Fait pour vous.</h2>
         </div>
 
-        <div className="space-y-4">
-          {STEPS.map(({ n, title, time, desc, detail }) => (
-            <div key={n} className="flex gap-3 sm:gap-5 bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-sm">
+        <div className="space-y-4 mb-10">
+          {STEPS.map(({ n, title, desc, badge }) => (
+            <div key={n} className="flex gap-4 bg-gray-50 rounded-2xl p-5">
               <div className="shrink-0 w-10 h-10 rounded-xl bg-green-500 text-white flex items-center justify-center font-extrabold text-lg">
                 {n}
               </div>
               <div className="flex-1">
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <h3 className="font-bold text-gray-900 text-[15px] leading-snug">{title}</h3>
-                  <span className="shrink-0 text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full whitespace-nowrap">
-                    {time}
-                  </span>
+                <div className="flex items-center justify-between gap-3 mb-1">
+                  <p className="font-bold text-gray-900 text-sm">{title}</p>
+                  <span className="shrink-0 text-xs font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">{badge}</span>
                 </div>
-                <p className="text-sm text-gray-500 leading-relaxed mb-2">{desc}</p>
-                <p className="text-xs text-green-800 bg-green-50 rounded-lg px-3 py-2 font-medium italic">{detail}</p>
+                <p className="text-sm text-gray-500">{desc}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Comparaison agence */}
-        <div className="mt-8 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden">
-          <div className="grid grid-cols-2 divide-x divide-gray-200">
+        <div className="rounded-2xl bg-white border border-gray-100 overflow-hidden shadow-sm">
+          <div className="grid grid-cols-2 divide-x divide-gray-100">
             <div className="p-5 text-center">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Agence traditionnelle</p>
-              <p className="text-3xl font-extrabold text-red-500 mb-1">150-500€</p>
-              <p className="text-xs text-gray-400">2 à 4 semaines de délai</p>
-              <p className="text-xs text-gray-400 mt-1">Contrat annuel souvent imposé</p>
+              <p className="text-xs font-semibold text-gray-400 mb-3">Agence</p>
+              <p className="text-2xl font-extrabold text-red-500 mb-1">150–500€</p>
+              <p className="text-xs text-gray-400">2 à 4 semaines</p>
             </div>
             <div className="p-5 text-center bg-green-50">
-              <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-3">LocalBoost</p>
-              <p className="text-3xl font-extrabold text-green-600 mb-1">39€</p>
-              <p className="text-xs text-gray-500">Livré en 48h</p>
-              <p className="text-xs text-gray-500 mt-1">Sans engagement · Remboursé si insatisfait</p>
+              <p className="text-xs font-semibold text-green-700 mb-3">LocalBoost</p>
+              <p className="text-2xl font-extrabold text-green-600 mb-1">39€</p>
+              <p className="text-xs text-gray-500">48h · sans contrat</p>
             </div>
           </div>
-          <div className="px-5 py-3 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-400">Même résultat. Prix divisé par 10. Délai divisé par 14.</p>
-          </div>
+          <p className="text-xs text-gray-400 text-center py-3 border-t border-gray-100">Même résultat. Prix divisé par 10.</p>
         </div>
-
       </div>
     </section>
   )

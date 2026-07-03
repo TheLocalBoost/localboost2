@@ -3,29 +3,19 @@
 export default function CTAFinal() {
   return (
     <section className="py-20 px-6 bg-gray-900">
-      <div className="max-w-xl mx-auto text-center">
-        <p className="text-gray-400 text-sm font-semibold uppercase tracking-wide mb-4">
-          Deux options. Pas trois.
-        </p>
-        <h2 className="text-3xl font-extrabold text-white mb-5 leading-tight">
-          Consacrer 2h30 chaque semaine à votre fiche Google.<br />
-          <span className="text-blue-400">Ou déléguer à LocalBoost — dès 29€/mois.</span>
+      <div className="max-w-lg mx-auto text-center">
+        <h2 className="text-3xl font-extrabold text-white mb-4 leading-tight">
+          Votre fiche Google travaille pour vous.<br />
+          <span className="text-green-400">Ou pour vos concurrents.</span>
         </h2>
-        <p className="text-gray-300 mb-4 leading-relaxed">
-          Si vous ne faites ni l'un ni l'autre, votre fiche descend. Vos concurrents remontent. Et vous perdez des clients sans le savoir.
-        </p>
-        <p className="text-gray-400 text-sm mb-8">
-          Démarrez en 5 minutes. Satisfait ou remboursé 30 jours.
-        </p>
+        <p className="text-gray-400 mb-8">Commencez par voir ce qui bloque — gratuitement.</p>
         <a
-          href="/pricing"
-          className="inline-block rounded-xl bg-blue-600 text-white font-bold text-sm px-10 py-4 hover:bg-blue-700 transition shadow-lg mb-3"
+          href="/analyser"
+          className="inline-block rounded-xl bg-green-500 hover:bg-green-400 text-white font-bold text-base px-10 py-4 transition shadow-lg mb-3"
         >
-          Passer en Pro — 29€/mois →
+          Analyser ma fiche →
         </a>
-        <p className="text-gray-500 text-xs">
-          Sans engagement · Résiliation en 1 clic
-        </p>
+        <p className="text-gray-500 text-xs">Sans inscription · Résultat en 60 secondes</p>
       </div>
     </section>
   )
