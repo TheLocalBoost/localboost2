@@ -77,7 +77,6 @@ export default function Hero({ detectedCity, signupCount }: Props) {
             )}
           </div>
 
-        </div>
       </div>
     </section>
   )
