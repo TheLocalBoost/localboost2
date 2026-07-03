@@ -263,18 +263,29 @@ function normalizeStr(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
 }
 
+export const maxDuration = 30
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (!checkRateLimit(ip)) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez dans une minute.' }, { status: 429 })
   }
 
-  const { commerce_name, city } = await req.json()
+  let commerce_name: string, city: string
+  try {
+    const body = await req.json()
+    commerce_name = body.commerce_name
+    city = body.city
+  } catch {
+    return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 })
+  }
   if (!commerce_name || !city) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
 
   // Cache hit
   const cached = fromCache(commerce_name, city)
   if (cached) return NextResponse.json(cached)
+
+  try {
 
   // 1. Textsearch — essaie le nom complet, puis le premier mot si pas de résultat
   async function textsearch(query: string) {
@@ -389,10 +400,12 @@ export async function POST(req: NextRequest) {
 
   // Score Commercial — 5 dimensions en langage artisan, pas SEO
   const beating = competitors.filter(c => c.estimatedScore < score).length
+  const myReviews = p.user_ratings_total ?? 0
+  const myPhotos  = p.photos?.length ?? 0
   // Scores continus pour refléter la réalité : 25 avis ≠ 50 avis même si avis20=true
-  const reviewScore       = criteria.avis20 ? Math.min(3.5, myReviews / 50 * 3.5) : 0
-  const trustPhotoScore   = criteria.photos  ? Math.min(2.5, myPhotos  / 15 * 2.5) : 0
-  const activityPhotoScore = criteria.photos ? Math.min(3,   myPhotos  / 15 * 3)   : 0
+  const reviewScore        = criteria.avis20 ? Math.min(3.5, myReviews / 50 * 3.5) : 0
+  const trustPhotoScore    = criteria.photos  ? Math.min(2.5, myPhotos  / 15 * 2.5) : 0
+  const activityPhotoScore = criteria.photos  ? Math.min(3,   myPhotos  / 15 * 3)   : 0
   const commercialScores = {
     found:          Math.round((Number(criteria.description)*3 + Number(criteria.horaires)*2.5 + Number(criteria.site)*2 + Number(criteria.telephone)*2 + 0.5) / 10 * 10),
     trust:          Math.round((Number(criteria.note4)*4 + reviewScore + trustPhotoScore) / 10 * 10),
@@ -440,4 +453,9 @@ export async function POST(req: NextRequest) {
 
   toCache(commerce_name, city, responseData)
   return NextResponse.json(responseData)
+
+  } catch (e) {
+    console.error('[analyse-public]', e)
+    return NextResponse.json({ error: 'Analyse impossible. Vérifiez le nom et la ville, puis réessayez.' }, { status: 500 })
+  }
 }
