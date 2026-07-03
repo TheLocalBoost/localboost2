@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { track } from '@/lib/track'
 
 const SECTIONS = [
   {
@@ -44,6 +45,13 @@ function PricingContent() {
       if (u) setUser({ email: u.email ?? '', id: u.id })
       setChecking(false)
     })
+    // Track pricing page load
+    track('pricing_loaded', {
+      nom:     nomParam,
+      city,
+      score:   scoreParam,
+      revenue: revenueParam,
+    })
   }, [])
 
   const handlePay = async () => {
@@ -51,6 +59,7 @@ function PricingContent() {
     if (!email || !email.includes('@')) { setEmailError(true); return }
     setEmailError(false)
     setLoading(true)
+    track('checkout_started', { nom: nomParam, city, score: scoreParam, revenue: revenueParam })
     try {
       const res = await fetch('/api/stripe/checkout-oneshot', {
         method:  'POST',

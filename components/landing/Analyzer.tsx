@@ -166,6 +166,11 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const postsRef       = useRef<HTMLDivElement>(null)
   const beforeAfterRef = useRef<HTMLDivElement>(null)
   const ctaRef         = useRef<HTMLDivElement>(null)
+  const problemRef     = useRef<HTMLDivElement>(null)
+  const scroll25Ref    = useRef<HTMLDivElement>(null)
+  const scroll50Ref    = useRef<HTMLDivElement>(null)
+  const scroll75Ref    = useRef<HTMLDivElement>(null)
+  const scroll100Ref   = useRef<HTMLDivElement>(null)
 
   const supabase = createClient()
 
@@ -214,23 +219,42 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
     }
   }, [])
 
-  // Visibility tracking — mesure quelles sections sont réellement vues
+  // Properties communes à tous les events
+  const eventProps = result ? {
+    score:        result.score,
+    category:     result.category,
+    city:         result.city,
+    nb_problems:  result.problems.length,
+    rating:       result.rating,
+    lost_revenue: result.lostRevenue,
+    lost_calls:   result.lostCalls,
+    has_description:    result.criteria.description,
+    has_recent_review:  result.criteria.recentReview,
+    review_count:       result.reviews,
+  } : {}
+
+  // Visibility + scroll depth tracking
   useEffect(() => {
     if (!result) return
     const pairs: [React.RefObject<HTMLDivElement>, string][] = [
       [descriptionRef, 'saw_description'],
       [postsRef,       'saw_posts'],
+      [problemRef,     'problem_seen'],
       [beforeAfterRef, 'saw_before_after'],
       [ctaRef,         'saw_cta'],
+      [scroll25Ref,    'scroll_25'],
+      [scroll50Ref,    'scroll_50'],
+      [scroll75Ref,    'scroll_75'],
+      [scroll100Ref,   'scroll_100'],
     ]
     const observers = pairs.map(([ref, event]) => {
       if (!ref.current) return null
       const o = new IntersectionObserver(([e]) => {
         if (e.isIntersecting) {
-          track(event, { score: result.score, category: result.category, city: result.city })
+          track(event, eventProps)
           o.disconnect()
         }
-      }, { threshold: 0.3 })
+      }, { threshold: 0.1 })
       o.observe(ref.current)
       return o
     })
@@ -309,7 +333,17 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setResult(data as AnalysisResult)
-      track('analyzer_result', { score: data.score, city: data.city, category: data.category })
+      track('analyzer_result', {
+        score:       data.score,
+        city:        data.city,
+        category:    data.category,
+        nb_problems: (data.problems ?? []).length,
+        rating:      data.rating,
+        lost_revenue: data.lostRevenue,
+        has_description:   data.criteria?.description,
+        has_recent_review: data.criteria?.recentReview,
+        review_count:      data.reviews,
+      })
       onResult?.({ score: data.score, name: data.name, city: data.city, category: data.category })
       setTimeout(() => document.getElementById('analyzer-result')?.scrollIntoView({ behavior: 'smooth' }), 100)
       // Génère post Google + réponse à avis en arrière-plan
@@ -447,7 +481,8 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
             <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
 
               {/* ═══ HOOK COURT — immédiat ═══ */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div ref={scroll25Ref} className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div ref={problemRef} />
                 <p className="text-xs text-gray-400 mb-3">{result.name} · {result.address}</p>
                 {(() => {
                   const n = result.problems.length + (!result.criteria.description ? 1 : 0)
@@ -463,6 +498,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </p>
               </div>
 
+              <div ref={scroll50Ref} />
               {/* ═══ PREUVE IMMÉDIATE + CTA HAUT ═══ */}
               {(generatingContent || generatedDescription || generatedPosts.length > 0) && (
               <div>
@@ -626,6 +662,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               </div>
               )}
 
+              <div ref={scroll75Ref} />
               {/* ═══ ACTE 3 — LA DÉCISION ═══ */}
               <div>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">3. Finaliser</p>
@@ -683,6 +720,8 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   : `Je récupère tout le travail préparé — 39€ →`
 
                 return (
+                  <div>
+                  <div ref={scroll100Ref} />
                   <div ref={ctaRef} className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-6 border border-gray-700">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-green-400 text-xs font-bold uppercase tracking-wide">Travail prêt · En attente de validation</p>
@@ -732,13 +771,14 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                       href={pricingUrl}
                       onClick={() => {
                         setCtaClicked(true)
-                        track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city, priority: selectedPriority })
+                        track('cta_click_subscribe', { ...eventProps, priority: selectedPriority })
                       }}
                       className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-2 text-center shadow-lg shadow-green-900/30"
                     >
                       {ctaLabel}
                     </a>
                     <p className="text-gray-400 text-xs text-center">Paiement sécurisé · Si le contenu ne vous convient pas, nous le retravaillons ou remboursons · Sans engagement</p>
+                  </div>
                   </div>
                 )
               })()}
