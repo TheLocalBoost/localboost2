@@ -28,39 +28,21 @@ interface PreviewCardProps {
   label: string
   previewText: string
   loading?: boolean
-  onSeeMore: () => void
 }
 
-function PreviewCard({ label, previewText, loading, onSeeMore }: PreviewCardProps) {
+function PreviewCard({ label, previewText, loading }: PreviewCardProps) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      <div className="px-4 pt-4 pb-1">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-          {label}
-        </p>
-      </div>
-      <div className="relative px-4 pb-4">
-        {loading || !previewText ? (
-          <div className="space-y-2 animate-pulse">
-            <div className="h-3 bg-gray-100 rounded w-full" />
-            <div className="h-3 bg-gray-100 rounded w-4/5" />
-          </div>
-        ) : (
-          <>
-            <p className="blur-sm select-none text-sm text-gray-700 leading-relaxed line-clamp-2">
-              {previewText}
-            </p>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                onClick={onSeeMore}
-                className="text-xs text-gray-500 font-medium hover:text-gray-700 transition underline underline-offset-2"
-              >
-                Voir la version complète →
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+    <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{label}</p>
+      {loading || !previewText ? (
+        <div className="space-y-2 animate-pulse">
+          <div className="h-3 bg-gray-100 rounded w-full" />
+          <div className="h-3 bg-gray-100 rounded w-4/5" />
+          <div className="h-3 bg-gray-100 rounded w-3/5" />
+        </div>
+      ) : (
+        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-line">{previewText}</p>
+      )}
     </div>
   )
 }
@@ -96,19 +78,16 @@ export default function ScreenPreuve({
             label="Description optimisée"
             previewText={descPreview}
             loading={generating && !descPreview}
-            onSeeMore={() => setModalOpen(true)}
           />
           <PreviewCard
             label="Publication Google"
             previewText={postPreview}
             loading={generating && !postPreview}
-            onSeeMore={() => setModalOpen(true)}
           />
           <PreviewCard
             label={generatedReview ? 'Réponse à un avis' : 'Modèles de réponses aux avis'}
-            previewText={reviewPreview || 'Réponse personnalisée à vos avis clients...'}
+            previewText={reviewPreview}
             loading={generating && !reviewPreview}
-            onSeeMore={() => setModalOpen(true)}
           />
         </div>
 
