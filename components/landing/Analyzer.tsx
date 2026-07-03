@@ -645,48 +645,58 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               <div>
                 <div ref={scroll100Ref} />
                 <div className="rounded-2xl bg-gray-900 p-6">
-                  {/* Urgence */}
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-green-400 text-xs font-bold uppercase tracking-wide">Travail prêt · En attente de validation</p>
-                    <span className="text-xs text-gray-500 bg-gray-800 px-2.5 py-1 rounded-full shrink-0">Réservé 24h</span>
+
+                  {/* Badge urgence */}
+                  <div className="inline-flex items-center gap-1.5 bg-gray-800 text-gray-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                    <span>⏳</span> Dossier réservé pendant 24h
                   </div>
 
-                  {/* Phrase d'accroche */}
-                  <p className="text-white text-lg font-extrabold leading-snug mb-4">
-                    Un habitant de {result.city} cherche un {result.category} sur Google — votre fiche doit lui donner envie d&apos;appeler.
+                  {/* Titre */}
+                  <p className="text-white text-xl font-extrabold leading-snug mb-5">
+                    Votre dossier est terminé.
                   </p>
 
-                  {/* Perte chiffrée si disponible */}
-                  {result.lostCalls > 0 && (
-                    <div className="bg-red-900/30 border border-red-700/40 rounded-xl px-4 py-3 mb-4">
-                      <p className="text-red-300 text-sm font-bold">Chaque semaine sans corriger ça : ~{Math.round(result.lostCalls / 4)} appels perdus · ~{Math.round(result.lostRevenue / 4)}€ non réalisés.</p>
+                  {/* Récapitulatif du travail effectué */}
+                  <div className="bg-gray-800/60 rounded-xl px-4 py-4 mb-4">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Ce qui a été préparé</p>
+                    <div className="space-y-2">
+                      {[
+                        `Analyse de votre fiche terminée`,
+                        `${result.competitors.length} concurrent${result.competitors.length > 1 ? 's' : ''} analysés`,
+                        `Description rédigée pour ${result.name}`,
+                        `Calendrier de publications préparé`,
+                        `Réponses aux avis générées`,
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-green-400 text-xs shrink-0">✔</span>
+                          <p className="text-xs text-gray-300">{item}</p>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {/* Ce que vous voyez vs ce que vous recevez */}
-                  <div className="bg-gray-800/60 rounded-xl px-4 py-3 mb-5">
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-gray-400">Aperçu visible ici</span>
-                      <span className="text-gray-400">Dossier complet</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-8 bg-gray-600 rounded-full" />
-                      <div className="flex-1 h-1.5 bg-green-500 rounded-full" />
-                    </div>
-                    <p className="text-xs text-green-400 font-bold mt-2 text-center">
-                      {1 + 12 + (result.recentReviews?.length || 0) + 10 + 2}+ éléments préparés — vous n&apos;en voyez que 3 ici
-                    </p>
                   </div>
+
+                  {/* Aperçu vs dossier complet */}
+                  <div className="bg-green-900/20 border border-green-700/30 rounded-xl px-4 py-3 mb-5 text-center">
+                    {(() => {
+                      const total = 1 + 12 + (result.recentReviews?.length || 0) + 10 + 2 + 1 + 1
+                      return <>
+                        <p className="text-white font-extrabold text-lg">{total} éléments préparés.</p>
+                        <p className="text-gray-400 text-sm mt-0.5">Vous n&apos;en voyez actuellement que 3.</p>
+                      </>
+                    })()}
+                  </div>
+
+                  {/* Motivation douce */}
+                  <p className="text-gray-400 text-sm italic mb-5">
+                    Chaque jour où votre fiche reste inchangée est une occasion manquée d&apos;améliorer votre visibilité sur Google.
+                  </p>
 
                   <a
                     href={pricingUrl}
                     onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { ...eventProps, priority: selectedPriority }) }}
                     className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-3 text-center shadow-lg shadow-green-900/30"
                   >
-                    {selectedPriority === 'convince' ? `Je récupère la nouvelle présentation` :
-                     selectedPriority === 'reviews'  ? `Je récupère les réponses aux avis` :
-                     selectedPriority === 'publish'  ? `Je récupère les publications` :
-                     `Je récupère tout le dossier`} — 39€ →
+                    🚀 Débloquer mon dossier{result.category ? ` ${result.category}` : ' personnalisé'} — 39€
                   </a>
                   <p className="text-gray-500 text-xs text-center">Paiement sécurisé · Satisfait ou remboursé · Sans engagement</p>
                 </div>
