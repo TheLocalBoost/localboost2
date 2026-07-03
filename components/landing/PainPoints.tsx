@@ -1,45 +1,57 @@
-const PROBLEMS = [
-  {
-    icon: '🕐',
-    title: 'Horaires incorrects',
-    impact: '8 à 15 appels perdus / mois',
-  },
-  {
-    icon: '📸',
-    title: 'Pas de photos récentes',
-    impact: '5 à 10 appels perdus / mois',
-  },
-  {
-    icon: '📅',
-    title: 'Aucun post depuis 3 mois',
-    impact: '10 à 20 appels perdus / mois',
-  },
-]
-
 export default function PainPoints() {
   return (
-    <section className="py-16 px-6 bg-gray-50 border-y border-gray-100">
-      <div className="max-w-3xl mx-auto text-center">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Ce que votre fiche vous coûte</p>
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-10">Chaque problème non corrigé est un appel perdu.</h2>
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-2xl mx-auto">
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          {PROBLEMS.map(({ icon, title, impact }) => (
-            <div key={title} className="bg-white rounded-2xl border border-gray-100 p-6 text-center shadow-sm">
-              <p className="text-3xl mb-3">{icon}</p>
-              <p className="font-bold text-gray-900 text-sm mb-2">{title}</p>
-              <p className="text-xs font-semibold text-red-500">{impact}</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+          Ce que votre fiche vous coûte
+        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-3 leading-tight tracking-tight">
+          Chaque problème non corrigé<br />
+          est un appel qui part ailleurs.
+        </h2>
+        <p className="text-gray-500 mb-12">
+          Les clients ne cherchent pas plus loin — ils appellent le premier résultat qui inspire confiance.
+        </p>
+
+        <div className="space-y-0 border border-gray-100 rounded-xl overflow-hidden">
+          {[
+            {
+              problem: 'Aucun post depuis plus de 2 mois',
+              consequence: 'Google considère la fiche abandonnée et la descend dans les résultats.',
+              freq: 'Très fréquent',
+            },
+            {
+              problem: 'Description absente ou générique',
+              consequence: 'Le visiteur ne comprend pas ce que vous faites. Il passe au suivant.',
+              freq: 'Fréquent',
+            },
+            {
+              problem: 'Avis sans réponse',
+              consequence: 'Signal négatif pour l\'algorithme. Signal négatif pour le client.',
+              freq: 'Très fréquent',
+            },
+          ].map(({ problem, consequence, freq }, i) => (
+            <div key={i} className={`px-5 py-5 ${i > 0 ? 'border-t border-gray-100' : ''}`}>
+              <div className="flex items-start justify-between gap-4 mb-1">
+                <p className="text-sm font-semibold text-gray-900">{problem}</p>
+                <span className="text-xs text-gray-400 shrink-0 pt-0.5">{freq}</span>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed">{consequence}</p>
             </div>
           ))}
         </div>
 
-        <a
-          href="/analyser"
-          className="inline-block rounded-xl bg-green-500 px-8 py-4 text-sm font-bold text-white hover:bg-green-400 transition shadow-md"
-        >
-          Voir ce qui bloque ma fiche →
-        </a>
-        <p className="text-xs text-gray-400 mt-2">Gratuit · Résultat en 60 secondes</p>
+        <div className="mt-10">
+          <a
+            href="/analyser"
+            className="inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition"
+          >
+            Voir l&apos;état de ma fiche →
+          </a>
+          <p className="text-xs text-gray-400 mt-3">Gratuit · Résultat personnalisé en 60 secondes</p>
+        </div>
+
       </div>
     </section>
   )

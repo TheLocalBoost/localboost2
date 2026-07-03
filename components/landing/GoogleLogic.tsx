@@ -1,88 +1,86 @@
+// Élément signature de la page — la seule section visuellement audacieuse.
+// Montre concrètement comment l'algorithme Google Maps classe les fiches.
+
 export default function GoogleLogic() {
   return (
-    <section className="py-20 px-6 bg-white">
-      <div className="max-w-2xl mx-auto text-center">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">La vérité sur Google Maps</p>
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-3 leading-snug">
-          Votre concurrent vous devance —<br />
-          pas parce qu&apos;il est meilleur, mais parce qu&apos;il est <span className="text-green-600">plus actif.</span>
-        </h2>
-        <p className="text-gray-500 mb-12">Google affiche la fiche la plus active, pas la mieux notée.</p>
+    <section className="py-24 px-6 bg-gray-50 border-y border-gray-100">
+      <div className="max-w-2xl mx-auto">
 
-        {/* Pack local */}
-        <div className="rounded-2xl bg-gray-50 border border-gray-200 p-6 mb-10">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-5">Sur mobile, Google n&apos;affiche que 3 résultats</p>
-          <div className="space-y-2 max-w-xs mx-auto">
+        {/* Titre */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+          Comment fonctionne Google Maps
+        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-3 leading-tight tracking-tight">
+          Trois résultats.<br />Le reste est invisible.
+        </h2>
+        <p className="text-gray-500 mb-12 max-w-lg">
+          Sur mobile, Google n&apos;affiche que 3 établissements avant
+          &quot;Voir plus de résultats&quot;. Le premier capte environ 70&nbsp;% des clics.
+          Le quatrième n&apos;existe pas pour vos clients.
+        </p>
+
+        {/* Visualisation Pack local — élément signature */}
+        <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden mb-12 shadow-sm">
+
+          {/* Barre de recherche simulée */}
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-gray-200 shrink-0" />
+            <div className="flex-1 bg-gray-100 rounded px-3 py-1.5 text-xs text-gray-400">
+              plombier paris
+            </div>
+          </div>
+
+          {/* Les 3 résultats */}
+          <div className="divide-y divide-gray-100">
             {[
-              { n: '1', pct: '~70% des clics', active: true },
-              { n: '2', pct: '~20%', active: false },
-              { n: '3', pct: '~8%', active: false },
-            ].map(({ n, pct, active }) => (
-              <div key={n} className={`flex items-center gap-3 bg-white rounded-xl border px-4 py-3 ${active ? 'border-green-400' : 'border-gray-200'}`}>
-                <span className={`text-xs font-extrabold rounded-full w-6 h-6 flex items-center justify-center shrink-0 ${active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>{n}</span>
-                <div className="flex-1">
-                  <div className={`h-2.5 rounded mb-1 ${active ? 'bg-gray-800 w-3/4' : 'bg-gray-300 w-2/3'}`} />
-                  <div className={`h-2 rounded ${active ? 'bg-gray-400 w-1/2' : 'bg-gray-200 w-1/3'}`} />
+              { rank: 1, name: 'Plomberie Martin', rating: '4.2', reviews: 18, status: 'Actif — post il y a 3 jours', pct: '70 %', highlight: true },
+              { rank: 2, name: 'Chauffage & Plomberie Est', rating: '4.5', reviews: 31, status: 'Actif', pct: '20 %', highlight: false },
+              { rank: 3, name: 'Dépannage Express Paris', rating: '3.9', reviews: 8,  status: 'Actif', pct: '8 %', highlight: false },
+            ].map(({ rank, name, rating, reviews, status, pct, highlight }) => (
+              <div key={rank} className="flex items-center gap-4 px-4 py-3.5">
+                <span className="text-xs font-bold text-gray-300 w-4 shrink-0">{rank}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{name}</p>
+                  <p className="text-xs text-gray-400">{rating} · {reviews} avis · {status}</p>
                 </div>
-                <span className={`text-xs font-bold shrink-0 ${active ? 'text-green-600' : 'text-gray-400'}`}>{pct}</span>
+                <span className={`text-xs font-bold shrink-0 ${highlight ? 'text-[#16a34a]' : 'text-gray-300'}`}>
+                  {pct}
+                </span>
               </div>
             ))}
-            <div className="flex items-center gap-3 bg-gray-100 rounded-xl border border-dashed border-gray-200 px-4 py-3">
-              <span className="text-xs font-extrabold text-gray-300 bg-gray-200 rounded-full w-6 h-6 flex items-center justify-center shrink-0">4+</span>
-              <p className="text-xs text-gray-400 italic">Invisible pour vos clients</p>
+
+            {/* Position 4 — invisible */}
+            <div className="flex items-center gap-4 px-4 py-3.5 bg-gray-50">
+              <span className="text-xs font-bold text-gray-200 w-4 shrink-0">4</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-300 truncate">Votre établissement</p>
+                <p className="text-xs text-gray-300">4.8 · 47 avis · Dernier post il y a 4 mois</p>
+              </div>
+              <span className="text-xs font-bold text-gray-300 shrink-0">invisible</span>
             </div>
           </div>
         </div>
 
-        {/* 3 signaux */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-10">
+        {/* Les 3 signaux — liste, pas grille */}
+        <div className="space-y-6">
+          <p className="text-sm font-semibold text-gray-900">
+            Ce que Google mesure pour décider du classement :
+          </p>
           {[
-            { n: '1', title: 'Activité récente', desc: 'Posts, réponses aux avis, mises à jour.', badge: 'Le plus important', color: 'bg-red-50 border-red-100', badgeColor: 'bg-red-100 text-red-700' },
-            { n: '2', title: 'Complétude', desc: 'Description, horaires, catégories, photos.', badge: 'Important', color: 'bg-amber-50 border-amber-100', badgeColor: 'bg-amber-100 text-amber-700' },
-            { n: '3', title: 'Avis récents', desc: 'Nombre, fraîcheur, taux de réponse.', badge: 'Important', color: 'bg-blue-50 border-blue-100', badgeColor: 'bg-blue-100 text-blue-700' },
-          ].map(({ n, title, desc, badge, color, badgeColor }) => (
-            <div key={n} className={`rounded-2xl border p-5 text-left ${color}`}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-extrabold text-gray-500 bg-white rounded-full w-6 h-6 flex items-center justify-center border border-gray-200">{n}</span>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${badgeColor}`}>{badge}</span>
+            { n: '01', label: 'Activité récente', desc: 'Publications, réponses aux avis, mises à jour. Une fiche sans activité depuis 2 mois est pénalisée — quelle que soit sa note.' },
+            { n: '02', label: 'Complétude', desc: 'Description, catégories, horaires, photos. Chaque champ vide est un signal négatif.' },
+            { n: '03', label: 'Engagement sur les avis', desc: 'Nombre d\'avis, fraîcheur, et taux de réponse. Les fiches qui répondent sont mieux classées.' },
+          ].map(({ n, label, desc }) => (
+            <div key={n} className="flex gap-5">
+              <span className="text-xs font-bold text-gray-200 shrink-0 mt-0.5 w-6">{n}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{label}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
               </div>
-              <p className="text-sm font-bold text-gray-900 mb-1">{title}</p>
-              <p className="text-xs text-gray-600">{desc}</p>
             </div>
           ))}
         </div>
 
-        {/* Exemple avant/après */}
-        <div className="rounded-2xl bg-gray-900 text-white p-6 text-left">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-4 text-center">Même ville, même métier</p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-green-900/40 border border-green-700/50 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-green-400">#1 · ~70% des clics</span>
-              </div>
-              <p className="text-sm font-bold text-white mb-1">Plombier Martin</p>
-              <p className="text-xs text-gray-400 mb-2">★ 3,9 · 41 avis</p>
-              <div className="space-y-1">
-                {['Post il y a 4 jours', '9 réponses aux avis', 'Description complète'].map((i, k) => (
-                  <p key={k} className="text-xs text-green-300">✓ {i}</p>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-xl bg-red-900/30 border border-red-700/40 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-red-400">#4 · invisible</span>
-              </div>
-              <p className="text-sm font-bold text-white mb-1">Plomberie Dupont</p>
-              <p className="text-xs text-gray-400 mb-2">★ 4,8 · 87 avis</p>
-              <div className="space-y-1">
-                {['Dernier post : 7 mois', '0 réponse aux avis', 'Description vide'].map((i, k) => (
-                  <p key={k} className="text-xs text-red-300">✗ {i}</p>
-                ))}
-              </div>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400 text-center mt-4">La note ne change rien. L&apos;activité décide tout.</p>
-        </div>
       </div>
     </section>
   )

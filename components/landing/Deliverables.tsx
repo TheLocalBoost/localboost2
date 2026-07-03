@@ -1,40 +1,55 @@
 export default function Deliverables() {
-  const items = [
-    { icon: '📝', label: 'Description Google', sub: '1 — prête à publier' },
-    { icon: '📅', label: 'Publications', sub: '12 — 3 mois d\'avance' },
-    { icon: '⭐', label: 'Réponses aux avis', sub: 'Tous vos avis récents' },
-    { icon: '📋', label: '30 modèles réponses', sub: 'Réutilisables à vie' },
-    { icon: '📲', label: 'QR code + SMS', sub: 'Pour collecter des avis' },
-    { icon: '📈', label: 'Plan d\'action', sub: 'Basé sur vos concurrents' },
-  ]
-
   return (
-    <section className="py-20 px-6 bg-gray-50">
-      <div className="max-w-2xl mx-auto text-center">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Ce que vous recevez</p>
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Votre dossier complet.</h2>
-        <p className="text-gray-500 mb-12">Livré par email en 48h. Prêt à publier.</p>
+    <section className="py-24 px-6 bg-white">
+      <div className="max-w-2xl mx-auto">
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
-          {items.map(({ icon, label, sub }) => (
-            <div key={label} className="bg-white rounded-2xl border border-gray-100 p-5 text-center shadow-sm">
-              <p className="text-2xl mb-2">{icon}</p>
-              <p className="text-sm font-bold text-gray-900">{label}</p>
-              <p className="text-xs text-green-600 font-medium mt-1">✓ {sub}</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">
+          Ce que vous recevez
+        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-3 leading-tight tracking-tight">
+          Votre dossier complet.<br />Livré en 48h.
+        </h2>
+        <p className="text-gray-500 mb-12">
+          Préparé à partir des données réelles de votre fiche et de vos concurrents locaux.
+          Prêt à publier — aucun travail de rédaction de votre côté.
+        </p>
+
+        <div className="border border-gray-100 rounded-xl overflow-hidden mb-10">
+          {[
+            { label: 'Description Google optimisée',          detail: 'Rédigée pour votre métier et votre ville. Prête à copier-coller.' },
+            { label: '12 publications prêtes',                 detail: '3 mois de contenu. Saisonnières, conseils, actualité.' },
+            { label: 'Réponses aux avis récents',              detail: 'Personnalisées par avis. Pas de modèles génériques.' },
+            { label: '30 modèles de réponses réutilisables',   detail: 'Pour tous vos futurs avis — positifs, mitigés, négatifs.' },
+            { label: 'QR code + script SMS collecte d\'avis',  detail: 'À afficher en boutique ou envoyer après chaque prestation.' },
+            { label: 'Plan d\'action prioritaire',              detail: 'Basé sur l\'analyse de vos concurrents locaux réels.' },
+            { label: 'Guide de mise en ligne',                 detail: 'Où cliquer, dans quel ordre. 10 minutes pour tout publier.' },
+          ].map(({ label, detail }, i) => (
+            <div
+              key={i}
+              className={`px-5 py-4 flex items-start gap-3 ${i > 0 ? 'border-t border-gray-100' : ''}`}
+            >
+              <span className="text-[#16a34a] font-bold shrink-0 mt-0.5 text-sm">✓</span>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{detail}</p>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
-          <p className="text-green-800 font-extrabold text-xl mb-1">39€ · livré en 48h</p>
-          <p className="text-green-700 text-sm mb-4">Satisfait ou remboursé · Sans engagement</p>
+        <div className="flex items-center gap-6">
+          <div>
+            <p className="text-3xl font-bold text-gray-900">39€</p>
+            <p className="text-xs text-gray-400 mt-1">Une seule fois · Satisfait ou remboursé 30 jours</p>
+          </div>
           <a
             href="/analyser"
-            className="inline-block rounded-xl bg-green-500 hover:bg-green-400 px-8 py-3.5 text-base font-extrabold text-white transition shadow-lg"
+            className="rounded-lg bg-[#16a34a] hover:bg-[#15803d] px-6 py-3 text-sm font-semibold text-white transition"
           >
-            Analyser ma fiche — gratuit →
+            Analyser ma fiche gratuitement →
           </a>
         </div>
+
       </div>
     </section>
   )
