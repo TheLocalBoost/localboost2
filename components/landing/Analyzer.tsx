@@ -161,6 +161,9 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [selectedPriority, setSelectedPriority]         = useState<string | null>(null)
   const [revealedCount, setRevealedCount]               = useState(0)
   const [searchStarted, setSearchStarted]               = useState(false)
+  const [showFullDesc, setShowFullDesc]                 = useState(false)
+  const [showPostEx, setShowPostEx]                     = useState(false)
+  const [showReviewEx, setShowReviewEx]                 = useState(false)
 
   const descriptionRef  = useRef<HTMLDivElement>(null)
   const postsRef        = useRef<HTMLDivElement>(null)
@@ -480,210 +483,138 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
 
         <div id="analyzer-result">
           {result && (
-            <div className="space-y-6 animate-[fadeIn_0.5s_ease]">
+            <div className="space-y-4 animate-[fadeIn_0.5s_ease]">
 
-              {/* ═══ HOOK COURT — immédiat ═══ */}
+              {/* Écran 1 — Pourquoi suis-je ici ? */}
               <div ref={scroll25Ref} className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div ref={problemRef} />
-                <p className="text-xs text-gray-400 mb-3">{result.name} · {result.address}</p>
-                {(() => {
-                  const n = result.problems.length + (!result.criteria.description ? 1 : 0)
-                  return (
-                    <p className="text-2xl font-extrabold text-gray-900 leading-tight">
-                      {n} amélioration{n > 1 ? 's' : ''} identifiée{n > 1 ? 's' : ''}.
-                    </p>
-                  )
-                })()}
-                <p className="text-lg font-semibold text-green-600 mt-1">4 sont déjà prêtes pour vous.</p>
-                <p className="text-xs text-gray-400 mt-2">
-                  Basé sur {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} {result.competitors.length > 1 ? 'locaux' : 'local'} analysés{result.reviews > 0 ? ` · ${result.reviews} avis clients` : ''}.
-                </p>
+                <ScoreRing score={result.score} />
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  {(() => {
+                    const n = result.problems.length + (!result.criteria.description ? 1 : 0)
+                    return <>
+                      <p className="text-lg font-extrabold text-gray-900">{n} problème{n > 1 ? 's' : ''} détecté{n > 1 ? 's' : ''} sur votre fiche.</p>
+                      <p className="text-base font-semibold text-green-600 mt-0.5">Le dossier pour les corriger est déjà prêt.</p>
+                    </>
+                  })()}
+                  <p className="text-xs text-gray-400 mt-2">{result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} analysés · {result.reviews} avis · {result.city}</p>
+                </div>
               </div>
 
               <div ref={scroll50Ref} />
-              {/* ═══ PREUVE IMMÉDIATE + CTA HAUT ═══ */}
-              {(generatingContent || generatedDescription || generatedPosts.length > 0) && (
-              <div>
-                <div className="bg-gray-900 text-white rounded-2xl px-5 py-4 mb-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-green-400 uppercase tracking-wide mb-0.5">Votre nouvelle fiche est prête</p>
-                    <p className="text-base font-bold leading-snug">Nous avons déjà commencé les corrections pour {result.name}.</p>
-                  </div>
+
+              {/* Écran 2 — Qu'avez-vous fait ? */}
+              <div ref={descriptionRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-gray-900 px-5 py-3 flex items-center justify-between">
+                  <p className="text-sm font-bold text-green-400">✅ Votre nouvelle fiche est prête</p>
                   {generationSeconds !== null && generationSeconds <= 120 && (
-                    <span className="text-xs text-gray-400 shrink-0 ml-3">⚡ {generationSeconds}s</span>
+                    <span className="text-xs text-gray-500">⚡ {generationSeconds}s</span>
                   )}
                 </div>
-                <div className="bg-white rounded-2xl border border-blue-100 p-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-blue-600 text-sm">✦</span>
-                    <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">Dossier préparé pour {result.name}</p>
-                  </div>
-                  <p className="text-xs text-gray-400 mb-5 ml-5">Personnalisé pour votre activité à {result.city}</p>
-
-                  <div className="space-y-5">
-                    {/* Description complète */}
-                    <div ref={descriptionRef}>
-                      <p className="text-xs font-semibold text-gray-500 mb-2">📝 Ce que les gens lisent pendant les 5 premières secondes</p>
-                      {generatingContent && !generatedDescription ? (
-                        <div className="space-y-2 animate-pulse">
-                          {[...Array(5)].map((_, i) => (
-                            <div key={i} className={`h-3 bg-gray-100 rounded ${i === 4 ? 'w-3/5' : i === 3 ? 'w-4/5' : 'w-full'}`} />
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
-                          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedDescription}</p>
-                          <p className="text-xs text-gray-400 mt-2">Prêt à publier dans votre fiche Google</p>
-                        </div>
-                      )}
+                <div className="p-5">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">📝 Nouvelle description Google</p>
+                  {generatingContent && !generatedDescription ? (
+                    <div className="space-y-2 animate-pulse">
+                      {[...Array(4)].map((_, i) => <div key={i} className={`h-3 bg-gray-100 rounded ${i === 3 ? 'w-3/5' : 'w-full'}`} />)}
                     </div>
-
-                    {/* CTA immédiat après la description */}
-                    {generatedDescription && (
-                      <div ref={ctaRef}>
-                        <p className="text-xs text-gray-500 text-center mb-2">Votre dossier est prêt. Le paiement sert uniquement à le débloquer.</p>
-                        <a
-                          href={pricingUrl}
-                          onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city, position: 'early' }) }}
-                          className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white text-center transition shadow-lg"
-                        >
-                          Oui, je récupère tout le travail préparé — 39€ →
-                        </a>
+                  ) : (
+                    <>
+                      <div className={`text-sm text-gray-800 leading-relaxed whitespace-pre-line ${showFullDesc ? '' : 'line-clamp-4'}`}>
+                        {generatedDescription}
                       </div>
-                    )}
-
-                    {/* 1 post complet + aperçu des thèmes saisonniers */}
-                    <div ref={postsRef}>
-                      <p className="text-xs font-semibold text-gray-500 mb-2">📅 Exemple de publication — 1 sur 12 préparées</p>
-                      {generatingContent && generatedPosts.length === 0 ? (
-                        <div className="space-y-2 animate-pulse">
-                          <div className="h-3 bg-gray-100 rounded w-full" />
-                          <div className="h-3 bg-gray-100 rounded w-5/6" />
-                          <div className="h-3 bg-gray-100 rounded w-4/6" />
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {generatedPosts.length > 0 && (
-                            <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                              <p className="text-xs text-gray-400 mb-1">Publication n°1</p>
-                              <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPosts[0]}</p>
-                            </div>
-                          )}
-                          {/* Aperçu des 11 autres thèmes */}
-                          <div className="rounded-xl bg-gray-50 border border-dashed border-gray-200 px-4 py-3">
-                            <p className="text-xs font-semibold text-gray-500 mb-2">11 autres publications incluses dans le dossier :</p>
-                            <div className="space-y-1.5">
-                              {[
-                                `Conseil de saison pour vos clients à ${result.city}`,
-                                'Publication spéciale Noël — message & offre',
-                                'Publication rentrée — reprise & disponibilités',
-                                'Témoignage client — retour positif en image',
-                                'Fête des mères / Fête des pères — idée cadeau',
-                                'Coulisses de votre activité — journée type',
-                                'Conseil pratique de votre métier',
-                                'Disponibilités & délais ce mois-ci',
-                                'Présentation d\'un service spécifique',
-                                'Offre ou promotion du moment',
-                                'Publication vacances d\'été',
-                              ].map((theme, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                  <span className="text-gray-300 text-xs shrink-0">🔒</span>
-                                  <p className="text-xs text-gray-400">{theme}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                      {generatedDescription && (
+                        <button onClick={() => setShowFullDesc(v => !v)} className="text-xs text-blue-500 mt-2 font-medium">
+                          {showFullDesc ? 'Réduire ▲' : 'Voir tout ▼'}
+                        </button>
                       )}
-                    </div>
-
-                    {/* Réponse à l'avis */}
-                    {(generatingContent || generatedReview) && (
-                      <div>
-                        <p className="text-xs font-semibold text-gray-500 mb-2">⭐ Ce que les futurs clients liront avant de vous choisir</p>
-                        {generatingContent && !generatedReview ? (
-                          <div className="space-y-2 animate-pulse">
-                            <div className="h-3 bg-gray-100 rounded w-full" />
-                            <div className="h-3 bg-gray-100 rounded w-4/6" />
-                          </div>
-                        ) : (
-                          <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
-                            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedReview}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Vous voyez un aperçu — le pack livre beaucoup plus */}
-                  <div className="mt-6 pt-5 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 italic mb-3">Vous voyez ici un aperçu. Après validation, vous récupérez l'ensemble des contenus et outils préparés pour votre entreprise.</p>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Votre dossier complet</p>
-                    <div className="space-y-4">
-                      {[
-                        {
-                          icon: '📍', title: 'Convaincre les visiteurs',
-                          items: ['Description Google optimisée', 'Catégories secondaires suggérées', 'Présentation claire de vos services']
-                        },
-                        {
-                          icon: '📅', title: 'Animer votre fiche 3 mois',
-                          items: ['12 publications prêtes (saisonnières, conseils, promos)', 'Calendrier de publication mensuel']
-                        },
-                        {
-                          icon: '⭐', title: 'Renforcer la confiance',
-                          items: ['Réponses à vos avis récents', '10 modèles réutilisables pour vos futurs avis', 'QR code + script SMS demande d\'avis']
-                        },
-                        {
-                          icon: '📈', title: 'Passer devant vos concurrents',
-                          items: [`Plan d'action basé sur les ${result.competitors.length} concurrents analysés`, 'Guide de mise en ligne pas à pas']
-                        },
-                      ].map(({ icon, title, items }, i) => (
-                        <div key={i}>
-                          <p className="text-xs font-bold text-gray-700 mb-1.5">{icon} {title}</p>
-                          <div className="space-y-1 pl-5">
-                            {items.map((item, j) => (
-                              <div key={j} className="flex items-center gap-1.5">
-                                <span className="text-green-500 text-xs shrink-0">✓</span>
-                                <p className="text-xs text-gray-600">{item}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Temps économisé */}
-                  <div className="mt-5 flex items-center justify-between bg-green-50 rounded-xl px-4 py-3">
-                    <div>
-                      <p className="text-xs text-gray-500 line-through">À faire soi-même : 6 à 7 heures — à condition de savoir quoi écrire</p>
-                      <p className="text-sm font-bold text-green-700">LocalBoost : quelques secondes ⚡</p>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
+                {generatedDescription && (
+                  <div ref={ctaRef} className="px-5 pb-5">
+                    <a
+                      href={pricingUrl}
+                      onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { score: result.score, category: result.category, city: result.city, position: 'early' }) }}
+                      className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white text-center transition shadow-lg"
+                    >
+                      Je récupère mon dossier complet — 39€ →
+                    </a>
+                    <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé · Satisfait ou remboursé</p>
+                  </div>
+                )}
               </div>
-              )}
 
-              <div ref={scroll75Ref} />
-              {/* ═══ ACTE 3 — LA DÉCISION ═══ */}
-              <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">3. Finaliser</p>
+              {/* Écran 3 — Qu'est-ce que je reçois ? */}
+              <div ref={postsRef} className="bg-white rounded-2xl border border-gray-100 p-5">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Ce que contient le dossier</p>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  {[
+                    { icon: '📝', label: 'Description', sub: '1 — prête' },
+                    { icon: '📅', label: 'Publications', sub: '12 — 3 mois' },
+                    { icon: '⭐', label: 'Avis', sub: `${result.recentReviews?.length || 0}+ réponses` },
+                    { icon: '📈', label: 'Plan d\'action', sub: '3 priorités' },
+                  ].map(({ icon, label, sub }) => (
+                    <div key={label} className="bg-gray-50 rounded-xl p-4 text-center">
+                      <p className="text-xl mb-1">{icon}</p>
+                      <p className="text-sm font-bold text-gray-900">{label}</p>
+                      <p className="text-xs text-green-600 font-medium mt-0.5">✓ {sub}</p>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Avant/Après — pas de score chiffré, juste les items */}
-              <div ref={beforeAfterRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+                {/* Exemple publication collapsible */}
+                <button
+                  onClick={() => setShowPostEx(v => !v)}
+                  className="w-full text-left text-xs font-medium text-gray-500 py-3 border-t border-gray-100 flex items-center justify-between"
+                >
+                  <span>Voir un exemple de publication</span>
+                  <span>{showPostEx ? '▲' : '▼'}</span>
+                </button>
+                {showPostEx && (
+                  <div className="mt-2 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                    {generatedPosts.length > 0
+                      ? <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedPosts[0]}</p>
+                      : <p className="text-xs text-gray-400">En cours de génération…</p>
+                    }
+                  </div>
+                )}
+
+                {/* Exemple avis collapsible */}
+                {(generatedReview || generatingContent) && (
+                  <>
+                    <button
+                      onClick={() => setShowReviewEx(v => !v)}
+                      className="w-full text-left text-xs font-medium text-gray-500 py-3 border-t border-gray-100 flex items-center justify-between"
+                    >
+                      <span>Voir une réponse d&apos;avis</span>
+                      <span>{showReviewEx ? '▲' : '▼'}</span>
+                    </button>
+                    {showReviewEx && (
+                      <div className="mt-2 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
+                        {generatedReview
+                          ? <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{generatedReview}</p>
+                          : <p className="text-xs text-gray-400">En cours de génération…</p>
+                        }
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Écran 4 — Avant / Après */}
+              <div ref={beforeAfterRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="grid grid-cols-2">
                   <div className="p-4 bg-red-50 border-r border-gray-100">
-                    <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-3">Votre fiche aujourd'hui</p>
-                    <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-3">Aujourd'hui</p>
+                    <div className="space-y-2">
                       {([
                         !result.criteria.description && 'Activité pas expliquée',
-                        !result.criteria.recentReview && 'Fiche paraît inactive',
-                        !result.criteria.avis20 && 'Peu d\'éléments rassurants',
-                        !result.criteria.note4 && 'Note peu convaincante',
-                        topCompetitor && topCompetitor.estimatedScore > result.score && `${topCompetitor.name} en avant`,
-                      ] as (string | false)[]).filter((x): x is string => Boolean(x)).slice(0, 4).map((item, i) => (
+                        !result.criteria.recentReview && 'Fiche inactive',
+                        !result.criteria.avis20 && 'Peu d\'avis',
+                        topCompetitor && topCompetitor.estimatedScore > result.score && `${topCompetitor.name} devant vous`,
+                      ] as (string | false)[]).filter((x): x is string => Boolean(x)).slice(0, 3).map((item, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                          <span className="text-red-400 text-xs">✗</span>
+                          <span className="text-red-400 text-xs shrink-0">✗</span>
                           <p className="text-xs text-gray-600">{item}</p>
                         </div>
                       ))}
@@ -691,15 +622,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                   </div>
                   <div className="p-4 bg-green-50">
                     <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le dossier</p>
-                    <div className="space-y-1.5">
-                      {[
-                        'Activité bien expliquée',
-                        'Fiche active 3 mois',
-                        'Avis avec réponses',
-                        'Plan d\'action clair',
-                      ].map((item, i) => (
+                    <div className="space-y-2">
+                      {['Fiche claire et complète', 'Active 3 mois', 'Avis avec réponses', 'Plan concret'].map((item, i) => (
                         <div key={i} className="flex items-center gap-1.5">
-                          <span className="text-green-500 text-xs">✓</span>
+                          <span className="text-green-500 text-xs shrink-0">✓</span>
                           <p className="text-xs text-gray-700">{item}</p>
                         </div>
                       ))}
@@ -708,82 +634,27 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 </div>
               </div>
 
-
-              {/* CTA — mission à finaliser, avec valeur du travail intégrée */}
-              {(() => {
-                const PRIORITY_CTAS: Record<string, string> = {
-                  convince: `Je récupère la nouvelle présentation de ${result.name}`,
-                  reviews:  `Je récupère les réponses aux avis de ${result.name}`,
-                  publish:  `Je récupère les publications de ${result.name}`,
-                  time:     `Je récupère tout le travail préparé`,
-                }
-                const ctaLabel = selectedPriority
-                  ? `${PRIORITY_CTAS[selectedPriority]} — 39€ →`
-                  : `Je récupère tout le travail préparé — 39€ →`
-
-                return (
-                  <div>
-                  <div ref={scroll100Ref} />
-                  <div ref={ctaRef} className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 p-6 border border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-green-400 text-xs font-bold uppercase tracking-wide">Travail prêt · En attente de validation</p>
-                      <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-full">Réservé 24h</span>
-                    </div>
-                    {/* Pull quote — le client se projette */}
-                    <blockquote className="border-l-2 border-green-500 pl-4 mb-4">
-                      <p className="text-white font-semibold text-base leading-snug">
-                        Imaginez un habitant de {result.city} qui cherche un {result.category} sur Google.
-                      </p>
-                      <p className="text-gray-300 text-sm mt-1">
-                        Nous avons préparé ce qu'il verra — pour lui donner davantage de raisons de vous choisir plutôt qu'un concurrent.
-                      </p>
-                    </blockquote>
-
-                    {/* Ce qui est livré dans le dossier — pas l'aperçu gratuit */}
-                    {(() => {
-                      const packItems = [
-                        '1 description premium',
-                        '12 publications prêtes (3 mois)',
-                        'Réponses aux avis récents',
-                        '10 modèles de réponses réutilisables',
-                        '1 QR Code + script SMS',
-                        '1 plan d\'action prioritaire',
-                        '1 guide de mise en ligne',
-                      ]
-                      const total = 1 + 12 + (result.recentReviews?.length || 0) + 10 + 2 + 1 + 1
-                      return (
-                        <div className="bg-gray-800/60 rounded-xl px-4 py-4 mb-4">
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Ce que vous recevez après validation</p>
-                          <div className="grid grid-cols-2 gap-1.5 mb-3">
-                            {packItems.map((item, i) => (
-                              <div key={i} className="flex items-center gap-1.5">
-                                <span className="text-green-400 text-xs shrink-0">✓</span>
-                                <p className="text-xs text-gray-300">{item}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <p className="text-xs font-bold text-green-400 text-center border-t border-gray-700 pt-2">
-                            {total}+ éléments livrés — contre 3 visibles en aperçu
-                          </p>
-                        </div>
-                      )
-                    })()}
-
-                    <a
-                      href={pricingUrl}
-                      onClick={() => {
-                        setCtaClicked(true)
-                        track('cta_click_subscribe', { ...eventProps, priority: selectedPriority })
-                      }}
-                      className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-2 text-center shadow-lg shadow-green-900/30"
-                    >
-                      {ctaLabel}
-                    </a>
-                    <p className="text-gray-400 text-xs text-center">Paiement sécurisé · Si le contenu ne vous convient pas, nous le retravaillons ou remboursons · Sans engagement</p>
-                  </div>
-                  </div>
-                )
-              })()}
+              {/* Écran 5 — J'achète */}
+              <div ref={scroll75Ref} />
+              <div>
+                <div ref={scroll100Ref} />
+                <div className="rounded-2xl bg-gray-900 p-6">
+                  <p className="text-green-400 text-xs font-bold uppercase tracking-wide mb-1">Dossier prêt · En attente de validation</p>
+                  <p className="text-white text-lg font-extrabold leading-snug mb-5">
+                    Un habitant de {result.city} cherche un {result.category} sur Google — votre fiche doit lui donner envie d'appeler.
+                  </p>
+                  <a
+                    href={pricingUrl}
+                    onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { ...eventProps, priority: selectedPriority }) }}
+                    className="block w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition mb-3 text-center shadow-lg shadow-green-900/30"
+                  >
+                    {selectedPriority === 'convince' ? `Je récupère la nouvelle présentation` :
+                     selectedPriority === 'reviews'  ? `Je récupère les réponses aux avis` :
+                     selectedPriority === 'publish'  ? `Je récupère les publications` :
+                     `Je récupère tout le dossier`} — 39€ →
+                  </a>
+                  <p className="text-gray-500 text-xs text-center">Paiement sécurisé · Satisfait ou remboursé · Sans engagement</p>
+                </div>
               </div>
 
               {/* Détails supplémentaires — après le CTA (pour ceux qui veulent plus d'info) */}
