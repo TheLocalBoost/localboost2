@@ -28,9 +28,10 @@ interface PreviewCardProps {
   label: string
   previewText: string
   loading?: boolean
+  clamp?: boolean
 }
 
-function PreviewCard({ label, previewText, loading }: PreviewCardProps) {
+function PreviewCard({ label, previewText, loading, clamp = false }: PreviewCardProps) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{label}</p>
@@ -41,7 +42,7 @@ function PreviewCard({ label, previewText, loading }: PreviewCardProps) {
           <div className="h-3 bg-gray-100 rounded w-3/5" />
         </div>
       ) : (
-        <p className="text-sm text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-line">{previewText}</p>
+        <p className={`text-sm text-gray-700 leading-relaxed whitespace-pre-line ${clamp ? 'line-clamp-4' : ''}`}>{previewText}</p>
       )}
     </div>
   )
@@ -59,8 +60,8 @@ export default function ScreenPreuve({
   const [modalOpen, setModalOpen] = useState(false)
 
   const descPreview   = generatedDescription ?? ''
-  const postPreview   = generatedPosts[0]?.split('\n')[0] ?? ''
-  const reviewPreview = generatedReview?.split('\n')[0] ?? ''
+  const postPreview   = generatedPosts[0] ?? ''
+  const reviewPreview = generatedReview ?? ''
 
   return (
     <>
@@ -78,6 +79,7 @@ export default function ScreenPreuve({
             label="Description optimisée"
             previewText={descPreview}
             loading={generating && !descPreview}
+            clamp
           />
           <PreviewCard
             label="Publication Google"
