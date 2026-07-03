@@ -34,7 +34,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-base font-semibold text-gray-900 mb-3">3. Prix et facturation</h2>
-            <p><strong>Tarif :</strong> 59 € TTC par mois (TVA non applicable — article 293 B du CGI).</p>
+            <p><strong>Tarif :</strong> 39 € TTC par mois (TVA non applicable — article 293 B du CGI).</p>
             <p className="mt-2"><strong>Période d'essai :</strong> 7 jours gratuits à compter de l'inscription. Aucun débit n'est effectué pendant cette période. Une carte bancaire valide est requise pour démarrer l'essai.</p>
             <p className="mt-2"><strong>Facturation :</strong> À l'issue de la période d'essai, l'abonnement est renouvelé automatiquement chaque mois par prélèvement via Stripe.</p>
           </section>
@@ -91,7 +91,7 @@ export default function CGVPage() {
             </p>
           </section>
 
-          <p className="text-xs text-gray-400 pt-4 border-t border-gray-100">Dernière mise à jour : mai 2026</p>
+          <p className="text-xs text-gray-400 pt-4 border-t border-gray-100">Dernière mise à jour : juillet 2026</p>
 
         </div>
       </div>
