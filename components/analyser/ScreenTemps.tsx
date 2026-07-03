@@ -7,7 +7,7 @@ interface Props {
 
 const MANUAL_ITEMS = [
   'Rédiger une description (45 min)',
-  '12 publications mensuelles (3h)',
+  '12 publications — 1 par semaine (3h)',
   'Réponses aux avis (1h)',
   'Plan d\'action (30 min)',
 ]
@@ -68,7 +68,7 @@ export default function ScreenTemps({ onNext }: Props) {
       </div>
 
       <p className="text-sm text-gray-400 mb-8">
-        Les mêmes éléments, préparés à partir de vos données réelles.
+        Les mêmes éléments, générés en quelques secondes à partir de vos données réelles. Votre pack complet est livré par email sous 48h.
       </p>
 
       <button

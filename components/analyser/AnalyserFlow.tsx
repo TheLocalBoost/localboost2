@@ -126,6 +126,7 @@ export default function AnalyserFlow() {
           city:         data.city,
           category:     data.category,
           recentReview: bestReview,
+          phoneIntl:    data.phoneIntl ?? null,
         }),
       })
         .then(r => r.json())

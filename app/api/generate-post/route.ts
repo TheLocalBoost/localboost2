@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (!checkRL(ip)) return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 })
 
-  const { name, city, category, recentReview } = await req.json()
+  const { name, city, category, recentReview, phoneIntl } = await req.json()
   if (!name || !city) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
 
   const cat = category ?? 'artisan'
@@ -34,6 +34,10 @@ Contraintes strictes :
 
 Réponds uniquement avec la description, rien d'autre.`
 
+  const ctaLine = phoneIntl
+    ? `- Fin : appel à l'action court avec le numéro réel ${phoneIntl}`
+    : `- Fin : appel à l'action court (devis gratuit ou prise de contact) — n'invente aucun numéro de téléphone`
+
   const makePostPrompt = (angle: string) => `Tu es un expert Google Business Profile. Rédige un post Google pour "${name}", ${cat} à ${city}.
 
 Angle : ${angle}
@@ -43,7 +47,7 @@ Contraintes :
 - Accroche directe liée au métier ou à une situation concrète
 - Mentionne "${city}" naturellement
 - Ton humain, authentique — comme si le professionnel écrit lui-même
-- Fin : appel à l'action court (appel ou devis)
+${ctaLine}
 - 2 hashtags locaux (#${city.replace(/\s+/g, '')} #${cat.replace(/\s+/g, '')})
 - Maximum 1 emoji
 
