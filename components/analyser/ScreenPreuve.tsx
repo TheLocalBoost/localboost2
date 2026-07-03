@@ -9,6 +9,7 @@ interface Props {
   generatedDescription: string | null
   generatedPosts: string[]
   generatedReview: string | null
+  generating: boolean
   onNext: () => void
   totalElements: number
 }
@@ -26,9 +27,11 @@ const DELIVERABLES = [
 interface PreviewCardProps {
   label: string
   previewText: string
+  loading?: boolean
+  onSeeMore: () => void
 }
 
-function PreviewCard({ label, previewText }: PreviewCardProps) {
+function PreviewCard({ label, previewText, loading, onSeeMore }: PreviewCardProps) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
       <div className="px-4 pt-4 pb-1">
@@ -37,14 +40,26 @@ function PreviewCard({ label, previewText }: PreviewCardProps) {
         </p>
       </div>
       <div className="relative px-4 pb-4">
-        <p className="blur-sm select-none text-sm text-gray-700 leading-relaxed line-clamp-2">
-          {previewText || 'Contenu en cours de génération...'}
-        </p>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button className="text-xs text-gray-500 font-medium hover:text-gray-700 transition underline underline-offset-2">
-            Voir la version complète →
-          </button>
-        </div>
+        {loading ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="h-3 bg-gray-100 rounded w-full" />
+            <div className="h-3 bg-gray-100 rounded w-4/5" />
+          </div>
+        ) : (
+          <>
+            <p className="blur-sm select-none text-sm text-gray-700 leading-relaxed line-clamp-2">
+              {previewText}
+            </p>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <button
+                onClick={onSeeMore}
+                className="text-xs text-gray-500 font-medium hover:text-gray-700 transition underline underline-offset-2"
+              >
+                Voir la version complète →
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -55,28 +70,21 @@ export default function ScreenPreuve({
   generatedDescription,
   generatedPosts,
   generatedReview,
+  generating,
   onNext,
   totalElements,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
-  const descPreview = generatedDescription
-    ? generatedDescription.slice(0, 60)
-    : 'Description optimisée pour votre établissement...'
-
-  const postPreview = generatedPosts[0]
-    ? generatedPosts[0].split('\n')[0]
-    : 'Publication Google prête à poster...'
-
-  const reviewPreview = generatedReview
-    ? generatedReview.split('\n')[0]
-    : 'Modèles de réponses aux avis'
+  const descPreview   = generatedDescription ?? ''
+  const postPreview   = generatedPosts[0]?.split('\n')[0] ?? ''
+  const reviewPreview = generatedReview?.split('\n')[0] ?? ''
 
   return (
     <>
       <ScreenLayout>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
-          Apercu du rapport
+          Aperçu du rapport
         </p>
 
         <h2 className="text-xl font-bold text-gray-900 mb-6 leading-snug">
@@ -87,14 +95,20 @@ export default function ScreenPreuve({
           <PreviewCard
             label="Description optimisée"
             previewText={descPreview}
+            loading={generating && !descPreview}
+            onSeeMore={() => setModalOpen(true)}
           />
           <PreviewCard
             label="Publication Google"
             previewText={postPreview}
+            loading={generating && !postPreview}
+            onSeeMore={() => setModalOpen(true)}
           />
           <PreviewCard
             label={generatedReview ? 'Réponse à un avis' : 'Modèles de réponses aux avis'}
-            previewText={reviewPreview}
+            previewText={reviewPreview || 'Réponse personnalisée à vos avis clients...'}
+            loading={generating && !reviewPreview}
+            onSeeMore={() => setModalOpen(true)}
           />
         </div>
 
@@ -124,38 +138,40 @@ export default function ScreenPreuve({
               className="fixed inset-0 z-40 bg-black/40"
               onClick={() => setModalOpen(false)}
             />
-            <motion.aside
-              initial={{ opacity: 0, y: 32 }}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } }}
-              exit={{ opacity: 0, y: 32, transition: { duration: 0.18, ease: 'easeOut' } }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-6 pt-6 pb-10 max-w-[480px] mx-auto"
+              exit={{ opacity: 0, y: 24, transition: { duration: 0.18, ease: 'easeOut' } }}
+              className="fixed inset-x-0 bottom-0 z-50 flex justify-center"
             >
-              <div className="flex items-start justify-between mb-5">
-                <h3 className="text-base font-bold text-gray-900 leading-snug">
-                  Ce que contient le dossier
-                </h3>
-                <button
-                  onClick={() => setModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 transition ml-4 text-xl leading-none"
-                  aria-label="Fermer"
-                >
-                  &times;
-                </button>
+              <div className="bg-white rounded-t-2xl px-6 pt-6 pb-10 w-full max-w-[480px]">
+                <div className="flex items-start justify-between mb-5">
+                  <h3 className="text-base font-bold text-gray-900 leading-snug">
+                    Ce que contient le dossier
+                  </h3>
+                  <button
+                    onClick={() => setModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 transition ml-4 text-xl leading-none"
+                    aria-label="Fermer"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <ul className="space-y-3 mb-6">
+                  {DELIVERABLES.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                      <span className="text-[#16a34a] font-bold shrink-0 mt-0.5">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="text-xs text-gray-400 text-center">
+                  Ce rapport est généré spécifiquement pour votre établissement.
+                </p>
               </div>
-
-              <ul className="space-y-3 mb-6">
-                {DELIVERABLES.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                    <span className="text-[#16a34a] font-bold shrink-0 mt-0.5">✓</span>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <p className="text-xs text-gray-400">
-                Ce rapport est généré spécifiquement pour votre établissement.
-              </p>
-            </motion.aside>
+            </motion.div>
           </>
         )}
       </AnimatePresence>

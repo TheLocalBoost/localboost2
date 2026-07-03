@@ -28,7 +28,8 @@ export default function ScreenSynthese({ result, onNext }: Props) {
         <p className="text-base text-gray-700 leading-relaxed">
           Notre analyse a identifié{' '}
           <span className="font-bold text-gray-900">
-            {improvementCount} point{plural ? 's' : ''} d&apos;amélioration
+            {improvementCount} point{plural ? 's' : ''}{' '}
+            d&apos;amélioration
           </span>{' '}
           sur la fiche de {result.name}. Un rapport personnalisé a été généré.
         </p>

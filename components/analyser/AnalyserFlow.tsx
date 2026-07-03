@@ -154,55 +154,30 @@ export default function AnalyserFlow() {
         </div>
       )}
 
-      <AnimatePresence mode="wait">
-        {screen === 0 && (
-          <div key="screen-0">
-            <ScreenInput onStart={handleStart} />
-          </div>
-        )}
-
-        {screen === 1 && (
-          <div key="screen-1">
-            <ScreenLoading nom={nom} ville={ville} />
-          </div>
-        )}
-
-        {screen === 2 && result && (
-          <div key="screen-2">
-            <ScreenSynthese
-              result={result}
-              onNext={() => setScreen(3)}
-            />
-          </div>
-        )}
-
+      <AnimatePresence mode="wait" initial={false}>
+        {screen === 0 && <ScreenInput key="screen-0" onStart={handleStart} />}
+        {screen === 1 && <ScreenLoading key="screen-1" nom={nom} ville={ville} />}
+        {screen === 2 && result && <ScreenSynthese key="screen-2" result={result} onNext={() => setScreen(3)} />}
         {screen === 3 && result && (
-          <div key="screen-3">
-            <ScreenPreuve
-              result={result}
-              generatedDescription={generatedDescription}
-              generatedPosts={generatedPosts}
-              generatedReview={generatedReview}
-              onNext={() => setScreen(4)}
-              totalElements={totalElements}
-            />
-          </div>
+          <ScreenPreuve
+            key="screen-3"
+            result={result}
+            generatedDescription={generatedDescription}
+            generatedPosts={generatedPosts}
+            generatedReview={generatedReview}
+            generating={generating}
+            onNext={() => setScreen(4)}
+            totalElements={totalElements}
+          />
         )}
-
-        {screen === 4 && (
-          <div key="screen-4">
-            <ScreenTemps onNext={() => setScreen(5)} />
-          </div>
-        )}
-
+        {screen === 4 && <ScreenTemps key="screen-4" onNext={() => setScreen(5)} />}
         {screen === 5 && result && (
-          <div key="screen-5">
-            <ScreenCTA
-              result={result}
-              totalElements={totalElements}
-              pricingUrl={pricingUrl}
-            />
-          </div>
+          <ScreenCTA
+            key="screen-5"
+            result={result}
+            totalElements={totalElements}
+            pricingUrl={pricingUrl}
+          />
         )}
       </AnimatePresence>
     </div>
