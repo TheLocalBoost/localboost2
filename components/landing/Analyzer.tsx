@@ -488,17 +488,17 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
               {/* Écran 1 — Pourquoi suis-je ici ? */}
               <div ref={scroll25Ref} className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div ref={problemRef} />
-                <ScoreRing score={result.score} />
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  {(() => {
-                    const n = result.problems.length + (!result.criteria.description ? 1 : 0)
-                    return <>
-                      <p className="text-lg font-extrabold text-gray-900">{n} problème{n > 1 ? 's' : ''} détecté{n > 1 ? 's' : ''} sur votre fiche.</p>
-                      <p className="text-base font-semibold text-green-600 mt-0.5">Le dossier pour les corriger est déjà prêt.</p>
-                    </>
-                  })()}
-                  <p className="text-xs text-gray-400 mt-2">{result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} analysés · {result.reviews} avis · {result.city}</p>
-                </div>
+                {(() => {
+                  const n = result.problems.length + (!result.criteria.description ? 1 : 0)
+                  return <>
+                    <p className="text-xl font-extrabold text-gray-900">{n > 0 ? `${n} problème${n > 1 ? 's' : ''} détecté${n > 1 ? 's' : ''} sur votre fiche.` : 'Votre fiche est bien tenue.'}</p>
+                    <p className="text-base font-semibold text-green-600 mt-1">Le dossier pour l&apos;améliorer est déjà prêt.</p>
+                    {result.lostCalls > 0 && (
+                      <p className="text-sm font-bold text-red-500 mt-2">~{result.lostCalls} appels perdus par mois · ~{result.lostRevenue}€ non réalisés</p>
+                    )}
+                  </>
+                })()}
+                <p className="text-xs text-gray-400 mt-3">{result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''} analysés · {result.reviews} avis · {result.city}</p>
               </div>
 
               <div ref={scroll50Ref} />
@@ -601,48 +601,83 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
                 )}
               </div>
 
-              {/* Écran 4 — Avant / Après */}
-              <div ref={beforeAfterRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                <div className="grid grid-cols-2">
-                  <div className="p-4 bg-red-50 border-r border-gray-100">
-                    <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-3">Aujourd'hui</p>
-                    <div className="space-y-2">
-                      {([
-                        !result.criteria.description && 'Activité pas expliquée',
-                        !result.criteria.recentReview && 'Fiche inactive',
-                        !result.criteria.avis20 && 'Peu d\'avis',
-                        topCompetitor && topCompetitor.estimatedScore > result.score && `${topCompetitor.name} devant vous`,
-                      ] as (string | false)[]).filter((x): x is string => Boolean(x)).slice(0, 3).map((item, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <span className="text-red-400 text-xs shrink-0">✗</span>
-                          <p className="text-xs text-gray-600">{item}</p>
+              {/* Écran 4 — Avant / Après (seulement si des problèmes existent) */}
+              {(() => {
+                const problems = ([
+                  !result.criteria.description && 'Activité pas expliquée',
+                  !result.criteria.recentReview && 'Fiche inactive',
+                  !result.criteria.avis20 && 'Peu d\'avis',
+                  topCompetitor && topCompetitor.estimatedScore > result.score && `${topCompetitor.name} devant vous`,
+                ] as (string | false)[]).filter((x): x is string => Boolean(x)).slice(0, 3)
+                if (problems.length === 0) return null
+                return (
+                  <div ref={beforeAfterRef} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <div className="grid grid-cols-2">
+                      <div className="p-4 bg-red-50 border-r border-gray-100">
+                        <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-3">Aujourd&apos;hui</p>
+                        <div className="space-y-2">
+                          {problems.map((item, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                              <span className="text-red-400 text-xs shrink-0">✗</span>
+                              <p className="text-xs text-gray-600">{item}</p>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                      <div className="p-4 bg-green-50">
+                        <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le dossier</p>
+                        <div className="space-y-2">
+                          {['Fiche claire et complète', 'Active 3 mois', 'Avis avec réponses', 'Plan concret'].map((item, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                              <span className="text-green-500 text-xs shrink-0">✓</span>
+                              <p className="text-xs text-gray-700">{item}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="p-4 bg-green-50">
-                    <p className="text-xs font-bold text-green-700 uppercase tracking-wide mb-3">Après le dossier</p>
-                    <div className="space-y-2">
-                      {['Fiche claire et complète', 'Active 3 mois', 'Avis avec réponses', 'Plan concret'].map((item, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <span className="text-green-500 text-xs shrink-0">✓</span>
-                          <p className="text-xs text-gray-700">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                )
+              })()}
 
-              {/* Écran 5 — J'achète */}
+              {/* Écran 5 — J'achète + urgence */}
               <div ref={scroll75Ref} />
               <div>
                 <div ref={scroll100Ref} />
                 <div className="rounded-2xl bg-gray-900 p-6">
-                  <p className="text-green-400 text-xs font-bold uppercase tracking-wide mb-1">Dossier prêt · En attente de validation</p>
-                  <p className="text-white text-lg font-extrabold leading-snug mb-5">
-                    Un habitant de {result.city} cherche un {result.category} sur Google — votre fiche doit lui donner envie d'appeler.
+                  {/* Urgence */}
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-green-400 text-xs font-bold uppercase tracking-wide">Travail prêt · En attente de validation</p>
+                    <span className="text-xs text-gray-500 bg-gray-800 px-2.5 py-1 rounded-full shrink-0">Réservé 24h</span>
+                  </div>
+
+                  {/* Phrase d'accroche */}
+                  <p className="text-white text-lg font-extrabold leading-snug mb-4">
+                    Un habitant de {result.city} cherche un {result.category} sur Google — votre fiche doit lui donner envie d&apos;appeler.
                   </p>
+
+                  {/* Perte chiffrée si disponible */}
+                  {result.lostCalls > 0 && (
+                    <div className="bg-red-900/30 border border-red-700/40 rounded-xl px-4 py-3 mb-4">
+                      <p className="text-red-300 text-sm font-bold">Chaque semaine sans corriger ça : ~{Math.round(result.lostCalls / 4)} appels perdus · ~{Math.round(result.lostRevenue / 4)}€ non réalisés.</p>
+                    </div>
+                  )}
+
+                  {/* Ce que vous voyez vs ce que vous recevez */}
+                  <div className="bg-gray-800/60 rounded-xl px-4 py-3 mb-5">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="text-gray-400">Aperçu visible ici</span>
+                      <span className="text-gray-400">Dossier complet</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 w-8 bg-gray-600 rounded-full" />
+                      <div className="flex-1 h-1.5 bg-green-500 rounded-full" />
+                    </div>
+                    <p className="text-xs text-green-400 font-bold mt-2 text-center">
+                      {1 + 12 + (result.recentReviews?.length || 0) + 10 + 2}+ éléments préparés — vous n&apos;en voyez que 3 ici
+                    </p>
+                  </div>
+
                   <a
                     href={pricingUrl}
                     onClick={() => { setCtaClicked(true); track('cta_click_subscribe', { ...eventProps, priority: selectedPriority }) }}
