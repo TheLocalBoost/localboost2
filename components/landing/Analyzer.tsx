@@ -162,11 +162,12 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
   const [revealedCount, setRevealedCount]               = useState(0)
   const [searchStarted, setSearchStarted]               = useState(false)
 
-  const descriptionRef = useRef<HTMLDivElement>(null)
-  const postsRef       = useRef<HTMLDivElement>(null)
-  const beforeAfterRef = useRef<HTMLDivElement>(null)
-  const ctaRef         = useRef<HTMLDivElement>(null)
-  const problemRef     = useRef<HTMLDivElement>(null)
+  const descriptionRef  = useRef<HTMLDivElement>(null)
+  const postsRef        = useRef<HTMLDivElement>(null)
+  const beforeAfterRef  = useRef<HTMLDivElement>(null)
+  const ctaRef          = useRef<HTMLDivElement>(null)
+  const problemRef      = useRef<HTMLDivElement>(null)
+  const firedTrackEvents = useRef<Set<string>>(new Set())
   const scroll25Ref    = useRef<HTMLDivElement>(null)
   const scroll50Ref    = useRef<HTMLDivElement>(null)
   const scroll75Ref    = useRef<HTMLDivElement>(null)
@@ -248,9 +249,10 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       [scroll100Ref,   'scroll_100'],
     ]
     const observers = pairs.map(([ref, event]) => {
-      if (!ref.current) return null
+      if (!ref.current || firedTrackEvents.current.has(event)) return null
       const o = new IntersectionObserver(([e]) => {
         if (e.isIntersecting) {
+          firedTrackEvents.current.add(event)
           track(event, eventProps)
           o.disconnect()
         }
@@ -259,7 +261,7 @@ function AnalyzerInner({ onEmailCapture, onResult }: AnalyzerProps) {
       return o
     })
     return () => observers.forEach(o => o?.disconnect())
-  }, [result])
+  }, [result, generatedDescription])
 
   // tracker non-converti : arrivé depuis email, résultat vu, pas de CTA cliqué après 20s
   useEffect(() => {
