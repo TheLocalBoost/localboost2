@@ -20,7 +20,7 @@ const DELIVERABLES = [
   'Réponses aux avis clients',
   '30 modèles de communication',
   'QR code établissement',
-  'Plan d\'action prioritaire',
+  'Plan d\'action basé sur vos concurrents',
   'Guide de mise en ligne',
 ]
 

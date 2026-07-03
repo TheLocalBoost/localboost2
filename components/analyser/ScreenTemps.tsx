@@ -7,16 +7,17 @@ interface Props {
 
 const MANUAL_ITEMS = [
   'Rédiger une description (45 min)',
-  '12 publications — 1 par semaine (3h)',
+  '12 publications — 1 par semaine (4h)',
   'Réponses aux avis (1h)',
   'Plan d\'action (30 min)',
+  'Mise en ligne sur Google (45 min)',
 ]
 
 const LOCALBOOST_ITEMS = [
   'Description optimisée',
-  '12 publications prêtes',
+  '12 publications prêtes (3 mois)',
   'Réponses aux avis',
-  'Plan d\'action prioritaire',
+  'Plan d\'action basé sur vos concurrents',
 ]
 
 export default function ScreenTemps({ onNext }: Props) {

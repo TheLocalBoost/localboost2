@@ -31,6 +31,7 @@ Contraintes strictes :
 - Ton professionnel mais humain, pas de jargon marketing
 - Dernière phrase : appel à l'action (devis gratuit, contact, etc.)
 - Aucun emoji
+- N'invente pas d'ancienneté, de date de création ou d'années d'expérience — utilise uniquement des faits vérifiables sur l'établissement
 
 Réponds uniquement avec la description, rien d'autre.`
 
@@ -68,7 +69,7 @@ Avis : "${recentReview.text}"
 Contraintes :
 - 40 à 70 mots
 - Commence par remercier par le prénom si possible
-- Mentionne un détail spécifique de l'avis
+- Mentionne uniquement des éléments cités dans le texte de l'avis — n'invente aucun plat, produit, service ou détail absent de l'avis
 - Ton chaleureux et professionnel
 - Si note < 4 : reconnaître sans justifier, proposer de recontacter
 - Signe avec le nom de l'établissement

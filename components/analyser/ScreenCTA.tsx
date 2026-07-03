@@ -13,7 +13,7 @@ const DELIVERABLES = [
   'Description Google optimisée',
   '12 publications prêtes (3 mois)',
   'Réponses aux avis',
-  'Plan d\'action prioritaire',
+  'Plan d\'action basé sur vos concurrents',
   'Guide de mise en ligne',
 ]
 

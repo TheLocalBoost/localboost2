@@ -28,9 +28,8 @@ export default function ScreenEnjeu({ city, category, onNext }: Props) {
         </div>
         <div className="border-l-2 border-gray-200 pl-4">
           <p className="text-sm text-gray-700 leading-relaxed">
-            L&apos;algorithme de classement ne prend pas en compte la qualité
-            du service. Il mesure l&apos;activité de la fiche — publications récentes,
-            réponses aux avis, description à jour.
+            L&apos;algorithme valorise autant l&apos;activité de la fiche que la qualité
+            perçue — publications récentes, réponses aux avis, description à jour.
           </p>
         </div>
         <div className="border-l-2 border-[#16a34a] pl-4">

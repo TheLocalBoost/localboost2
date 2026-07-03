@@ -12,7 +12,7 @@ const SECTIONS = [
   },
   {
     title: 'Montrer que votre entreprise est active',
-    items: ['12 publications prêtes à diffuser — 1 par semaine', 'Calendrier de publication avec dates réelles', '20 idées de photos adaptées à votre métier'],
+    items: ['12 publications prêtes à diffuser (3 mois — 1 par semaine)', 'Calendrier de publication avec dates réelles', '20 idées de photos adaptées à votre métier'],
   },
   {
     title: 'Donner confiance avant le premier appel',
