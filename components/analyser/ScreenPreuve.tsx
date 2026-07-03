@@ -40,7 +40,7 @@ function PreviewCard({ label, previewText, loading, onSeeMore }: PreviewCardProp
         </p>
       </div>
       <div className="relative px-4 pb-4">
-        {loading ? (
+        {loading || !previewText ? (
           <div className="space-y-2 animate-pulse">
             <div className="h-3 bg-gray-100 rounded w-full" />
             <div className="h-3 bg-gray-100 rounded w-4/5" />
