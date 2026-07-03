@@ -68,9 +68,8 @@ export default function ScreenSynthese({ result, onNext }: Props) {
 
       <p className="text-sm text-gray-400 mb-10">
         Analyse basée sur les données publiques de votre fiche Google
-        et de {result.competitors.length} concurrent
-        {result.competitors.length > 1 ? 's' : ''} local
-        {result.competitors.length > 1 ? 'aux' : ''} à {result.city}.
+        et de {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''}{' '}
+        {result.competitors.length > 1 ? 'locaux' : 'local'} à {result.city}.
       </p>
 
       <button

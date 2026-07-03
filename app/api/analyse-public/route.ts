@@ -209,9 +209,9 @@ function generateRichProblems(
       revenue: 2 * panier,
     })
   }
-  if (items.length < 3) {
+  if (items.length < 3 && myPhotos < 10) {
     items.push({
-      text: "Votre fiche n'a pas eu de publications Google récemment. Les fiches actives bénéficient d'un meilleur classement local.",
+      text: `Vous avez ${myPhotos} photo${myPhotos !== 1 ? 's' : ''} sur votre fiche Google. Les fiches avec 10 photos ou plus inspirent davantage confiance et remontent dans les résultats locaux.`,
       calls: 2,
       revenue: 2 * panier,
     })
@@ -389,11 +389,15 @@ export async function POST(req: NextRequest) {
 
   // Score Commercial — 5 dimensions en langage artisan, pas SEO
   const beating = competitors.filter(c => c.estimatedScore < score).length
+  // Scores continus pour refléter la réalité : 25 avis ≠ 50 avis même si avis20=true
+  const reviewScore       = criteria.avis20 ? Math.min(3.5, myReviews / 50 * 3.5) : 0
+  const trustPhotoScore   = criteria.photos  ? Math.min(2.5, myPhotos  / 15 * 2.5) : 0
+  const activityPhotoScore = criteria.photos ? Math.min(3,   myPhotos  / 15 * 3)   : 0
   const commercialScores = {
     found:          Math.round((Number(criteria.description)*3 + Number(criteria.horaires)*2.5 + Number(criteria.site)*2 + Number(criteria.telephone)*2 + 0.5) / 10 * 10),
-    trust:          Math.round((Number(criteria.note4)*4 + Number(criteria.avis20)*3.5 + Number(criteria.photos)*2.5) / 10 * 10),
+    trust:          Math.round((Number(criteria.note4)*4 + reviewScore + trustPhotoScore) / 10 * 10),
     desire:         Math.round((Number(criteria.recentReview)*5 + Number(criteria.description)*5) / 10 * 10),
-    activity:       Math.round((Number(criteria.recentReview)*7 + Number(criteria.photos)*3) / 10 * 10),
+    activity:       Math.round((Number(criteria.recentReview)*7 + activityPhotoScore) / 10 * 10),
     vsCompetitors:  competitors.length ? Math.max(1, Math.round(2 + beating / competitors.length * 8)) : 5,
   }
 
