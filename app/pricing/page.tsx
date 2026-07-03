@@ -147,6 +147,7 @@ function PricingContent() {
             <p className="text-sm text-amber-800">
               D'après notre analyse, votre fiche actuelle peut laisser partir environ <strong>~{revenueParam}€/mois</strong> d'opportunités clients vers vos concurrents.
             </p>
+            <p className="text-xs text-amber-700 mt-1">Estimation basée sur le panier moyen du secteur et le volume de recherches locales manquées détecté sur votre fiche.</p>
           </div>
         )}
 
@@ -182,7 +183,7 @@ function PricingContent() {
                 <ul className="space-y-1.5">
                   {items.map(item => (
                     <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="text-green-500 shrink-0 mt-0.5 font-bold">✓</span>{item}
+                      <span className="text-blue-400 shrink-0 mt-0.5 font-bold">→</span>{item}
                     </li>
                   ))}
                 </ul>
@@ -218,7 +219,7 @@ function PricingContent() {
             </div>
           </div>
           <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-            Tout est préparé en quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez immédiatement. Même résultat. Jusqu'à 10x moins cher.
+            La génération IA prend quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez sous 48h. Même résultat. Jusqu'à 10x moins cher.
           </p>
         </div>
 
