@@ -8,6 +8,7 @@ import ScreenInput    from './ScreenInput'
 import ScreenLoading  from './ScreenLoading'
 import ScreenSynthese from './ScreenSynthese'
 import ScreenPreuve   from './ScreenPreuve'
+import ScreenEnjeu    from './ScreenEnjeu'
 import ScreenPriorite from './ScreenPriorite'
 import ScreenTemps    from './ScreenTemps'
 import ScreenCTA      from './ScreenCTA'
@@ -49,9 +50,10 @@ export interface AnalysisResult {
 // 1 = loading
 // 2 = synthese
 // 3 = preuve
-// 4 = priorite
-// 5 = temps
-// 6 = cta
+// 4 = enjeu
+// 5 = priorite
+// 6 = temps
+// 7 = cta
 
 export default function AnalyserFlow() {
   const [screen, setScreen]   = useState(0)
@@ -174,16 +176,24 @@ export default function AnalyserFlow() {
           />
         )}
         {screen === 4 && result && (
-          <ScreenPriorite
+          <ScreenEnjeu
             key="screen-4"
-            nom={result.name}
-            onNext={(priority) => { setSelectedPriority(priority); setScreen(5) }}
+            city={result.city}
+            category={result.category}
+            onNext={() => setScreen(5)}
           />
         )}
-        {screen === 5 && <ScreenTemps key="screen-5" onNext={() => setScreen(6)} />}
-        {screen === 6 && result && (
+        {screen === 5 && result && (
+          <ScreenPriorite
+            key="screen-5"
+            nom={result.name}
+            onNext={(priority) => { setSelectedPriority(priority); setScreen(6) }}
+          />
+        )}
+        {screen === 6 && <ScreenTemps key="screen-6" onNext={() => setScreen(7)} />}
+        {screen === 7 && result && (
           <ScreenCTA
-            key="screen-6"
+            key="screen-7"
             result={result}
             totalElements={totalElements}
             pricingUrl={pricingUrl}
