@@ -16,7 +16,7 @@ const SECTIONS = [
   },
   {
     title: 'Donner confiance avant le premier appel',
-    items: ['Réponses personnalisées à vos derniers avis', '30 réponses prêtes pour vos futurs avis (classées par situation)', 'QR code collecte d\'avis + script SMS'],
+    items: ['Réponses personnalisées à tous vos avis récents', '30 réponses prêtes pour vos futurs avis (classées par situation)', 'QR code collecte d\'avis + script SMS'],
   },
   {
     title: 'Gagner plusieurs heures',
@@ -125,7 +125,7 @@ function PricingContent() {
               </div>
             ))}
           </div>
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Il reste à préparer</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Livré dans votre pack complet</p>
           <div className="space-y-1">
             {[
               '2 publications supplémentaires (4 au total)',
@@ -134,7 +134,7 @@ function PricingContent() {
               'Plan d\'action basé sur vos concurrents',
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <span className="text-gray-500 text-xs">○</span>
+                <span className="text-blue-400 text-xs">→</span>
                 <p className="text-xs text-gray-400">{item}</p>
               </div>
             ))}
@@ -218,7 +218,7 @@ function PricingContent() {
             </div>
           </div>
           <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-            Tout est préparé en quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez immédiatement. Même résultat. Prix divisé par 10.
+            Tout est préparé en quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez immédiatement. Même résultat. Jusqu'à 10x moins cher.
           </p>
         </div>
 
@@ -233,7 +233,7 @@ function PricingContent() {
           <p className="text-sm font-bold text-gray-900 mb-4">Ce qui se passe après votre paiement</p>
           <div className="space-y-4">
             {[
-              { t: 'Maintenant', d: 'Vous recevez une confirmation. Notre système analyse votre fiche Google en temps réel.' },
+              { t: 'Maintenant', d: 'Vous recevez une confirmation. Votre dossier est mis en préparation avec les données déjà analysées.' },
               { t: 'Dans 48h maximum', d: 'Votre pack complet arrive par email : description, 12 publications, réponses aux avis, 10 modèles, QR code, guide et plan d\'action.' },
               { t: 'Vous mettez en ligne', d: 'Tout est prêt à publier. Votre fiche devient active et convaincante pour vos prochains clients.' },
             ].map(({ t, d }, i) => (
