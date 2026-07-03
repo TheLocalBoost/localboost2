@@ -1,6 +1,2 @@
 'use client'
-import Analyzer from '@/components/landing/Analyzer'
-
-export default function AnalyserClient() {
-  return <Analyzer />
-}
+export { default } from '@/components/analyser/AnalyserFlow'
