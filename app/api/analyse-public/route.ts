@@ -320,18 +320,12 @@ export async function POST(req: NextRequest) {
 
   if (!results.length) return NextResponse.json({ error: 'Établissement introuvable. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
 
-  // Choisir le résultat en France qui correspond à la bonne ville
+  // Choisir le résultat qui correspond à la bonne ville (region=fr dans l'API suffit)
   const cityNorm = normalizeStr(city)
-  const frenchResults = results.filter(r =>
-    (r.formatted_address ?? '').toLowerCase().includes('france')
-  )
-  const pool = frenchResults.length > 0 ? frenchResults : []
-  if (!pool.length) return NextResponse.json({ error: 'Établissement introuvable en France. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
-
-  const place = pool.find(r => {
+  const place = results.find(r => {
     const addr = normalizeStr(r.formatted_address ?? r.vicinity ?? '')
     return addr.includes(cityNorm)
-  }) ?? pool[0]
+  }) ?? results[0]
 
   // 2. Détails
   const fields = [
