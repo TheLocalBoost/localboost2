@@ -187,8 +187,7 @@ export default function AnalyserFlow() {
         {screen === 4 && result && (
           <ScreenEnjeu
             key="screen-4"
-            city={result.city}
-            category={result.category}
+            result={result}
             onNext={() => setScreen(5)}
           />
         )}

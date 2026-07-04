@@ -1,41 +1,51 @@
 'use client'
 import type { AnalysisResult } from './AnalyserFlow'
 import ScreenLayout from './ScreenLayout'
-import { ds } from './ds'
 
 interface Props {
   result: AnalysisResult
   onNext: () => void
 }
 
-const AXES = [
-  { key: 'found',         label: 'Visibilité' },
-  { key: 'trust',         label: 'Confiance' },
-  { key: 'desire',        label: 'Attractivité' },
-  { key: 'activity',      label: 'Activité' },
-  { key: 'vsCompetitors', label: 'Vs concurrents' },
-] as const
+function getConcreteAlert(result: AnalysisResult): string | null {
+  // Unanswered recent reviews — most visible problem for prospects
+  if (result.recentReviews?.length > 0) {
+    const count = result.recentReviews.length
+    const times = result.recentReviews
+      .map(r => Number(r.time))
+      .filter(t => t > 0)
+    const oldest = times.length > 0 ? Math.min(...times) : null
+    const monthsAgo = oldest
+      ? Math.floor((Date.now() / 1000 - oldest) / (30 * 86400))
+      : null
+    if (monthsAgo !== null && monthsAgo >= 1) {
+      return `${count} avis récent${count > 1 ? 's' : ''} sans réponse — le plus ancien date d'il y a ${monthsAgo} mois`
+    }
+    return `${count} avis récent${count > 1 ? 's' : ''} sans réponse sur votre fiche — visible de tous vos visiteurs`
+  }
 
-function AxisBar({ label, value }: { label: string; value: number }) {
-  const pct = Math.min(100, Math.max(0, value * 10))
-  const color = pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626'
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-xs font-semibold text-gray-700">{value}/10</p>
-      </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
-    </div>
-  )
+  // No description
+  if (result.criteria && !result.criteria.description) {
+    return "Votre fiche n'a pas de description — vos visiteurs ne savent pas ce que vous proposez"
+  }
+
+  // Very few photos
+  if (result.photos !== undefined && result.photos < 5) {
+    return `Votre fiche ne compte que ${result.photos} photo${result.photos !== 1 ? 's' : ''}`
+  }
+
+  // Low review count
+  if (result.reviews !== undefined && result.reviews < 20) {
+    return `Votre fiche compte seulement ${result.reviews} avis Google`
+  }
+
+  return null
 }
 
 export default function ScreenSynthese({ result, onNext }: Props) {
-  const improvementCount = result.problems.length + (!result.criteria.description ? 1 : 0)
+  const improvementCount = result.problems.length + (!result.criteria?.description ? 1 : 0)
   const plural = improvementCount > 1
-  const scores = result.commercialScores
+  const alert = getConcreteAlert(result)
 
   return (
     <ScreenLayout>
@@ -44,31 +54,30 @@ export default function ScreenSynthese({ result, onNext }: Props) {
       </p>
 
       <h1 className="text-2xl font-bold text-gray-900 mb-6 leading-snug">
-        Votre établissement est référencé sur Google.
+        {result.name} est référencé sur Google.
       </h1>
 
-      <div className={`${ds.signature} mb-6`}>
-        <p className="text-base text-gray-700 leading-relaxed">
-          Notre analyse a identifié{' '}
-          <span className="font-bold text-gray-900">
-            {improvementCount} point{plural ? 's' : ''}{' '}
-            d&apos;amélioration
-          </span>{' '}
-          sur la fiche de {result.name}. Un rapport personnalisé a été généré.
-        </p>
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gray-900 flex items-center justify-center">
+          <span className="text-2xl font-extrabold text-white">{result.score}</span>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-gray-700">Score sur 100</p>
+          <p className="text-xs text-gray-400">
+            {improvementCount} point{plural ? 's' : ''} d'amélioration identifié{plural ? 's' : ''}
+          </p>
+        </div>
       </div>
 
-      {scores && (
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-4 mb-6 space-y-3">
-          {AXES.map(({ key, label }) => (
-            <AxisBar key={key} label={label} value={scores[key]} />
-          ))}
+      {alert && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 mb-6">
+          <p className="text-sm font-semibold text-amber-900 leading-snug">{alert}</p>
         </div>
       )}
 
       <p className="text-sm text-gray-400 mb-10">
-        Analyse basée sur les données publiques de votre fiche Google
-        et de {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''}{' '}
+        Analyse basée sur les données publiques de votre fiche Google et de{' '}
+        {result.competitors.length} concurrent{result.competitors.length > 1 ? 's' : ''}{' '}
         {result.competitors.length > 1 ? 'locaux' : 'local'} à {result.city}.
       </p>
 
@@ -76,7 +85,7 @@ export default function ScreenSynthese({ result, onNext }: Props) {
         onClick={onNext}
         className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition"
       >
-        Voir le rapport →
+        Voir ce qui a été préparé →
       </button>
     </ScreenLayout>
   )
