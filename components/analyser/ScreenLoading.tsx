@@ -9,7 +9,7 @@ interface Props {
 }
 
 const MESSAGES = [
-  (nom: string) => `Analyse de ${nom} en cours...`,
+  (nom: string) => `Bilan de ${nom} en cours...`,
   (_nom: string) => 'Comparaison avec les concurrents locaux...',
 ]
 
@@ -24,7 +24,6 @@ export default function ScreenLoading({ nom, ville }: Props) {
   return (
     <ScreenLayout>
       <div className="text-center">
-        {/* Minimal animated indicator — three dots */}
         <div className="flex items-center justify-center gap-1.5 mb-8">
           {[0, 1, 2].map(i => (
             <motion.span

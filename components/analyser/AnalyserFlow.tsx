@@ -4,14 +4,13 @@ import { AnimatePresence } from 'framer-motion'
 import { track } from '@/lib/track'
 import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
-import ScreenInput    from './ScreenInput'
-import ScreenLoading  from './ScreenLoading'
-import ScreenSynthese from './ScreenSynthese'
-import ScreenPreuve   from './ScreenPreuve'
-import ScreenEnjeu    from './ScreenEnjeu'
-import ScreenPriorite from './ScreenPriorite'
-import ScreenTemps    from './ScreenTemps'
-import ScreenCTA      from './ScreenCTA'
+import ScreenInput      from './ScreenInput'
+import ScreenLoading    from './ScreenLoading'
+import ScreenDiagnostic from './ScreenDiagnostic'
+import ScreenProblemes  from './ScreenProblemes'
+import ScreenTravail    from './ScreenTravail'
+import ScreenLivrables  from './ScreenLivrables'
+import ScreenCTA        from './ScreenCTA'
 
 // Re-export so child screens can import the type from this file
 export interface AnalysisResult {
@@ -48,26 +47,24 @@ export interface AnalysisResult {
 // screen indexes:
 // 0 = input
 // 1 = loading
-// 2 = synthese
-// 3 = preuve
-// 4 = enjeu
-// 5 = priorite
-// 6 = temps
-// 7 = cta
+// 2 = diagnostic
+// 3 = problemes
+// 4 = travail
+// 5 = livrables
+// 6 = cta
 
 export default function AnalyserFlow() {
-  const [screen, setScreen]   = useState(0)
-  const [nom, setNom]         = useState('')
-  const [ville, setVille]     = useState('')
-  const [email, setEmail]     = useState('')
-  const [result, setResult]   = useState<AnalysisResult | null>(null)
-  const [error, setError]     = useState<string | null>(null)
+  const [screen, setScreen] = useState(0)
+  const [nom, setNom]       = useState('')
+  const [ville, setVille]   = useState('')
+  const [email, setEmail]   = useState('')
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError]   = useState<string | null>(null)
 
   const [generatedDescription, setGeneratedDescription] = useState<string | null>(null)
   const [generatedPosts, setGeneratedPosts]             = useState<string[]>([])
   const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
-  const [selectedPriority, setSelectedPriority]         = useState<string | null>(null)
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
     setNom(paramNom)
@@ -113,7 +110,7 @@ export default function AnalyserFlow() {
 
       setScreen(2)
 
-      // Start content generation in the background
+      // Content generation in background — starts immediately after API result
       setGenerating(true)
       const bestReview =
         (data.recentReviews ?? []).find((r: { text: string }) => r.text?.length > 20) ?? null
@@ -143,14 +140,7 @@ export default function AnalyserFlow() {
     }
   }
 
-  // 1 description
-  // + 12 publications
-  // + N réponses avis personnalisées (max 3, selon recentReviews renvoyés par l'API)
-  // + 10 modèles de réponses futures (aperçu — 30 au total dans le pack livré)
-  // + 2 = QR code + script SMS
-  // + 1 plan d'action
-  // + 1 guide de mise en ligne
-  // max = 1+12+3+10+2+1+1 = 30
+  // 1 description + 12 publications + N réponses (max 3) + 10 modèles + 2 (QR+SMS) + 1 plan + 1 guide
   const totalElements =
     1 + 12 + (result?.recentReviews?.length || 0) + 10 + 2 + 1 + 1
 
@@ -169,43 +159,49 @@ export default function AnalyserFlow() {
       )}
 
       <AnimatePresence mode="wait" initial={false}>
-        {screen === 0 && <ScreenInput key="screen-0" onStart={handleStart} />}
-        {screen === 1 && <ScreenLoading key="screen-1" nom={nom} ville={ville} />}
-        {screen === 2 && result && <ScreenSynthese key="screen-2" result={result} onNext={() => setScreen(3)} />}
+        {screen === 0 && (
+          <ScreenInput key="screen-0" onStart={handleStart} />
+        )}
+        {screen === 1 && (
+          <ScreenLoading key="screen-1" nom={nom} ville={ville} />
+        )}
+        {screen === 2 && result && (
+          <ScreenDiagnostic key="screen-2" result={result} onNext={() => setScreen(3)} />
+        )}
         {screen === 3 && result && (
-          <ScreenPreuve
+          <ScreenProblemes
             key="screen-3"
+            result={result}
+            generatedDescription={generatedDescription}
+            generatedReview={generatedReview}
+            generating={generating}
+            onNext={() => setScreen(4)}
+          />
+        )}
+        {screen === 4 && result && (
+          <ScreenTravail
+            key="screen-4"
             result={result}
             generatedDescription={generatedDescription}
             generatedPosts={generatedPosts}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => setScreen(4)}
-            totalElements={totalElements}
-          />
-        )}
-        {screen === 4 && result && (
-          <ScreenEnjeu
-            key="screen-4"
-            result={result}
             onNext={() => setScreen(5)}
           />
         )}
         {screen === 5 && result && (
-          <ScreenPriorite
+          <ScreenLivrables
             key="screen-5"
-            nom={result.name}
-            onNext={(priority) => { setSelectedPriority(priority); setScreen(6) }}
-          />
-        )}
-        {screen === 6 && <ScreenTemps key="screen-6" onNext={() => setScreen(7)} />}
-        {screen === 7 && result && (
-          <ScreenCTA
-            key="screen-7"
             result={result}
             totalElements={totalElements}
+            onNext={() => setScreen(6)}
+          />
+        )}
+        {screen === 6 && result && (
+          <ScreenCTA
+            key="screen-6"
+            result={result}
             pricingUrl={pricingUrl}
-            selectedPriority={selectedPriority}
           />
         )}
       </AnimatePresence>
