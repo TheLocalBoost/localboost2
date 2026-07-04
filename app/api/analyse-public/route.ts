@@ -320,12 +320,18 @@ export async function POST(req: NextRequest) {
 
   if (!results.length) return NextResponse.json({ error: 'Établissement introuvable. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
 
-  // Choisir le résultat qui correspond à la bonne ville (évite de montrer le mauvais établissement)
+  // Choisir le résultat en France qui correspond à la bonne ville
   const cityNorm = normalizeStr(city)
-  const place = results.find(r => {
+  const frenchResults = results.filter(r =>
+    (r.formatted_address ?? '').toLowerCase().includes('france')
+  )
+  const pool = frenchResults.length > 0 ? frenchResults : []
+  if (!pool.length) return NextResponse.json({ error: 'Établissement introuvable en France. Vérifiez le nom exact sur Google Maps.' }, { status: 404 })
+
+  const place = pool.find(r => {
     const addr = normalizeStr(r.formatted_address ?? r.vicinity ?? '')
     return addr.includes(cityNorm)
-  }) ?? results[0]
+  }) ?? pool[0]
 
   // 2. Détails
   const fields = [
