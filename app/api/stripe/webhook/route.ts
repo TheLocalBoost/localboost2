@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
@@ -25,6 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook invalide' }, { status: 400 })
   }
 
+  // Retourner 200 immédiatement — Stripe a un timeout ~30s et le traitement peut dépasser ça
+  waitUntil(handleEvent(event))
+  return NextResponse.json({ received: true })
+}
+
+async function handleEvent(event: Stripe.Event) {
   switch (event.type) {
 
     case 'checkout.session.completed': {
@@ -435,6 +442,4 @@ ${(pack.guideSteps as string[]).map((step: string, i: number) => `
       break
     }
   }
-
-  return NextResponse.json({ received: true })
 }
