@@ -94,7 +94,7 @@ RÈGLES ABSOLUES :
 - Ne jamais afficher un chiffre qui ne provient pas des données ci-dessus.
 - Tout le contenu doit correspondre au secteur ${category} uniquement.
 
-Réponds UNIQUEMENT avec ce JSON valide (pas de markdown, pas de ```json) :
+Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 {
   "description": "...",
   "posts": ["post1","post2","post3","post4","post5","post6","post7","post8","post9","post10","post11","post12"],
@@ -107,7 +107,7 @@ Réponds UNIQUEMENT avec ce JSON valide (pas de markdown, pas de ```json) :
     "incident": ["t1","t2","t3"],
     "fidele": ["t1","t2","t3","t4"]
   },
-  "guideSteps": ["étape1","étape2","étape3","étape4","étape5","étape6"],
+  "guideSteps": ["etape1","etape2","etape3","etape4","etape5","etape6"],
   "actionPlan": "1. Action concrète (temps estimé)\\n2. Action concrète (temps estimé)\\n3. Action concrète (temps estimé)"
 }
 
@@ -123,11 +123,11 @@ Contraintes détaillées :
 
 SECTEUR : ${category}. Tout le contenu doit correspondre UNIQUEMENT au secteur ${category}. Ne jamais générer de contenu pour un autre secteur médical ou professionnel.
 
-Réponds UNIQUEMENT avec ce JSON valide (pas de markdown, pas de ```json) :
+Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 {
   "faq": [{"q": "...", "a": "..."}],
   "services": [{"name": "...", "description": "..."}],
-  "photoIdeas": ["idée1", "idée2"]
+  "photoIdeas": ["idee1", "idee2"]
 }
 
 Contraintes :
