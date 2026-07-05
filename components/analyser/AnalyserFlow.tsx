@@ -68,7 +68,7 @@ export default function AnalyserFlow() {
   const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
 
-  const onSkip = () => setScreen(7)
+  const onSkip = () => { track('skipped_to_cta', {}); setScreen(7) }
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
     setNom(paramNom)
@@ -113,6 +113,7 @@ export default function AnalyserFlow() {
       })
 
       setScreen(2)
+      track('saw_diagnostic', { score: data.score, city: data.city, category: data.category })
 
       // Content generation in background — starts immediately after API result
       setGenerating(true)
@@ -175,13 +176,13 @@ export default function AnalyserFlow() {
           <ScreenDiagnostic
             key="screen-2"
             result={result}
-            onNext={() => setScreen(3)}
+            onNext={() => { track('saw_temps', {}); setScreen(3) }}
           />
         )}
         {screen === 3 && (
           <ScreenTemps
             key="screen-3"
-            onNext={() => setScreen(4)}
+            onNext={() => { track('saw_problemes', {}); setScreen(4) }}
             onSkip={onSkip}
           />
         )}
@@ -192,7 +193,7 @@ export default function AnalyserFlow() {
             generatedDescription={generatedDescription}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => setScreen(5)}
+            onNext={() => { track('saw_travail', {}); setScreen(5) }}
             onSkip={onSkip}
           />
         )}
@@ -204,7 +205,7 @@ export default function AnalyserFlow() {
             generatedPosts={generatedPosts}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => setScreen(6)}
+            onNext={() => { track('saw_livrables', {}); setScreen(6) }}
             onSkip={onSkip}
           />
         )}
@@ -213,7 +214,7 @@ export default function AnalyserFlow() {
             key="screen-6"
             result={result}
             totalElements={totalElements}
-            onNext={() => setScreen(7)}
+            onNext={() => { track('saw_cta', {}); setScreen(7) }}
             onSkip={onSkip}
           />
         )}
