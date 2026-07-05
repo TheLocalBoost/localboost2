@@ -38,9 +38,14 @@ async function getData() {
     { count: waitlist },
     { count: evLanded },
     { count: evAnalysed },
-    { count: evDesc },
+    { count: evDiag },
+    { count: evTemps },
+    { count: evProb },
+    { count: evTravail },
+    { count: evLivr },
     { count: evCta },
     { count: evCtaClick },
+    { count: evSkipped },
     { data: recentRaw },
     { data: dailyRaw },
   ] = await Promise.all([
@@ -54,8 +59,13 @@ async function getData() {
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'email_click_landed').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'analyzer_result').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_diagnostic').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_temps').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_problemes').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_travail').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_livrables').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_cta').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'cta_click_subscribe').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'skipped_to_cta').gte('created_at', FUNNEL_SINCE),
     sb.from('outreach_events').select('email, variant, created_at').eq('event', 'sent').gte('created_at', SINCE).order('created_at', { ascending: false }).limit(15),
     sb.from('outreach_events').select('created_at').eq('event', 'sent').gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
   ])
@@ -96,9 +106,14 @@ async function getData() {
     funnel: {
       landed:   evLanded   ?? 0,
       analysed: evAnalysed ?? 0,
-      sawDesc:  evDesc     ?? 0,
-      sawCta:   evCta      ?? 0,
+      diag:     evDiag     ?? 0,
+      temps:    evTemps    ?? 0,
+      prob:     evProb     ?? 0,
+      travail:  evTravail  ?? 0,
+      livr:     evLivr     ?? 0,
+      cta:      evCta      ?? 0,
       ctaClick: evCtaClick ?? 0,
+      skipped:  evSkipped  ?? 0,
     },
   }
 }
@@ -146,24 +161,45 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         </div>
 
         {/* Funnel */}
-        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20, padding: '20px 24px' }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Envoi → clic → analyse → CTA · depuis 05/07 14h06</p>
-          <div style={{ display: 'flex', gap: 0 }}>
-            {[
-              { label: 'Clic email', n: d.funnel.landed, ref: d.sends, color: '#3b82f6' },
-              { label: 'Analyse', n: d.funnel.analysed, ref: d.funnel.landed, color: '#8b5cf6' },
-              { label: 'Vu diagnostic', n: d.funnel.sawDesc, ref: d.funnel.analysed, color: '#f59e0b' },
-              { label: 'Vu CTA', n: d.funnel.sawCta, ref: d.funnel.sawDesc, color: '#f97316' },
-              { label: 'Clic CTA', n: d.funnel.ctaClick, ref: d.funnel.sawCta, color: '#ef4444' },
-            ].map(({ label, n, ref, color }, i, arr) => (
-              <div key={label} style={{ flex: 1, textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid #f3f4f6' : 'none', padding: '0 8px' }}>
-                <p style={{ margin: 0, fontSize: 24, fontWeight: 800, color }}>{n}</p>
-                <p style={{ margin: '2px 0 4px', fontSize: 11, color: '#9ca3af' }}>{pct(n, ref)}</p>
-                <p style={{ margin: 0, fontSize: 11, color: '#6b7280', lineHeight: 1.3 }}>{label}</p>
-              </div>
-            ))}
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20 }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel — 6 écrans</h2>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#9ca3af' }}>email → analyse → diagnostic → CTA · depuis FUNNEL_SINCE</p>
           </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr>{th('Étape')}{th('N')}{th('vs précédent')}{th('vs envois')}</tr></thead>
+            <tbody>
+              {[
+                { label: 'Clic email',          n: d.funnel.landed,   ref: d.sends,          top: d.sends },
+                { label: 'Analyse complète',     n: d.funnel.analysed, ref: d.funnel.landed,  top: d.sends },
+                { label: '1 — Diagnostic',       n: d.funnel.diag,     ref: d.funnel.analysed,top: d.sends },
+                { label: '2 — Temps',            n: d.funnel.temps,    ref: d.funnel.diag,    top: d.sends },
+                { label: '3 — Problèmes',        n: d.funnel.prob,     ref: d.funnel.temps,   top: d.sends },
+                { label: '4 — Travail',          n: d.funnel.travail,  ref: d.funnel.prob,    top: d.sends },
+                { label: '5 — Livrables',        n: d.funnel.livr,     ref: d.funnel.travail, top: d.sends },
+                { label: '6 — CTA affiché',      n: d.funnel.cta,      ref: d.funnel.livr,    top: d.sends },
+                { label: 'Clic achat',           n: d.funnel.ctaClick, ref: d.funnel.cta,     top: d.sends },
+              ].map(({ label, n, ref, top }) => (
+                <tr key={label}>
+                  {td(label)}
+                  {td(n, { bold: true })}
+                  {td(pct(n, ref), { color: n > 0 ? '#7c3aed' : undefined })}
+                  {td(pct(n, top), { color: '#9ca3af' })}
+                </tr>
+              ))}
+              <tr>
+                <td style={{ padding: '8px 14px', fontSize: 12, color: '#9ca3af', fontStyle: 'italic', borderTop: '1px solid #e5e7eb' }} colSpan={2}>
+                  Skip direct vers CTA
+                </td>
+                <td style={{ padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#f59e0b', borderTop: '1px solid #e5e7eb' }}>
+                  {d.funnel.skipped}
+                </td>
+                <td style={{ padding: '8px 14px', fontSize: 12, color: '#9ca3af', borderTop: '1px solid #e5e7eb' }}>
+                  {pct(d.funnel.skipped, d.funnel.analysed)} des analyses
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         {/* Graphique 7j */}
