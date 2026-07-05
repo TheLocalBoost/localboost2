@@ -92,7 +92,7 @@ export default function ScreenDiagnostic({ result, onNext }: Props) {
 
       <h2 className="text-xl font-bold text-gray-900 mb-8 leading-snug">
         Voici ce qu&apos;un client voit aujourd&apos;hui en cherchant{' '}
-        {result.category} à {result.city}
+        {result.name} à {result.city}
       </h2>
 
       <ol className="space-y-4 mb-10 list-none p-0">
