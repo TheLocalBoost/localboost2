@@ -9,7 +9,7 @@ export const revalidate = 60
 
 // Depuis switch texte pur + URL courte (03/07 20h)
 const SINCE        = '2026-07-03T20:00:00.000Z'
-const FUNNEL_SINCE = '2026-07-05T07:45:02.000Z'
+const FUNNEL_SINCE = '2026-07-05T10:39:04.000Z'
 
 const SUBJECTS: Record<string, string> = {
   '0': 'un habitant de {ville} cherche un {s} demain',
@@ -53,7 +53,7 @@ async function getData() {
     sb.from('waitlist').select('*', { count: 'exact', head: true }),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'email_click_landed').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'analyzer_result').gte('created_at', FUNNEL_SINCE),
-    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_description').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_diagnostic').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_cta').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'cta_click_subscribe').gte('created_at', FUNNEL_SINCE),
     sb.from('outreach_events').select('email, variant, created_at').eq('event', 'sent').gte('created_at', SINCE).order('created_at', { ascending: false }).limit(15),
@@ -148,12 +148,12 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         {/* Funnel */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20, padding: '20px 24px' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Envoi → clic → analyse → CTA · depuis 03/07 20h</p>
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Envoi → clic → analyse → CTA · depuis 05/07 10h39</p>
           <div style={{ display: 'flex', gap: 0 }}>
             {[
               { label: 'Clic email', n: d.funnel.landed, ref: d.sends, color: '#3b82f6' },
               { label: 'Analyse', n: d.funnel.analysed, ref: d.funnel.landed, color: '#8b5cf6' },
-              { label: 'Vu description', n: d.funnel.sawDesc, ref: d.funnel.analysed, color: '#f59e0b' },
+              { label: 'Vu diagnostic', n: d.funnel.sawDesc, ref: d.funnel.analysed, color: '#f59e0b' },
               { label: 'Vu CTA', n: d.funnel.sawCta, ref: d.funnel.sawDesc, color: '#f97316' },
               { label: 'Clic CTA', n: d.funnel.ctaClick, ref: d.funnel.sawCta, color: '#ef4444' },
             ].map(({ label, n, ref, color }, i, arr) => (
