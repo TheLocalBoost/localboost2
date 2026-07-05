@@ -7,6 +7,7 @@ import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 import ScreenInput      from './ScreenInput'
 import ScreenLoading    from './ScreenLoading'
 import ScreenDiagnostic from './ScreenDiagnostic'
+import ScreenTemps      from './ScreenTemps'
 import ScreenProblemes  from './ScreenProblemes'
 import ScreenTravail    from './ScreenTravail'
 import ScreenLivrables  from './ScreenLivrables'
@@ -47,11 +48,12 @@ export interface AnalysisResult {
 // screen indexes:
 // 0 = input
 // 1 = loading
-// 2 = diagnostic
-// 3 = problemes
-// 4 = travail
-// 5 = livrables
-// 6 = cta
+// 2 = diagnostic  (step 1/6 — no skip link)
+// 3 = temps        (step 2/6)  ← NEW
+// 4 = problemes    (step 3/6)
+// 5 = travail      (step 4/6)
+// 6 = livrables    (step 5/6)
+// 7 = cta          (step 6/6 — no skip link)
 
 export default function AnalyserFlow() {
   const [screen, setScreen] = useState(0)
@@ -65,6 +67,8 @@ export default function AnalyserFlow() {
   const [generatedPosts, setGeneratedPosts]             = useState<string[]>([])
   const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
+
+  const onSkip = () => setScreen(7)
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
     setNom(paramNom)
@@ -166,40 +170,54 @@ export default function AnalyserFlow() {
           <ScreenLoading key="screen-1" nom={nom} ville={ville} />
         )}
         {screen === 2 && result && (
-          <ScreenDiagnostic key="screen-2" result={result} onNext={() => setScreen(3)} />
+          <ScreenDiagnostic
+            key="screen-2"
+            result={result}
+            onNext={() => setScreen(3)}
+          />
         )}
-        {screen === 3 && result && (
-          <ScreenProblemes
+        {screen === 3 && (
+          <ScreenTemps
             key="screen-3"
+            onNext={() => setScreen(4)}
+            onSkip={onSkip}
+          />
+        )}
+        {screen === 4 && result && (
+          <ScreenProblemes
+            key="screen-4"
             result={result}
             generatedDescription={generatedDescription}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => setScreen(4)}
+            onNext={() => setScreen(5)}
+            onSkip={onSkip}
           />
         )}
-        {screen === 4 && result && (
+        {screen === 5 && result && (
           <ScreenTravail
-            key="screen-4"
+            key="screen-5"
             result={result}
             generatedDescription={generatedDescription}
             generatedPosts={generatedPosts}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => setScreen(5)}
-          />
-        )}
-        {screen === 5 && result && (
-          <ScreenLivrables
-            key="screen-5"
-            result={result}
-            totalElements={totalElements}
             onNext={() => setScreen(6)}
+            onSkip={onSkip}
           />
         )}
         {screen === 6 && result && (
-          <ScreenCTA
+          <ScreenLivrables
             key="screen-6"
+            result={result}
+            totalElements={totalElements}
+            onNext={() => setScreen(7)}
+            onSkip={onSkip}
+          />
+        )}
+        {screen === 7 && result && (
+          <ScreenCTA
+            key="screen-7"
             result={result}
             pricingUrl={pricingUrl}
           />

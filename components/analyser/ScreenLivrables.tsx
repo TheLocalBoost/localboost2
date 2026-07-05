@@ -6,6 +6,7 @@ interface Props {
   result: AnalysisResult
   totalElements: number
   onNext: () => void
+  onSkip: () => void
 }
 
 const DELIVERABLES = [
@@ -23,15 +24,15 @@ const DELIVERABLES = [
   },
   {
     label:  '30 modèles de réponses futures',
-    detail: 'Pour tous les types d\'avis que vous recevrez — positifs, négatifs, neutres',
+    detail: "Pour tous les types d'avis que vous recevrez — positifs, négatifs, neutres",
   },
   {
-    label:  'QR code + script de relance SMS',
-    detail: 'Pour collecter des avis clients sans y penser',
+    label:  "QR code + script de relance SMS",
+    detail: "Pour collecter des avis clients sans y penser",
   },
   {
-    label:  'Plan d\'action basé sur vos concurrents',
-    detail: null, // injected dynamically below with result.city
+    label:  "Plan d'action basé sur vos concurrents",
+    detail: null,
   },
   {
     label:  'Guide de mise en ligne',
@@ -39,18 +40,23 @@ const DELIVERABLES = [
   },
 ]
 
-export default function ScreenLivrables({ result, totalElements, onNext }: Props) {
+export default function ScreenLivrables({ result, totalElements, onNext, onSkip }: Props) {
   return (
-    <ScreenLayout centered={false}>
+    <ScreenLayout step={5} totalSteps={6} onSkip={onSkip} centered={false}>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
         Ce que vous récupérez
       </p>
 
-      <h2 className="text-xl font-bold text-gray-900 mb-6 leading-snug">
+      <h2 className="text-xl font-bold text-gray-900 mb-2 leading-snug">
         {totalElements} éléments préparés pour {result.name}
       </h2>
 
-      <ul className="space-y-2 mb-6">
+      {/* Time recap */}
+      <p className="text-sm text-gray-400 mb-6">
+        7 heures en manuel. <span className="font-semibold text-gray-600">0 de votre côté.</span>
+      </p>
+
+      <ul className="space-y-2 mb-5">
         {DELIVERABLES.map((item, i) => (
           <li
             key={i}
@@ -69,9 +75,11 @@ export default function ScreenLivrables({ result, totalElements, onNext }: Props
         ))}
       </ul>
 
-      <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 mb-6">
-        <p className="text-sm text-gray-600 leading-relaxed">
-          Généré automatiquement à partir de vos données Google, relu par un humain, livré sous 48h.
+      {/* Prominent no-tech-skills line */}
+      <div className="rounded-xl border border-[#16a34a] bg-[#f0fdf4] px-4 py-3 mb-6 flex items-center gap-3">
+        <span className="text-[#16a34a] font-bold text-base shrink-0">✓</span>
+        <p className="text-sm font-semibold text-[#16a34a]">
+          Aucune compétence technique requise — tout est prêt à copier-coller.
         </p>
       </div>
 
