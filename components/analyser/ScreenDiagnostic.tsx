@@ -109,8 +109,12 @@ export default function ScreenDiagnostic({ result, onNext }: Props) {
           Ces signaux représentent environ{' '}
           <span className="font-bold text-gray-900">
             ~{result.lostCalls} appels potentiels manqués ce mois-ci
+          </span>
+          . Chaque appel peut représenter jusqu&apos;à{' '}
+          <span className="font-bold text-gray-900">
+            {Math.round(result.lostRevenue / result.lostCalls)} € de panier moyen
           </span>{' '}
-          — des clients qui ont choisi un concurrent visible.
+          dans votre secteur.
         </p>
       )}
 
