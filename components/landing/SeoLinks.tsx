@@ -16,7 +16,7 @@ export default function SeoLinks() {
           Analyser votre fiche Google par secteur et ville
         </h2>
         <p className="text-gray-500 text-center mb-10">
-          Diagnostic gratuit · Sans inscription · Résultat en 30 secondes
+          Diagnostic gratuit · Sans inscription · Résultat en 60 secondes
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

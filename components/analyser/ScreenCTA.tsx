@@ -1,6 +1,7 @@
 'use client'
 import type { AnalysisResult } from './AnalyserFlow'
 import ScreenLayout from './ScreenLayout'
+import { track } from '@/lib/track'
 
 interface Props {
   result: AnalysisResult
@@ -19,7 +20,7 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
       </h2>
 
       <p className="text-sm text-gray-400 mb-8">
-        {result.city} · {result.category}
+        {result.city}
       </p>
 
       <div className="mb-8">
@@ -40,6 +41,7 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
 
       <a
         href={pricingUrl}
+        onClick={() => track('cta_click_subscribe', { name: result.name, city: result.city })}
         className="block w-full rounded-xl bg-[#16a34a] hover:bg-[#15803d] px-5 py-4 text-sm font-bold text-white text-center transition mb-3"
       >
         Récupérer mon rapport — 39€

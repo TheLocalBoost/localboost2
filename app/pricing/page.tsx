@@ -29,8 +29,8 @@ function PricingContent() {
   const searchParams = useSearchParams()
   const city         = searchParams.get('city') ?? ''
   const nomParam     = searchParams.get('nom') ?? ''
-  const scoreParam   = parseInt(searchParams.get('score') ?? '0') || 0
-  const revenueParam = parseInt(searchParams.get('revenue') ?? '0') || 0
+  const scoreParam  = parseInt(searchParams.get('score') ?? '0') || 0
+  const callsParam  = parseInt(searchParams.get('calls') ?? '0') || 0
 
   const [user, setUser]               = useState<{ email: string; id: string } | null>(null)
   const [loading, setLoading]         = useState(false)
@@ -47,10 +47,10 @@ function PricingContent() {
     })
     // Track pricing page load
     track('pricing_loaded', {
-      nom:     nomParam,
+      nom:   nomParam,
       city,
-      score:   scoreParam,
-      revenue: revenueParam,
+      score: scoreParam,
+      calls: callsParam,
     })
   }, [])
 
@@ -59,7 +59,7 @@ function PricingContent() {
     if (!email || !email.includes('@')) { setEmailError(true); return }
     setEmailError(false)
     setLoading(true)
-    track('checkout_started', { nom: nomParam, city, score: scoreParam, revenue: revenueParam })
+    track('checkout_started', { nom: nomParam, city, score: scoreParam, calls: callsParam })
     try {
       const res = await fetch('/api/stripe/checkout-oneshot', {
         method:  'POST',
@@ -142,12 +142,11 @@ function PricingContent() {
         </div>
 
         {/* Opportunité — seulement si suffisamment significative */}
-        {revenueParam > 150 && (
+        {callsParam > 5 && (
           <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 mb-4">
             <p className="text-sm text-amber-800">
-              D'après notre analyse, votre fiche actuelle peut laisser partir environ <strong>~{revenueParam}€/mois</strong> d'opportunités clients vers vos concurrents.
+              D'après notre analyse, votre fiche présente <strong>~{callsParam} signaux d'appels potentiellement manqués ce mois-ci</strong> — des clients qui ont probablement contacté un concurrent visible.
             </p>
-            <p className="text-xs text-amber-700 mt-1">Estimation basée sur le panier moyen du secteur et le volume de recherches locales manquées détecté sur votre fiche.</p>
           </div>
         )}
 

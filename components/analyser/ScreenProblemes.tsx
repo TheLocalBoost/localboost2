@@ -11,41 +11,19 @@ interface Props {
   onSkip: () => void
 }
 
-// Mirrored from backend PANIER_MOYEN
-// Sources : FIDUCIAL 2025 (boulanger), Travaux.com 2025 (plombier),
-// Depanneo 2024 (electricien), Esprit-Coiffure 2024 (coiffeur),
-// idGarages 2024 (garagiste), FIDUCIAL 2024 (restaurant)
-const PANIER_MOYEN: Record<string, number> = {
-  plombier: 200, electricien: 180, coiffeur: 55, boulanger: 75,
-  restaurateur: 70, garagiste: 300, serrurier: 150, kine: 70,
-  dentiste: 150, medecin: 80, pharmacie: 40, hotel: 100,
-  fleuriste: 55, opticien: 200, artisan: 150, peintre: 180, carreleur: 200,
-}
-
-// Facteur de conversion avis sans réponse → client potentiellement perdu.
-// Hypothèse documentée : 1 visiteur sur 3 hésite face à un avis sans réponse
-// et finit par contacter un concurrent plutôt que de rappeler.
-// Source : BrightLocal Consumer Review Survey 2023 (32% abandonnent si avis sans réponse visible).
-const UNANSWERED_REVIEW_CONVERSION = 0.30
-
 interface Probleme {
   text: string
-  impact?: string
 }
 
 function getProblemes(result: AnalysisResult): Probleme[] {
   const items: Probleme[] = []
   const topComp    = result.competitors?.[0] ?? null
   const unanswered = result.recentReviews?.length ?? 0
-  const panier     = PANIER_MOYEN[result.category] ?? 150
 
-  // 1. Impact financier des avis sans réponse — angle DIFFÉRENT de ScreenDiagnostic
-  // (Diagnostic = visibilité/réputation ; ici = coût potentiel chiffré)
+  // 1. Avis sans réponse — angle comportemental (défendable : stat BrightLocal vérifiable)
   if (unanswered > 0) {
-    const impact = Math.round(unanswered * panier * UNANSWERED_REVIEW_CONVERSION)
     items.push({
-      text: `${unanswered} avis ${unanswered > 1 ? 'sont restés sans réponse' : 'est resté sans réponse'}. En estimant qu'un visiteur sur trois hésite face à un avis sans réponse,`,
-      impact: `jusqu'à ${impact}€ de manque à gagner potentiel.`,
+      text: `${unanswered} avis ${unanswered > 1 ? 'sont restés sans réponse' : 'est resté sans réponse'} — visible par chaque visiteur qui compare avant d'appeler. 1 visiteur sur 3 repart sans appeler face à un avis sans réponse (BrightLocal 2023).`,
     })
   }
 
@@ -120,12 +98,7 @@ export default function ScreenProblemes({
         {problemes.map((p, i) => (
           <li key={i} className="flex items-start gap-3 text-sm leading-relaxed">
             <span className="text-gray-300 shrink-0 mt-0.5 font-bold select-none">—</span>
-            <span className="text-gray-700">
-              {p.text}
-              {p.impact && (
-                <span className="block mt-0.5 font-semibold text-gray-900">{p.impact}</span>
-              )}
-            </span>
+            <span className="text-gray-700">{p.text}</span>
           </li>
         ))}
       </ul>

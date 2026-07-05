@@ -152,7 +152,7 @@ export default function AnalyserFlow() {
     1 + 1 + 20 + 12 + 1 + 20 + (result?.recentReviews?.length || 0) + 30 + 1 + 1 + 1
 
   const pricingUrl = result
-    ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&score=${result.score}&revenue=${result.lostRevenue}${email ? `&email=${encodeURIComponent(email)}` : ''}`
+    ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&calls=${result.lostCalls}${email ? `&email=${encodeURIComponent(email)}` : ''}`
     : '/pricing'
 
   return (
