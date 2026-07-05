@@ -22,6 +22,12 @@ const PANIER_MOYEN: Record<string, number> = {
   fleuriste: 55, opticien: 200, artisan: 150, peintre: 180, carreleur: 200,
 }
 
+// Facteur de conversion avis sans réponse → client potentiellement perdu.
+// Hypothèse documentée : 1 visiteur sur 3 hésite face à un avis sans réponse
+// et finit par contacter un concurrent plutôt que de rappeler.
+// Source : BrightLocal Consumer Review Survey 2023 (32% abandonnent si avis sans réponse visible).
+const UNANSWERED_REVIEW_CONVERSION = 0.30
+
 interface Probleme {
   text: string
   impact?: string
@@ -29,24 +35,24 @@ interface Probleme {
 
 function getProblemes(result: AnalysisResult): Probleme[] {
   const items: Probleme[] = []
-  const topComp   = result.competitors?.[0] ?? null
+  const topComp    = result.competitors?.[0] ?? null
   const unanswered = result.recentReviews?.length ?? 0
-  const panier    = PANIER_MOYEN[result.category] ?? 150
+  const panier     = PANIER_MOYEN[result.category] ?? 150
 
-  // 1. Impact financier des avis sans réponse — angle DIFFÉRENT de l'écran Diagnostic
-  // (Diagnostic montrait la visibilité ; ici on chiffre l'impact potentiel)
+  // 1. Impact financier des avis sans réponse — angle DIFFÉRENT de ScreenDiagnostic
+  // (Diagnostic = visibilité/réputation ; ici = coût potentiel chiffré)
   if (unanswered > 0) {
-    const impact = unanswered * panier
+    const impact = Math.round(unanswered * panier * UNANSWERED_REVIEW_CONVERSION)
     items.push({
-      text: `${unanswered} avis ${unanswered > 1 ? 'sont restés sans réponse' : 'est resté sans réponse'}. Sur un panier moyen estimé à ${panier}€ dans votre secteur,`,
+      text: `${unanswered} avis ${unanswered > 1 ? 'sont restés sans réponse' : 'est resté sans réponse'}. En estimant qu'un visiteur sur trois hésite face à un avis sans réponse,`,
       impact: `jusqu'à ${impact}€ de manque à gagner potentiel.`,
     })
   }
 
-  // 2. Concurrent nommé avec détails (plus précis que la position seule de l'écran 1)
+  // 2. Concurrent nommé avec détails (plus précis que la position seule de ScreenDiagnostic)
   if (topComp && topComp.estimatedScore > result.score) {
-    const ratingWorse = topComp.rating > result.rating
-    const reviewWorse = topComp.reviewCount > result.reviews
+    const ratingWorse  = topComp.rating > result.rating
+    const reviewWorse  = topComp.reviewCount > result.reviews
     items.push({
       text: ratingWorse
         ? `${topComp.name} (${topComp.rating.toFixed(1)}★, ${topComp.reviewCount} avis) apparaît avant vous avec une note plus élevée à ${result.city}.`
@@ -56,24 +62,24 @@ function getProblemes(result: AnalysisResult): Probleme[] {
     })
   }
 
-  // 3. Horaires — axe opérationnel, non présent à l'écran Diagnostic
+  // 3. Horaires — axe opérationnel (non présent à l'écran Diagnostic)
   if (!result.criteria?.horaires) {
     items.push({
       text: "Vos horaires ne sont pas renseignés. Un client qui cherche en dehors des heures habituelles ne sait pas si vous êtes ouvert — il appelle ailleurs.",
     })
   }
 
-  // 4. No recent activity — framing différent (perte de position vs apparence inactive)
+  // 4. Activité récente — framing différent (perte de position vs apparence inactive)
   if (!result.criteria?.recentReview && items.length < 4) {
     items.push({
-      text: "Aucun avis ni activité récente depuis plus de 3 mois sur la fiche. Une fiche inactive perd progressivement sa visibilité dans les résultats locaux.",
+      text: "Aucun avis ni activité récente depuis plus de 3 mois sur la fiche. Une fiche inactive perd progressivement sa position dans les résultats locaux.",
     })
   }
 
-  // 5. Note basse — angle levier (pas répété si déjà dans Diagnostic)
+  // 5. Note basse — levier = réponses aux avis (angle différent du diagnostic initial)
   if (result.rating < 4.3 && items.length < 4) {
     items.push({
-      text: `Note de ${result.rating.toFixed(1)}/5 actuelle. Répondre aux avis — même les moins positifs — est le levier le plus rapide pour l'améliorer.`,
+      text: `Note de ${result.rating.toFixed(1)}/5 actuelle. Répondre aux avis — même les moins positifs — est le levier le plus rapide pour la faire progresser.`,
     })
   }
 
@@ -95,10 +101,10 @@ export default function ScreenProblemes({
   onNext,
   onSkip,
 }: Props) {
-  const problemes   = getProblemes(result)
-  const previewText = generatedReview || generatedDescription || null
+  const problemes    = getProblemes(result)
+  const previewText  = generatedReview || generatedDescription || null
   const previewLabel = generatedReview ? 'Aperçu — réponse à un avis' : 'Aperçu — description rédigée'
-  const showPreview = generating || !!previewText
+  const showPreview  = generating || !!previewText
 
   return (
     <ScreenLayout step={3} totalSteps={6} onSkip={onSkip}>
