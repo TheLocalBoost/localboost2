@@ -144,9 +144,11 @@ export default function AnalyserFlow() {
     }
   }
 
-  // 1 description + 12 publications + N réponses (max 3) + 10 modèles + 2 (QR+SMS) + 1 plan + 1 guide
+  // Décompte complet du pack :
+  // 1 description + 1 services + 20 FAQ + 12 publications + 1 calendrier + 20 photos
+  // + N réponses perso + 30 modèles + 1 QR+script SMS + 1 guide + 1 plan d'action
   const totalElements =
-    1 + 12 + (result?.recentReviews?.length || 0) + 10 + 2 + 1 + 1
+    1 + 1 + 20 + 12 + 1 + 20 + (result?.recentReviews?.length || 0) + 30 + 1 + 1 + 1
 
   const pricingUrl = result
     ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&score=${result.score}&revenue=${result.lostRevenue}${email ? `&email=${encodeURIComponent(email)}` : ''}`

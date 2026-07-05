@@ -27,13 +27,13 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
         <span className="text-sm text-gray-400 ml-2">une seule fois</span>
       </div>
 
-      {/* Satisfait ou remboursé — encart mis en valeur */}
+      {/* Satisfait ou remboursé — encart mis en valeur, délai exact 30 jours */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 mb-6 flex items-center gap-3">
         <span className="text-sm font-bold text-[#16a34a] shrink-0">✓</span>
         <div>
-          <p className="text-sm font-semibold text-gray-700">Satisfait ou remboursé</p>
+          <p className="text-sm font-semibold text-gray-700">Satisfait ou remboursé sous 30 jours</p>
           <p className="text-xs text-gray-400 mt-0.5">
-            Si le rapport ne correspond pas à votre fiche, on vous rembourse.
+            Si vous n'êtes pas satisfait dans les 30 jours, on vous rembourse — sans question.
           </p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
       </a>
 
       <p className="text-xs text-gray-400 text-center">
-        Livré sous 48h après vérification · Paiement sécurisé
+        Livré par email sous 48h · Paiement sécurisé
       </p>
     </ScreenLayout>
   )

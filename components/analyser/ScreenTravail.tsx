@@ -13,13 +13,12 @@ interface Props {
 }
 
 // BACKEND GAP: "Prêt" is based on in-session state, not DB.
-// When generating=false the pack always includes all 4 deliverables.
+// When generating=false the pack always includes all 5 deliverable groups.
 
 // Single source of truth for issue counting — shared between title and bar.
 // Mirrors the criteria checked by ScreenDiagnostic / ScreenProblemes.
-// Issues not covered by the paid report (owner must act directly in Google My Business):
-//   • !criteria.photos   → add photos yourself
-//   • !criteria.horaires → update schedule yourself
+// Issue not covered by the paid report (owner must act directly in Google My Business):
+//   • !criteria.horaires → update schedule yourself (Google My Business, < 5 min)
 function countIssues(result: AnalysisResult) {
   const description  = !result.criteria?.description
   const photos       = !result.criteria?.photos
@@ -28,10 +27,9 @@ function countIssues(result: AnalysisResult) {
   const avis20       = !result.criteria?.avis20
   const unanswered   = (result.recentReviews?.length ?? 0) > 0
 
-  const total = [description, photos, recentReview, horaires, avis20, unanswered].filter(Boolean).length
-  // Items NOT covered by the report — displayed as separate recommendations
-  const notInReport = [photos, horaires].filter(Boolean).length
-  return { total, notInReport, photos, horaires }
+  const total      = [description, photos, recentReview, horaires, avis20, unanswered].filter(Boolean).length
+  const notInReport = horaires ? 1 : 0
+  return { total, notInReport, horaires }
 }
 
 export default function ScreenTravail({
@@ -48,69 +46,61 @@ export default function ScreenTravail({
   const descReady     = !generating || !!generatedDescription
   const postsReady    = !generating || generatedPosts.length > 0
 
-  const { total: N, notInReport: manualCount, photos: needsPhotos, horaires: needsHoraires } = countIssues(result)
+  const { total: N, notInReport: manualCount, horaires: needsHoraires } = countIssues(result)
   const reportCount = Math.max(0, N - manualCount)
 
-  // Bar denominator = N (same as title). When N=0, show bonus deliverables 4/4.
-  const barTotal = N > 0 ? N : 4
-  const barReady = N > 0 ? reportCount : 4
-  const pct = Math.round((barReady / barTotal) * 100)
+  const barTotal = N > 0 ? N : 5
+  const barReady = N > 0 ? reportCount : 5
+  const pct      = Math.round((barReady / barTotal) * 100)
 
   const unansweredCount = result.recentReviews?.length ?? 0
 
   const reportChecklist = [
     {
-      id:       'description',
-      label:    'Expliquer votre activité',
-      detail:   'Description Google rédigée pour votre métier et votre ville',
+      id:       'fiche',
+      label:    'Rendre votre fiche convaincante',
+      detail:   'Description professionnelle + services rédigés pour Google + FAQ de 20 questions/réponses',
       ready:    descReady,
       spinning: descSpinning,
     },
     {
       id:       'posts',
       label:    'Montrer que vous êtes actif',
-      detail:   '12 publications prêtes à poster sur votre fiche (3 mois)',
+      detail:   '12 publications + calendrier de diffusion sur 3 mois (1 par semaine)',
       ready:    postsReady,
       spinning: postsSpinning,
     },
     {
-      id:       'replies',
-      label:    'Répondre à vos avis',
-      detail:   unansweredCount > 0
-        ? `${unansweredCount} réponse${unansweredCount > 1 ? 's' : ''} personnalisée${unansweredCount > 1 ? 's' : ''} + 30 modèles pour les prochains avis`
-        : '30 modèles de réponses pour tous vos avis clients',
+      id:       'photos',
+      label:    'Savoir quelles photos publier',
+      detail:   '20 idées de photos adaptées à votre métier, prêtes à shooter et à poster',
       ready:    true,
       spinning: false,
     },
     {
-      id:       'contact',
-      label:    'Donner envie de vous contacter',
-      detail:   "QR code de collecte d'avis + script de relance SMS",
+      id:       'confiance',
+      label:    'Donner confiance avant le premier appel',
+      detail:   unansweredCount > 0
+        ? `${unansweredCount} réponse${unansweredCount > 1 ? 's' : ''} personnalisée${unansweredCount > 1 ? 's' : ''} + 30 modèles classés par situation + QR code d'avis + script SMS`
+        : '30 modèles de réponses classés par situation + QR code d\'avis + script SMS',
+      ready:    true,
+      spinning: false,
+    },
+    {
+      id:       'heures',
+      label:    'Gagner plusieurs heures',
+      detail:   "Guide de mise en ligne pas à pas + plan d'action personnalisé basé sur vos concurrents",
       ready:    true,
       spinning: false,
     },
   ]
 
-  // Manual recommendations — only shown when the issue is actually detected
-  const manualChecklist = [
-    ...(needsPhotos ? [{
-      id:     'photos',
-      label:  'Ajouter des photos récentes',
-      detail: `${result.photos ?? 0} photo${(result.photos ?? 0) !== 1 ? 's' : ''} actuellement — objectif 15 à 30. À publier depuis Google Maps ou votre téléphone.`,
-    }] : []),
-    ...(needsHoraires ? [{
-      id:     'horaires',
-      label:  'Renseigner vos horaires',
-      detail: 'À mettre à jour dans Google My Business — prend moins de 5 minutes.',
-    }] : []),
-  ]
-
   const titleLine2 =
     N === 0
-      ? '4 améliorations déjà prêtes pour vous.'
+      ? '5 groupes de solutions déjà prêts pour vous.'
       : reportCount === N
       ? `${N === 1 ? 'La solution est prête' : `Les ${N} solutions sont prêtes`}.`
-      : `${reportCount} ${reportCount > 1 ? 'solutions incluses' : 'solution incluse'} dans le rapport${manualCount > 0 ? ` — ${manualCount} action${manualCount > 1 ? 's' : ''} à faire vous-même` : ''}.`
+      : `${reportCount} ${reportCount > 1 ? 'solutions incluses' : 'solution incluse'} dans le rapport — ${manualCount} action${manualCount > 1 ? 's' : ''} à faire vous-même.`
 
   return (
     <ScreenLayout step={4} totalSteps={6} onSkip={onSkip}>
@@ -144,7 +134,7 @@ export default function ScreenTravail({
       </div>
 
       {/* Livrables du rapport */}
-      <div className={`space-y-3 ${manualChecklist.length > 0 ? 'mb-5' : 'mb-8'}`}>
+      <div className={`space-y-3 ${needsHoraires ? 'mb-5' : 'mb-8'}`}>
         {reportChecklist.map(({ id, label, detail, ready, spinning }) => (
           <div
             key={id}
@@ -172,25 +162,20 @@ export default function ScreenTravail({
         ))}
       </div>
 
-      {/* Recommandations manuelles — non incluses dans le rapport */}
-      {manualChecklist.length > 0 && (
+      {/* Recommandation manuelle — horaires uniquement, non inclus dans le rapport */}
+      {needsHoraires && (
         <div className="mb-8">
           <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide px-1 mb-2">
             A faire vous-même — gratuit
           </p>
-          <div className="space-y-2">
-            {manualChecklist.map(({ id, label, detail }) => (
-              <div
-                key={id}
-                className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50"
-              >
-                <span className="text-gray-300 font-bold shrink-0 mt-0.5 text-sm leading-none select-none">→</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-600">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 leading-snug">{detail}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50">
+            <span className="text-gray-300 font-bold shrink-0 mt-0.5 text-sm leading-none select-none">→</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-600">Renseigner vos horaires</p>
+              <p className="text-xs text-gray-400 mt-0.5 leading-snug">
+                À mettre à jour dans Google My Business — prend moins de 5 minutes.
+              </p>
+            </div>
           </div>
         </div>
       )}
