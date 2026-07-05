@@ -20,15 +20,26 @@ function getFindings(result: AnalysisResult): string[] {
     )
   }
 
-  // 2. No description — compréhension immédiate
+  // 2. No description, or description exists but poor quality
   if (!result.criteria?.description) {
     findings.push(
       "La fiche ne contient pas de description — un visiteur ne comprend pas en quelques secondes ce que vous proposez"
     )
+  } else if (result.criteria.description && result.criteria.descriptionOk === false) {
+    findings.push(
+      `La description est trop courte ou ne mentionne pas la ville — Google associe moins précisément votre fiche aux recherches locales`
+    )
   }
 
-  // 3. Few photos — confiance visuelle
-  if (result.photos !== undefined && result.photos < 10) {
+  // 2b. Negative reviews without owner reply
+  if (findings.length < 3 && result.criteria?.avisNegatifs === false) {
+    findings.push(
+      "Des avis 1 ou 2 étoiles apparaissent sur votre fiche sans réponse du propriétaire — premier signal négatif vu par chaque visiteur"
+    )
+  }
+
+  // 3. Few photos — confiance visuelle (seuil 15)
+  if (result.photos !== undefined && result.photos < 15) {
     findings.push(
       `${result.photos} photo${result.photos !== 1 ? 's' : ''} visible${result.photos !== 1 ? 's' : ''} sur la fiche — les fiches les plus cliquées dans votre secteur en ont entre 15 et 30`
     )

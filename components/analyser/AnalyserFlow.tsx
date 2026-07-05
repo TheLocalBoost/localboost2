@@ -6,7 +6,7 @@ import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
 import ScreenInput      from './ScreenInput'
 import ScreenLoading    from './ScreenLoading'
-import ScreenDiagnostic from './ScreenDiagnostic'
+import ScreenAudit      from './ScreenAudit'
 import ScreenTemps      from './ScreenTemps'
 import ScreenProblemes  from './ScreenProblemes'
 import ScreenTravail    from './ScreenTravail'
@@ -48,12 +48,12 @@ export interface AnalysisResult {
 // screen indexes:
 // 0 = input
 // 1 = loading
-// 2 = diagnostic  (step 1/6 — no skip link)
-// 3 = temps        (step 2/6)  ← NEW
-// 4 = problemes    (step 3/6)
-// 5 = travail      (step 4/6)
-// 6 = livrables    (step 5/6)
-// 7 = cta          (step 6/6 — no skip link)
+// 2 = audit       (step 1/6 — checklist 30 critères)
+// 3 = temps       (step 2/6)
+// 4 = problemes   (step 3/6)
+// 5 = travail     (step 4/6)
+// 6 = livrables   (step 5/6)
+// 7 = cta         (step 6/6 — no skip link)
 
 export default function AnalyserFlow() {
   const [screen, setScreen] = useState(0)
@@ -173,10 +173,11 @@ export default function AnalyserFlow() {
           <ScreenLoading key="screen-1" nom={nom} ville={ville} />
         )}
         {screen === 2 && result && (
-          <ScreenDiagnostic
+          <ScreenAudit
             key="screen-2"
             result={result}
             onNext={() => { track('saw_temps', {}); setScreen(3) }}
+            onSkip={onSkip}
           />
         )}
         {screen === 3 && (

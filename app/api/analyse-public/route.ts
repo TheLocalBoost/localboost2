@@ -187,10 +187,10 @@ function generateRichProblems(
     })
   }
 
-  // 2. Photos insuffisantes — 5 à 10 appels perdus/mois (borne basse)
-  if (!criteria.photos) {
+  // 2. Photos insuffisantes — seuil relevé à 15 (recommandé Google)
+  if (!criteria.photos15) {
     items.push({
-      text: `Vous avez ${myPhotos} photo${myPhotos !== 1 ? 's' : ''} sur votre fiche. Sans photos récentes, votre fiche inspire moins confiance que celle du voisin. Le client choisit l'autre.`,
+      text: `Vous avez ${myPhotos} photo${myPhotos !== 1 ? 's' : ''} sur votre fiche. Google recommande au moins 15 photos pour que votre établissement ressorte dans les résultats — en dessous, votre fiche inspire moins confiance.`,
       calls: 5,
       revenue: 5 * panier,
     })
@@ -208,12 +208,33 @@ function generateRichProblems(
     })
   }
 
-  // 4. Description manquante — 2 à 4 appels perdus/mois (borne basse)
+  // 4a. Description absente
   if (!criteria.description) {
     items.push({
       text: "Votre fiche n'a pas de description. Google ne sait pas précisément quels services vous proposez — votre fiche ressort moins dans les recherches locales.",
       calls: 2,
       revenue: 2 * panier,
+    })
+  }
+
+  // 4b. Description présente mais trop courte ou ville non mentionnée
+  if (criteria.description && !criteria.descriptionOk) {
+    const cityOut = p.vicinity?.split(',')[0] ?? ''
+    items.push({
+      text: cityOut
+        ? `Votre description ne mentionne pas "${cityOut}" ou est trop courte (moins de 100 caractères). Google associe moins précisément votre fiche aux recherches locales de votre ville.`
+        : "Votre description est trop courte (moins de 100 caractères). Une description complète est nécessaire pour que Google comprenne vos services.",
+      calls: 1,
+      revenue: 1 * panier,
+    })
+  }
+
+  // 4c. Avis négatifs (≤2★) sans réponse visible du propriétaire
+  if (!criteria.avisNegatifs) {
+    items.push({
+      text: "Des avis clients négatifs (1 ou 2 étoiles) apparaissent sur votre fiche sans réponse du propriétaire. Chaque visiteur les voit — c'est un signal de méfiance qui pousse à appeler ailleurs.",
+      calls: 3,
+      revenue: 3 * panier,
     })
   }
 
@@ -271,9 +292,9 @@ function generateRichProblems(
       revenue: 2 * panier,
     })
   }
-  if (items.length < 3 && myPhotos < 10) {
+  if (items.length < 3 && myPhotos < 15) {
     items.push({
-      text: `Vous avez ${myPhotos} photo${myPhotos !== 1 ? 's' : ''} sur votre fiche Google. Les fiches avec 10 photos ou plus inspirent davantage confiance et remontent dans les résultats locaux.`,
+      text: `Vous avez ${myPhotos} photo${myPhotos !== 1 ? 's' : ''} sur votre fiche Google. Les fiches avec 15 photos ou plus inspirent davantage confiance et remontent dans les résultats locaux.`,
       calls: 2,
       revenue: 2 * panier,
     })
@@ -419,27 +440,51 @@ export async function POST(req: NextRequest) {
   const recentReview = hasRecentReview(p.reviews ?? [])
   const hasSchedule  = !!(p.opening_hours?.periods?.length)
 
+  // Description qualité : existe + >= 100 chars + mentionne la ville
+  const overview   = p.editorial_summary?.overview ?? ''
+  const descExists = !!overview
+  const descOk     = descExists && overview.length >= 100 && normalizeStr(overview).includes(cityNorm)
+
+  // Photos : seuil ≥15 (recommandé par Google pour impact optimal)
+  const photoCnt = p.photos?.length ?? 0
+
+  // Avis négatifs : 1 ou 2 étoiles parmi les 5 avis retournés par Places API
+  // Places API ne fournit pas les réponses propriétaire — on détecte la présence de l'avis
+  const hasNegRev = (p.reviews ?? []).some((r: any) => r.rating <= 2)
+
   const criteria: Record<string, boolean> = {
-    nom:          !!p.name,
-    adresse:      !!p.formatted_address,
-    telephone:    !!p.formatted_phone_number,
-    horaires:     hasSchedule,
-    site:         !!p.website,
-    description:  !!p.editorial_summary?.overview,
-    photos:       (p.photos?.length ?? 0) >= 5,
-    avis20:       (p.user_ratings_total ?? 0) >= 20,
-    note4:        (p.rating ?? 0) >= 4.0,
+    nom:           !!p.name,
+    adresse:       !!p.formatted_address,
+    telephone:     !!p.formatted_phone_number,
+    horaires:      hasSchedule,
+    site:          !!p.website,
+    description:   descExists,       // backward compat : existence seule
+    descriptionOk: descOk,           // qualité : ≥100 chars + ville mentionnée
+    photos:        photoCnt >= 5,    // backward compat
+    photos15:      photoCnt >= 15,   // seuil recommandé
+    avis20:        (p.user_ratings_total ?? 0) >= 20,
+    avisNegatifs:  !hasNegRev,       // true = pas d'avis ≤2★ (bon)
+    note4:         (p.rating ?? 0) >= 4.0,
     recentReview,
   }
 
-  // Scoring pondéré : description et activité récente sont les 2 signaux
-  // les plus importants pour l'algorithme Google Maps — chacun vaut 3x plus
-  // que les critères de complétude basique. nom/adresse exclus (toujours vrais).
+  // Scoring pondéré — description et activité récente dominent.
+  // Redistribution pour intégrer descriptionOk, photos15, avisNegatifs.
+  // Somme = 88 (inchangée pour continuité du score).
   const SCORE_WEIGHTS: Record<string, number> = {
-    telephone: 7, horaires: 8, site: 6,
-    description: 22, photos: 7, avis20: 8, note4: 8, recentReview: 22,
+    telephone:     7,
+    horaires:      8,
+    site:          6,
+    description:   6,   // existence seulement (réduit)
+    descriptionOk: 16,  // qualité (longueur + ville)
+    photos:        3,   // existence ≥5 (réduit)
+    photos15:      4,   // seuil recommandé ≥15
+    avis20:        8,
+    avisNegatifs:  5,   // pas d'avis négatifs récents sans réponse visible
+    note4:         3,   // réduit (signal indirect)
+    recentReview:  22,
   }
-  const totalW  = 88
+  const totalW  = 88 // 7+8+6+6+16+3+4+8+5+3+22 = 88
   const earnedW = Object.entries(SCORE_WEIGHTS).reduce(
     (sum, [k, w]) => sum + (criteria[k] ? w : 0), 0
   )

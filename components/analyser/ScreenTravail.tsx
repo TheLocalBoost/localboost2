@@ -20,14 +20,17 @@ interface Props {
 // Issue not covered by the paid report (owner must act directly in Google My Business):
 //   • !criteria.horaires → update schedule yourself (Google My Business, < 5 min)
 function countIssues(result: AnalysisResult) {
-  const description  = !result.criteria?.description
-  const photos       = !result.criteria?.photos
+  // Description: use quality check if available, fall back to existence
+  const description  = !(result.criteria?.descriptionOk ?? result.criteria?.description)
+  // Photos: use ≥15 threshold if available, fall back to ≥5
+  const photos       = !(result.criteria?.photos15 ?? result.criteria?.photos)
   const recentReview = !result.criteria?.recentReview
   const horaires     = !result.criteria?.horaires
   const avis20       = !result.criteria?.avis20
+  const avisNegatifs = result.criteria?.avisNegatifs === false  // negative reviews present
   const unanswered   = (result.recentReviews?.length ?? 0) > 0
 
-  const total      = [description, photos, recentReview, horaires, avis20, unanswered].filter(Boolean).length
+  const total       = [description, photos, recentReview, horaires, avis20, avisNegatifs, unanswered].filter(Boolean).length
   const notInReport = horaires ? 1 : 0
   return { total, notInReport, horaires }
 }
