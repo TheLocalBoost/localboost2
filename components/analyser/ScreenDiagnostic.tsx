@@ -104,13 +104,13 @@ export default function ScreenDiagnostic({ result, onNext }: Props) {
         ))}
       </ol>
 
-      {result.lostRevenue > 0 && (
+      {result.lostCalls > 0 && (
         <p className="text-sm text-gray-500 leading-relaxed mb-6">
-          Ces points représentent environ{' '}
+          Ces signaux représentent environ{' '}
           <span className="font-bold text-gray-900">
-            {result.lostRevenue.toLocaleString('fr-FR')} €/mois
+            ~{result.lostCalls} appels potentiels manqués ce mois-ci
           </span>{' '}
-          de clients qui appellent un concurrent plutôt que vous.
+          — des clients qui ont choisi un concurrent visible.
         </p>
       )}
 
