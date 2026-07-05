@@ -104,11 +104,21 @@ export default function ScreenDiagnostic({ result, onNext }: Props) {
         ))}
       </ol>
 
+      {result.lostRevenue > 0 && (
+        <p className="text-sm text-gray-500 leading-relaxed mb-6">
+          Ces points représentent environ{' '}
+          <span className="font-bold text-gray-900">
+            {result.lostRevenue.toLocaleString('fr-FR')} €/mois
+          </span>{' '}
+          de clients qui appellent un concurrent plutôt que vous.
+        </p>
+      )}
+
       <button
         onClick={onNext}
         className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition"
       >
-        Comprendre ce que cela représente →
+        Voir ce qui a été préparé pour vous →
       </button>
 
       <p className="text-xs text-gray-300 mt-6 text-center leading-relaxed">
