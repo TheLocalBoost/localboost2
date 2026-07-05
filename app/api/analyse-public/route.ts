@@ -3,14 +3,75 @@ import { NextRequest, NextResponse } from 'next/server'
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY!
 
 const GOOGLE_TYPE_MAP: Record<string, string> = {
-  plumber: 'plombier', electrician: 'electricien', hair_care: 'coiffeur',
-  beauty_salon: 'coiffeur', bakery: 'boulanger', restaurant: 'restaurateur',
-  food: 'restaurateur', painter: 'peintre', flooring_store: 'carreleur',
-  general_contractor: 'artisan', roofing_contractor: 'artisan', plumbing: 'plombier',
-  car_repair: 'garagiste', locksmith: 'serrurier', physiotherapist: 'kine',
-  dentist: 'dentiste', doctor: 'medecin', pharmacy: 'pharmacie',
-  lodging: 'hotel', florist: 'fleuriste', optician: 'opticien',
+  // Bâtiment / artisanat
+  plumber: 'plombier', plumbing: 'plombier',
+  electrician: 'electricien', electrical_contractor: 'electricien',
+  painter: 'peintre',
+  flooring_store: 'carreleur', tile_contractor: 'carreleur',
+  general_contractor: 'artisan', roofing_contractor: 'artisan',
+  moving_company: 'artisan', window_service: 'artisan',
+  // Beauté / santé
+  hair_care: 'coiffeur', beauty_salon: 'coiffeur', hair_salon: 'coiffeur',
+  physiotherapist: 'kine',
+  dentist: 'dentiste', dental_clinic: 'dentiste',
+  doctor: 'medecin', medical_clinic: 'medecin', health: 'medecin',
+  pharmacy: 'pharmacie', drugstore: 'pharmacie',
+  optician: 'opticien', eye_care: 'opticien',
+  // Auto
+  car_repair: 'garagiste', car_dealer: 'garagiste', auto_repair: 'garagiste',
+  // Services
+  locksmith: 'serrurier',
+  // Restauration / hébergement
+  restaurant: 'restaurateur', food: 'restaurateur', meal_delivery: 'restaurateur',
+  meal_takeaway: 'restaurateur', cafe: 'restaurateur', bar: 'restaurateur',
+  bakery: 'boulanger',
+  lodging: 'hotel', hotel: 'hotel',
+  // Commerce
+  florist: 'fleuriste',
 }
+
+// Mots-clés français à chercher dans le nom du commerce en dernier recours
+const FRENCH_NAME_MAP: [RegExp, string][] = [
+  [/plomb/i,             'plombier'],
+  [/chauffage/i,         'plombier'],
+  [/\belec(tric)?/i,     'electricien'],
+  [/coiff/i,             'coiffeur'],
+  [/salon.de.beaut/i,    'coiffeur'],
+  [/barbi?er/i,          'coiffeur'],
+  [/boulang/i,           'boulanger'],
+  [/p[âa]tiss/i,         'boulanger'],
+  [/rest(au)?/i,         'restaurateur'],
+  [/brasserie/i,         'restaurateur'],
+  [/bistro?t?/i,         'restaurateur'],
+  [/traiteur/i,          'restaurateur'],
+  [/garage/i,            'garagiste'],
+  [/\bauto\b/i,          'garagiste'],
+  [/m[ée]canic/i,        'garagiste'],
+  [/serru(r)?/i,         'serrurier'],
+  [/kin[eé]/i,           'kine'],
+  [/physioth/i,          'kine'],
+  [/ostéo/i,             'kine'],
+  [/dent(iste)?/i,       'dentiste'],
+  [/stomato/i,           'dentiste'],
+  [/m[eé]d(ecin)?/i,     'medecin'],
+  [/cabinet.m[eé]d/i,    'medecin'],
+  [/pharmacie/i,         'pharmacie'],
+  [/pharmacien/i,        'pharmacie'],
+  [/h[oô]tel/i,          'hotel'],
+  [/pens(ion)?/i,        'hotel'],
+  [/gîte/i,              'hotel'],
+  [/fleur(iste)?/i,      'fleuriste'],
+  [/optiq/i,             'opticien'],
+  [/opticien/i,          'opticien'],
+  [/lunett/i,            'opticien'],
+  [/peintr/i,            'peintre'],
+  [/d[eé]coration/i,     'peintre'],
+  [/carrel/i,            'carreleur'],
+  [/fa[iï]ence/i,        'carreleur'],
+  [/maçonn/i,            'artisan'],
+  [/couvertur/i,         'artisan'],
+  [/charpent/i,          'artisan'],
+]
 
 // Sources : FIDUCIAL 2025 (boulanger), Travaux.com 2025 (plombier),
 // Depanneo 2024 (electricien), Esprit-Coiffure 2024 (coiffeur),
@@ -36,9 +97,10 @@ const PANIER_MOYEN: Record<string, number> = {
 }
 
 function detectCategory(types: string[], commerceName: string): string {
+  // 1. Types Google (les plus précis, ex: "dentist", "plumber")
   for (const t of types) { if (GOOGLE_TYPE_MAP[t]) return GOOGLE_TYPE_MAP[t] }
-  const n = commerceName.toLowerCase()
-  for (const [key] of Object.entries(GOOGLE_TYPE_MAP)) { if (n.includes(key)) return GOOGLE_TYPE_MAP[key] }
+  // 2. Mots-clés français dans le nom du commerce
+  for (const [re, cat] of FRENCH_NAME_MAP) { if (re.test(commerceName)) return cat }
   return 'artisan'
 }
 
