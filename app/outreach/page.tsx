@@ -148,7 +148,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         {/* Funnel */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20, padding: '20px 24px' }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel</h2>
-          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Envoi → clic → analyse → CTA · depuis 05/07 10h39</p>
+          <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af' }}>Envoi → clic → analyse → CTA · depuis 05/07 14h06</p>
           <div style={{ display: 'flex', gap: 0 }}>
             {[
               { label: 'Clic email', n: d.funnel.landed, ref: d.sends, color: '#3b82f6' },
