@@ -1,15 +1,15 @@
 'use client'
 import type { AnalysisResult } from './AnalyserFlow'
 import ScreenLayout from './ScreenLayout'
+import { track } from '@/lib/track'
 
 interface Props {
   result: AnalysisResult
   totalElements: number
-  onNext: () => void
-  onSkip: () => void
+  pricingUrl: string
 }
 
-export default function ScreenLivrables({ result, totalElements, onNext, onSkip }: Props) {
+export default function ScreenLivrables({ result, totalElements, pricingUrl }: Props) {
   const unanswered = result.recentReviews?.length ?? 0
 
   const groups = [
@@ -49,7 +49,7 @@ export default function ScreenLivrables({ result, totalElements, onNext, onSkip 
   ]
 
   return (
-    <ScreenLayout step={5} totalSteps={6} onSkip={onSkip} centered={false}>
+    <ScreenLayout step={4} totalSteps={5} centered={false}>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
         Ce que vous récupérez
       </p>
@@ -90,12 +90,13 @@ export default function ScreenLivrables({ result, totalElements, onNext, onSkip 
         </p>
       </div>
 
-      <button
-        onClick={onNext}
-        className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition"
+      <a
+        href={pricingUrl}
+        onClick={() => track('cta_click_subscribe', { name: result.name, city: result.city })}
+        className="block w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition text-center"
       >
         Récupérer mon rapport — 39€
-      </button>
+      </a>
     </ScreenLayout>
   )
 }

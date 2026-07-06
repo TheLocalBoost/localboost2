@@ -106,7 +106,7 @@ export default function ScreenTravail({
       : `${reportCount} ${reportCount > 1 ? 'solutions incluses' : 'solution incluse'} dans le rapport — ${manualCount} action${manualCount > 1 ? 's' : ''} à faire vous-même.`
 
   return (
-    <ScreenLayout step={4} totalSteps={6} onSkip={onSkip}>
+    <ScreenLayout step={3} totalSteps={5} onSkip={onSkip}>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
         Travail déjà fait
       </p>
@@ -120,6 +120,10 @@ export default function ScreenTravail({
       </h2>
       <p className="text-xl font-bold text-[#16a34a] mb-5 leading-snug">
         {titleLine2}
+      </p>
+
+      <p className="text-xs text-gray-400 mb-5 leading-snug">
+        Ces 5 axes de solution couvrent l&apos;ensemble des points identifiés dans votre audit.
       </p>
 
       {/* Barre — même dénominateur que le titre */}

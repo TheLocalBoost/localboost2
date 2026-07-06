@@ -9,7 +9,7 @@ export const revalidate = 60
 
 // Depuis switch texte pur + URL courte (03/07 20h)
 const SINCE        = '2026-07-03T20:00:00.000Z'
-const FUNNEL_SINCE = '2026-07-06T11:41:14.000Z'
+const FUNNEL_SINCE = '2026-07-06T11:54:22.000Z'
 
 const SUBJECTS: Record<string, string> = {
   '0': 'un habitant de {ville} cherche un {s} demain',
@@ -40,10 +40,8 @@ async function getData() {
     { count: evAnalysed },
     { count: evDiag },
     { count: evTemps },
-    { count: evProb },
     { count: evTravail },
     { count: evLivr },
-    { count: evCta },
     { count: evCtaClick },
     { count: evSkipped },
     { data: recentRaw },
@@ -60,12 +58,10 @@ async function getData() {
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'analyzer_result').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_diagnostic').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_temps').gte('created_at', FUNNEL_SINCE),
-    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_problemes').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_travail').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_livrables').gte('created_at', FUNNEL_SINCE),
-    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'saw_cta').gte('created_at', FUNNEL_SINCE),
     sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'cta_click_subscribe').gte('created_at', FUNNEL_SINCE),
-    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'skipped_to_cta').gte('created_at', FUNNEL_SINCE),
+    sb.from('analytics_events').select('*', { count: 'exact', head: true }).eq('name', 'skipped_to_pricing').gte('created_at', FUNNEL_SINCE),
     sb.from('outreach_events').select('email, variant, created_at').eq('event', 'sent').gte('created_at', SINCE).order('created_at', { ascending: false }).limit(15),
     sb.from('outreach_events').select('created_at').eq('event', 'sent').gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
   ])
@@ -108,10 +104,8 @@ async function getData() {
       analysed: evAnalysed ?? 0,
       diag:     evDiag     ?? 0,
       temps:    evTemps    ?? 0,
-      prob:     evProb     ?? 0,
       travail:  evTravail  ?? 0,
       livr:     evLivr     ?? 0,
-      cta:      evCta      ?? 0,
       ctaClick: evCtaClick ?? 0,
       skipped:  evSkipped  ?? 0,
     },
@@ -163,22 +157,20 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
         {/* Funnel */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,.08)', marginBottom: 20 }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel — 6 écrans</h2>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#9ca3af' }}>email → analyse → diagnostic → CTA · depuis FUNNEL_SINCE</p>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>Funnel — 5 écrans</h2>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#9ca3af' }}>email → analyse → problèmes → temps → travail → livrables · depuis FUNNEL_SINCE</p>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr>{th('Étape')}{th('N')}{th('vs précédent')}{th('vs envois')}</tr></thead>
             <tbody>
               {[
-                { label: 'Clic email',          n: d.funnel.landed,   ref: d.sends,          top: d.sends },
-                { label: 'Analyse complète',     n: d.funnel.analysed, ref: d.funnel.landed,  top: d.sends },
-                { label: '1 — Diagnostic',       n: d.funnel.diag,     ref: d.funnel.analysed,top: d.sends },
-                { label: '2 — Temps',            n: d.funnel.temps,    ref: d.funnel.diag,    top: d.sends },
-                { label: '3 — Problèmes',        n: d.funnel.prob,     ref: d.funnel.temps,   top: d.sends },
-                { label: '4 — Travail',          n: d.funnel.travail,  ref: d.funnel.prob,    top: d.sends },
-                { label: '5 — Livrables',        n: d.funnel.livr,     ref: d.funnel.travail, top: d.sends },
-                { label: '6 — CTA affiché',      n: d.funnel.cta,      ref: d.funnel.livr,    top: d.sends },
-                { label: 'Clic achat',           n: d.funnel.ctaClick, ref: d.funnel.cta,     top: d.sends },
+                { label: 'Clic email',           n: d.funnel.landed,   ref: d.sends,           top: d.sends },
+                { label: 'Analyse complète',      n: d.funnel.analysed, ref: d.funnel.landed,   top: d.sends },
+                { label: '1 — Problèmes',         n: d.funnel.diag,     ref: d.funnel.analysed, top: d.sends },
+                { label: '2 — Temps',             n: d.funnel.temps,    ref: d.funnel.diag,     top: d.sends },
+                { label: '3 — Travail',           n: d.funnel.travail,  ref: d.funnel.temps,    top: d.sends },
+                { label: '4 — Livrables',         n: d.funnel.livr,     ref: d.funnel.travail,  top: d.sends },
+                { label: 'Clic achat',            n: d.funnel.ctaClick, ref: d.funnel.livr,     top: d.sends },
               ].map(({ label, n, ref, top }) => (
                 <tr key={label}>
                   {td(label)}
@@ -189,7 +181,7 @@ export default async function OutreachPage({ searchParams }: { searchParams: Pro
               ))}
               <tr>
                 <td style={{ padding: '8px 14px', fontSize: 12, color: '#9ca3af', fontStyle: 'italic', borderTop: '1px solid #e5e7eb' }} colSpan={2}>
-                  Skip direct vers CTA
+                  Skip direct vers pricing
                 </td>
                 <td style={{ padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#f59e0b', borderTop: '1px solid #e5e7eb' }}>
                   {d.funnel.skipped}

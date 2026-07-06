@@ -15,7 +15,7 @@ const MANUAL_ITEMS = [
 
 export default function ScreenTemps({ onNext, onSkip }: Props) {
   return (
-    <ScreenLayout step={2} totalSteps={6} onSkip={onSkip} centered={false}>
+    <ScreenLayout step={2} totalSteps={5} onSkip={onSkip} centered={false}>
       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-6">
         Ce que cela représente
       </p>
@@ -59,7 +59,7 @@ export default function ScreenTemps({ onNext, onSkip }: Props) {
         onClick={onNext}
         className="w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition"
       >
-        Voir ce qui a été identifié sur votre fiche →
+        Voir comment nous l'avons déjà résolu →
       </button>
     </ScreenLayout>
   )

@@ -4,14 +4,12 @@ import { AnimatePresence } from 'framer-motion'
 import { track } from '@/lib/track'
 import type { Competitor, ProblemItem } from '@/app/api/analyse-public/route'
 
-import ScreenInput      from './ScreenInput'
-import ScreenLoading    from './ScreenLoading'
-import ScreenAudit      from './ScreenAudit'
-import ScreenTemps      from './ScreenTemps'
-import ScreenProblemes  from './ScreenProblemes'
-import ScreenTravail    from './ScreenTravail'
-import ScreenLivrables  from './ScreenLivrables'
-import ScreenCTA        from './ScreenCTA'
+import ScreenInput     from './ScreenInput'
+import ScreenLoading   from './ScreenLoading'
+import ScreenProblemes from './ScreenProblemes'
+import ScreenTemps     from './ScreenTemps'
+import ScreenTravail   from './ScreenTravail'
+import ScreenLivrables from './ScreenLivrables'
 
 // Re-export so child screens can import the type from this file
 export interface AnalysisResult {
@@ -48,12 +46,10 @@ export interface AnalysisResult {
 // screen indexes:
 // 0 = input
 // 1 = loading
-// 2 = audit       (step 1/6 — checklist 30 critères)
-// 3 = temps       (step 2/6)
-// 4 = problemes   (step 3/6)
-// 5 = travail     (step 4/6)
-// 6 = livrables   (step 5/6)
-// 7 = cta         (step 6/6 — no skip link)
+// 2 = problemes  (étape 1/5 — animation + bilan)
+// 3 = temps      (étape 2/5)
+// 4 = travail    (étape 3/5)
+// 5 = livrables  (étape 4/5 — CTA direct vers pricing)
 
 export default function AnalyserFlow() {
   const [screen, setScreen] = useState(0)
@@ -68,7 +64,14 @@ export default function AnalyserFlow() {
   const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
 
-  const onSkip = () => { track('skipped_to_cta', {}); setScreen(7) }
+  const pricingUrl = result
+    ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&calls=${result.lostCalls}${email ? `&email=${encodeURIComponent(email)}` : ''}`
+    : '/pricing'
+
+  const onSkip = () => {
+    track('skipped_to_pricing', {})
+    window.location.href = pricingUrl
+  }
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
     setNom(paramNom)
@@ -115,7 +118,6 @@ export default function AnalyserFlow() {
       setScreen(2)
       track('saw_diagnostic', { score: data.score, city: data.city, category: data.category })
 
-      // Content generation in background — starts immediately after API result
       setGenerating(true)
       const bestReview =
         (data.recentReviews ?? []).find((r: { text: string }) => r.text?.length > 20) ?? null
@@ -145,15 +147,8 @@ export default function AnalyserFlow() {
     }
   }
 
-  // Décompte complet du pack :
-  // 1 description + 1 services + 20 FAQ + 12 publications + 1 calendrier + 20 photos
-  // + N réponses perso + 30 modèles + 1 QR+script SMS + 1 guide + 1 plan d'action
   const totalElements =
     1 + 1 + 20 + 12 + 1 + 20 + (result?.recentReviews?.length || 0) + 30 + 1 + 1 + 1
-
-  const pricingUrl = result
-    ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&calls=${result.lostCalls}${email ? `&email=${encodeURIComponent(email)}` : ''}`
-    : '/pricing'
 
   return (
     <div className="relative">
@@ -173,7 +168,7 @@ export default function AnalyserFlow() {
           <ScreenLoading key="screen-1" nom={nom} ville={ville} />
         )}
         {screen === 2 && result && (
-          <ScreenAudit
+          <ScreenProblemes
             key="screen-2"
             result={result}
             onNext={() => { track('saw_temps', {}); setScreen(3) }}
@@ -183,46 +178,27 @@ export default function AnalyserFlow() {
         {screen === 3 && (
           <ScreenTemps
             key="screen-3"
-            onNext={() => { track('saw_problemes', {}); setScreen(4) }}
+            onNext={() => { track('saw_travail', {}); setScreen(4) }}
             onSkip={onSkip}
           />
         )}
         {screen === 4 && result && (
-          <ScreenProblemes
-            key="screen-4"
-            result={result}
-            generatedDescription={generatedDescription}
-            generatedReview={generatedReview}
-            generating={generating}
-            onNext={() => { track('saw_travail', {}); setScreen(5) }}
-            onSkip={onSkip}
-          />
-        )}
-        {screen === 5 && result && (
           <ScreenTravail
-            key="screen-5"
+            key="screen-4"
             result={result}
             generatedDescription={generatedDescription}
             generatedPosts={generatedPosts}
             generatedReview={generatedReview}
             generating={generating}
-            onNext={() => { track('saw_livrables', {}); setScreen(6) }}
+            onNext={() => { track('saw_livrables', {}); setScreen(5) }}
             onSkip={onSkip}
           />
         )}
-        {screen === 6 && result && (
+        {screen === 5 && result && (
           <ScreenLivrables
-            key="screen-6"
+            key="screen-5"
             result={result}
             totalElements={totalElements}
-            onNext={() => { track('saw_cta', {}); setScreen(7) }}
-            onSkip={onSkip}
-          />
-        )}
-        {screen === 7 && result && (
-          <ScreenCTA
-            key="screen-7"
-            result={result}
             pricingUrl={pricingUrl}
           />
         )}
