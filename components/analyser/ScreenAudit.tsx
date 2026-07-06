@@ -11,7 +11,7 @@ interface Props {
   onSkip: () => void
 }
 
-const INTERVAL_MS = 110
+const INTERVAL_MS = 190
 
 export default function ScreenAudit({ result, onNext, onSkip }: Props) {
   const groups    = getAuditGroups(result)
