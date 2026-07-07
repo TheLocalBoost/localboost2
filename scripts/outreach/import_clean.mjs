@@ -9,8 +9,8 @@ import { dirname, join } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const supabase = createClient(
-  'https://gezgemgrfehsxbbkjwuz.supabase.co',
-  'sb_secret_mSRMkqfgV1teHAy6MAwn3Q_1VOXFbRG'
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://gezgemgrfehsxbbkjwuz.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? (() => { throw new Error('SUPABASE_SERVICE_ROLE_KEY manquant') })()
 )
 
 function parseCSV(file) {

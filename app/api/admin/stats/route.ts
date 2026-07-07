@@ -91,13 +91,13 @@ export async function GET(req: NextRequest) {
     supabase.from('waitlist').select('*', { count: 'exact', head: true }),
     supabase.from('profiles').select('subscription_status').or('subscription_status.eq.active,subscription_status.eq.trialing'),
     // Variantes et secteurs : uniquement depuis le tracking
-    supabase.from('leads').select('subject_variant, secteur').eq('sent', true).gte('sent_at', TRACKING_START),
+    supabase.from('leads').select('subject_variant, secteur').eq('sent', true).gte('sent_at', TRACKING_START).limit(50000),
     // Clics : tous (tous ont le tracking URL dans le lien)
-    supabase.from('email_clicks').select('variant_id').gte('clicked_at', TRACKING_START),
+    supabase.from('email_clicks').select('variant_id').gte('clicked_at', TRACKING_START).limit(10000),
     supabase.from('leads').select('nom, email, secteur, ville, sent_at').eq('sent', true).gte('sent_at', TRACKING_START).order('sent_at', { ascending: false }).limit(10),
     supabase.from('email_clicks').select('variant_id, lead_id, clicked_at').gte('clicked_at', TRACKING_START).order('clicked_at', { ascending: false }).limit(10),
-    supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo),
-    supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid'),
+    supabase.from('leads').select('sent_at').eq('sent', true).gte('sent_at', sevenDaysAgo).limit(5000),
+    supabase.from('leads').select('secteur').eq('sent', false).not('email', 'is', null).or('email_status.is.null,email_status.neq.invalid').limit(50000),
   ])
 
   const sent = sentTracked ?? 0

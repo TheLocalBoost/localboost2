@@ -75,8 +75,8 @@ export async function GET(req: NextRequest) {
   if (error || !leads?.length) return NextResponse.json({ sent: 0, reason: error?.message ?? 'no leads' })
 
   // Stats Thompson Sampling
-  const { data: sentRows } = await supabase.from('leads').select('subject_variant').eq('sent', true).not('subject_variant', 'is', null)
-  const { data: clickRows } = await supabase.from('email_clicks').select('variant_id')
+  const { data: sentRows } = await supabase.from('leads').select('subject_variant').eq('sent', true).not('subject_variant', 'is', null).limit(50000)
+  const { data: clickRows } = await supabase.from('email_clicks').select('variant_id').limit(10000)
   const stats = new Map<number, { sends: number; clicks: number }>()
   for (const r of sentRows ?? []) {
     const id = parseInt(r.subject_variant); if (isNaN(id)) continue

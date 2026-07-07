@@ -28,9 +28,9 @@ const CONFIG = {
 
 // ── CREDENTIALS ───────────────────────────────────────────────────────────────
 
-const SUPABASE_URL  = 'https://gezgemgrfehsxbbkjwuz.supabase.co'
-const SUPABASE_KEY  = 'sb_secret_mSRMkqfgV1teHAy6MAwn3Q_1VOXFbRG'
-const BREVO_API_KEY = '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'
+const SUPABASE_URL  = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://gezgemgrfehsxbbkjwuz.supabase.co'
+const SUPABASE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? (() => { throw new Error('SUPABASE_SERVICE_ROLE_KEY manquant') })()
+const BREVO_API_KEY = process.env.BREVO_API_KEY ?? (() => { throw new Error('BREVO_API_KEY manquant') })()
 const APP_URL       = 'https://thelocalboost.fr'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)

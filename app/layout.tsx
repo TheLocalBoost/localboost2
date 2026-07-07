@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Suspense } from 'react'
 import { VercelAnalytics } from '@/components/VercelAnalytics'
 import { Analytics as CustomAnalytics } from '@/components/Analytics'
+import { PostHogProvider } from '@/components/PostHogProvider'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -19,11 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body className={inter.className}>
-        {children}
-        <VercelAnalytics />
-        <Suspense fallback={null}>
-          <CustomAnalytics />
-        </Suspense>
+        <PostHogProvider>
+          {children}
+          <VercelAnalytics />
+          <Suspense fallback={null}>
+            <CustomAnalytics />
+          </Suspense>
+        </PostHogProvider>
       </body>
     </html>
   )
