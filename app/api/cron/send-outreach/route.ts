@@ -52,9 +52,9 @@ function buildEmail(nom: string, ville: string, leadId: string, variantId: numbe
   <p style="margin:0 0 20px;">Bonjour,</p>
   <p style="margin:0 0 28px;color:#374151;">${hook.replace(/\n/g, '<br>')}</p>
   <p style="margin:0 0 32px;"><a href="${trackUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-family:Arial,sans-serif;font-size:14px;font-weight:600;padding:11px 22px;border-radius:6px;text-decoration:none;">${cta}</a></p>
-  <p style="margin:0;font-size:14px;color:#374151;">Brian<br><span style="color:#9ca3af;font-size:12px;">LocalBoost · contact@thelocalboost.fr</span></p>
+  <p style="margin:0;font-size:14px;color:#374151;">Brian<br><span style="color:#9ca3af;font-size:12px;">fichelocal.com · contact@fichelocal.com</span></p>
   <hr style="border:none;border-top:1px solid #f3f4f6;margin:32px 0 16px;">
-  <p style="color:#d1d5db;font-size:11px;margin:0;">Vous recevez cet email car votre établissement est référencé sur Google Maps. · <a href="mailto:contact@thelocalboost.fr?subject=désinscription" style="color:#d1d5db;">Se désinscrire</a></p>
+  <p style="color:#d1d5db;font-size:11px;margin:0;">Vous recevez cet email car votre établissement est référencé sur Google Maps. · <a href="mailto:contact@fichelocal.com?subject=désinscription" style="color:#d1d5db;">Se désinscrire</a></p>
 </div>`
 }
 
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'api-key': BREVO_KEY },
         body: JSON.stringify({
-          sender: { name: 'Brian de LocalBoost', email: 'contact@thelocalboost.fr' },
+          sender: { name: 'Brian', email: 'contact@fichelocal.com' },
           to: [{ email: lead.email, name: nom }],
           subject: vnt.subject(nom, s, v || 'votre ville'),
           htmlContent: buildEmail(nom, v, lead.id, vid, vnt.hook(nom, s, v || 'votre ville'), vnt.cta()),
