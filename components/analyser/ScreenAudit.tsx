@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { AnalysisResult } from './AnalyserFlow'
 import ScreenLayout from './ScreenLayout'
 import { getAuditGroups } from './auditGroups'
+import { track } from '@/lib/track'
 
 interface Props {
   result: AnalysisResult
@@ -11,7 +12,7 @@ interface Props {
   onSkip: () => void
 }
 
-const INTERVAL_MS = 190
+const INTERVAL_MS = 90
 
 export default function ScreenAudit({ result, onNext, onSkip }: Props) {
   const groups    = getAuditGroups(result)
@@ -23,6 +24,11 @@ export default function ScreenAudit({ result, onNext, onSkip }: Props) {
   const [revealed, setRevealed] = useState(0)
   const [done, setDone]         = useState(false)
   const scrollRef                = useRef<HTMLDivElement>(null)
+  const startedAt               = useRef<number>(Date.now())
+  const doneRef                 = useRef(false)
+
+  // Sync doneRef so the visibilitychange handler can read current value
+  useEffect(() => { doneRef.current = done }, [done])
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -38,6 +44,28 @@ export default function ScreenAudit({ result, onNext, onSkip }: Props) {
     }, INTERVAL_MS)
     return () => clearInterval(id)
   }, [total])
+
+  // Tracking abandon : visibilitychange (onglet caché / navigation) + beforeunload
+  useEffect(() => {
+    const device = window.innerWidth < 768 ? 'mobile' : 'desktop'
+
+    function fireAbandonment() {
+      if (doneRef.current) return
+      const elapsed = Math.round((Date.now() - startedAt.current) / 1000)
+      track('left_during_audit_animation', { elapsed_seconds: elapsed, device })
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') fireAbandonment()
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('beforeunload', fireAbandonment)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('beforeunload', fireAbandonment)
+    }
+  }, [])
 
   useEffect(() => {
     const el = scrollRef.current
