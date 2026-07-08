@@ -27,6 +27,7 @@ export default function PrivacyPage() {
         <ul className="text-sm leading-relaxed space-y-2 list-disc list-inside">
           <li>Fourniture du service LocalBoost (analyse et optimisation de fiche Google Business)</li>
           <li>Envoi d'emails liés au service (rapports, notifications)</li>
+          <li>Suivi commercial B2B : si vous consultez la page de tarification avec un email identifié sans finaliser votre achat, vous pouvez recevoir un email de suivi unique vous invitant à poser vos questions ou à finaliser. Cet email est envoyé sur la base de l'intérêt légitime (art. 6.1.f RGPD), dans le cadre d'une relation commerciale B2B. Chaque email contient un lien de désinscription opérationnel conformément à la RFC 8058.</li>
           <li>Amélioration du service</li>
           <li>Facturation et gestion des abonnements (via Stripe)</li>
         </ul>

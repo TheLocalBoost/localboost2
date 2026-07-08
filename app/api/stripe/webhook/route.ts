@@ -41,6 +41,12 @@ async function handleEvent(event: Stripe.Event) {
 
       if (!email) break
 
+      // Marquer comme converti pour bloquer le followup pricing
+      void supabaseAdmin.from('pricing_exits')
+        .update({ converted: true })
+        .eq('email', email.toLowerCase().trim())
+        .eq('converted', false)
+
       // ── One-shot 39€ : audit réel + génération contextualisée + envoi ──
       if (session.metadata?.type === 'oneshot') {
         const nom   = session.metadata?.nom   ?? ''

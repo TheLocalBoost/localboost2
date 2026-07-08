@@ -52,6 +52,15 @@ function PricingContent() {
       score: scoreParam,
       calls: callsParam,
     })
+    // Enregistre la visite pour le suivi de sortie sans paiement
+    const visitEmail = urlEmail ?? ''
+    if (visitEmail.includes('@')) {
+      fetch('/api/pricing-visit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: visitEmail, nom: nomParam, ville: city }),
+      }).catch(() => {})
+    }
   }, [])
 
   const handlePay = async () => {
