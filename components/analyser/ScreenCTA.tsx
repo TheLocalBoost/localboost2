@@ -23,10 +23,12 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
         {result.city}
       </p>
 
-      <div className="mb-8">
-        <span className="text-4xl font-bold text-gray-900">39€</span>
+      <div className="mb-2">
+        <span className="text-4xl font-bold text-gray-900">9,99€</span>
+        <span className="text-lg font-medium text-gray-400 line-through ml-3">39€</span>
         <span className="text-sm text-gray-400 ml-2">une seule fois</span>
       </div>
+      <p className="text-xs text-green-700 font-semibold mb-6">Offre lancement — jusqu&apos;au 31 juillet 2026</p>
 
       {/* Satisfait ou remboursé — encart mis en valeur, délai exact 30 jours */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 mb-6 flex items-center gap-3">
@@ -44,7 +46,7 @@ export default function ScreenCTA({ result, pricingUrl }: Props) {
         onClick={() => track('cta_click_subscribe', { name: result.name, city: result.city })}
         className="block w-full rounded-xl bg-[#16a34a] hover:bg-[#15803d] px-5 py-4 text-sm font-bold text-white text-center transition mb-3"
       >
-        Récupérer mon rapport — 39€
+        Récupérer mon rapport — 9,99€
       </a>
 
       <p className="text-xs text-gray-400 text-center">
