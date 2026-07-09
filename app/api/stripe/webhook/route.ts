@@ -52,6 +52,20 @@ async function handleEvent(event: Stripe.Event) {
         const nom   = session.metadata?.nom   ?? ''
         const ville = session.metadata?.ville ?? ''
 
+        // Tracking vente (permet de distinguer 9,99€ vs 39€ dans outreach_events)
+        void supabaseAdmin.from('outreach_events').insert({
+          email,
+          event:   'paid',
+          variant: `ONESHOT_${session.amount_total ?? 0}`,
+          sender:  'stripe',
+          url:     session.id,
+        })
+        // Marquer comme client pour exclure des exports leads B2B
+        void supabaseAdmin.from('payments').upsert(
+          { email, status: 'succeeded' },
+          { onConflict: 'email' }
+        )
+
         // Notification interne — vente reçue
         sendTransactional({
           to:      'mandartbrian68@gmail.com',
