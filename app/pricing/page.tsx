@@ -118,6 +118,12 @@ function PricingContent() {
           )}
         </div>
 
+        {/* Bannière promo lancement */}
+        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 mb-4 text-center">
+          <p className="text-sm font-bold text-green-800">Offre de lancement — 9,99€ au lieu de 39€</p>
+          <p className="text-xs text-green-700 mt-0.5">Valable jusqu&apos;au 31 juillet 2026 · Prix normal rétabli ensuite</p>
+        </div>
+
         {/* Ce qui a déjà été préparé */}
         <div className="rounded-2xl bg-gray-900 text-white p-5 mb-4">
           <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">Déjà préparé pour {nomParam || 'votre entreprise'}</p>
@@ -175,9 +181,10 @@ function PricingContent() {
 
         {/* Carte principale */}
         <div className="rounded-2xl border-2 border-green-500 bg-white p-6 sm:p-8 shadow-xl mb-4">
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-5xl font-extrabold text-gray-900">39€</span>
-            <span className="text-gray-400">une seule fois</span>
+          <div className="flex items-baseline gap-3 mb-1">
+            <span className="text-5xl font-extrabold text-gray-900">9,99€</span>
+            <span className="text-lg font-medium text-gray-400 line-through">39€</span>
+            <span className="text-gray-400 text-sm">une seule fois</span>
           </div>
           <p className="text-sm text-gray-500 mb-1">Livré par email sous 48h · Satisfait ou remboursé sous 30 jours</p>
           <a href="/exemple" target="_blank" className="inline-block text-xs text-green-600 hover:underline mb-5">
@@ -204,14 +211,14 @@ function PricingContent() {
             disabled={loading || checking}
             className="w-full rounded-xl bg-green-500 hover:bg-green-400 py-4 text-base font-extrabold text-white transition disabled:opacity-60 shadow-lg shadow-green-100"
           >
-            {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 39€ →'}
+            {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 9,99€ →'}
           </button>
           <p className="text-xs text-gray-400 text-center mt-2">Paiement sécurisé Stripe · Remboursé si insatisfait</p>
         </div>
 
         {/* Comparaison agences */}
         <div className="rounded-2xl border border-gray-200 bg-white p-5 mb-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4 text-center">Pourquoi 39€ et pas 300€ ?</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4 text-center">Pourquoi seulement 9,99€ ?</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <p className="text-xs text-gray-400 mb-2">Agence traditionnelle</p>
@@ -220,14 +227,14 @@ function PricingContent() {
               <p className="text-xs text-gray-400">Contrat souvent imposé</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-green-700 font-semibold mb-2">LocalBoost</p>
-              <p className="text-xl font-extrabold text-green-600">39€</p>
-              <p className="text-xs text-gray-500 mt-1">48h</p>
-              <p className="text-xs text-gray-500">Sans engagement</p>
+              <p className="text-xs text-green-700 font-semibold mb-2">LocalBoost — offre lancement</p>
+              <p className="text-xl font-extrabold text-green-600">9,99€</p>
+              <p className="text-xs text-gray-400 line-through">39€ après le 31 juillet</p>
+              <p className="text-xs text-gray-500 mt-1">48h · Sans engagement</p>
             </div>
           </div>
           <p className="text-xs text-gray-400 text-center mt-4 pt-3 border-t border-gray-100">
-            La génération IA prend quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez sous 48h. Même résultat. Jusqu'à 10x moins cher.
+            La génération IA prend quelques secondes. Ce qu'une agence facture 2 à 4 semaines de travail, vous le recevez sous 48h. Même résultat. Jusqu'à 30x moins cher pendant cette offre.
           </p>
         </div>
 
@@ -269,7 +276,7 @@ function PricingContent() {
           disabled={loading || checking}
           className="w-full rounded-xl bg-green-500 py-3.5 text-sm font-bold text-white hover:bg-green-400 transition disabled:opacity-60"
         >
-          {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 39€ →'}
+          {loading ? 'Chargement...' : 'Je récupère tout le travail préparé — 9,99€ →'}
         </button>
       </div>
     </div>

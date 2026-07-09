@@ -57,7 +57,7 @@ async function handleEvent(event: Stripe.Event) {
           to:      'mandartbrian68@gmail.com',
           subject: `💰 Nouvelle vente — ${nom || email}`,
           html: `<div style="font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;">
-<h2 style="font-size:18px;margin:0 0 12px;">Nouvelle vente one-shot 39€</h2>
+<h2 style="font-size:18px;margin:0 0 12px;">Nouvelle vente one-shot 9,99€ (offre lancement)</h2>
 <table style="font-size:14px;border-collapse:collapse;">
 <tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;font-weight:700;">${email}</td></tr>
 <tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Établissement</td><td style="padding:4px 0;font-weight:700;">${nom || '—'}</td></tr>

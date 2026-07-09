@@ -23,10 +23,10 @@ export async function POST(req: NextRequest) {
       line_items: [{
         price_data: {
           currency:     'eur',
-          unit_amount:  3900,
+          unit_amount:  999,
           product_data: {
-            name:        'Pack Google Business — Livraison 48h',
-            description: 'Description optimisée + 4 posts prêts à publier + réponses aux avis + QR code + plan d\'action. Livré par email sous 48h.',
+            name:        'Pack Google Business — Offre lancement 9,99€',
+            description: 'Description optimisée + 12 publications + réponses aux avis + QR code + FAQ + plan d\'action. Livré par email sous 48h.',
           },
         },
         quantity: 1,
