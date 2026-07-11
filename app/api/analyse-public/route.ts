@@ -229,10 +229,11 @@ function generateRichProblems(
     })
   }
 
-  // 4c. Avis négatifs (≤2★) sans réponse visible du propriétaire
+  // 4c. Avis négatifs (≤2★) visibles sur la fiche — Places API ne permet pas de
+  // vérifier si le propriétaire a déjà répondu, donc on ne l'affirme jamais.
   if (!criteria.avisNegatifs) {
     items.push({
-      text: "Des avis clients négatifs (1 ou 2 étoiles) apparaissent sur votre fiche sans réponse du propriétaire. Chaque visiteur les voit — c'est un signal de méfiance qui pousse à appeler ailleurs.",
+      text: "Des avis clients négatifs (1 ou 2 étoiles) apparaissent sur votre fiche. Chaque visiteur les voit — c'est un signal de méfiance qui pousse à appeler ailleurs.",
       calls: 3,
       revenue: 3 * panier,
     })
@@ -265,7 +266,9 @@ function generateRichProblems(
   }
 
   // 7. Note < 4.0 — 5 à 12 appels perdus/mois (borne basse)
-  if (!criteria.note4) {
+  // myReviews > 0 obligatoire : sans avis, myRating vaut 0 par défaut (aucune
+  // note n'existe sur Google) — affirmer "Votre note est 0/5" serait faux.
+  if (myReviews > 0 && !criteria.note4) {
     items.push({
       text: avgCompRating && avgCompRating > myRating
         ? `Votre note est ${myRating}/5, vos concurrents ont ${avgCompRating}/5 en moyenne. En dessous de 4.0, la majorité des clients ne vous appellent pas.`
@@ -468,6 +471,33 @@ export async function POST(req: NextRequest) {
     recentReview,
   }
 
+  // Score de complétude — proportion de champs structurels réellement remplis
+  // sur la fiche. Distinct du score de performance ci-dessous (qui inclut des
+  // seuils de qualité comme "≥15 photos" ou "note ≥4.0" — de la performance,
+  // pas de la complétude). Champs volontairement limités à ceux exposés par
+  // l'API Places : "attributs sectoriels" et "services détaillés" nécessitent
+  // l'API Google Business Profile (OAuth par établissement), indisponible ici —
+  // on ne les invente pas.
+  const completenessFields: Record<string, boolean> = {
+    nom:           !!p.name,
+    adresse:       !!p.formatted_address,
+    telephone:     !!p.formatted_phone_number,
+    horaires:      hasSchedule,
+    site:          !!p.website,
+    description:   descExists,
+    photos:        photoCnt >= 1,
+    categorie:     types.length > 0,
+    prixIndicatif: p.price_level !== undefined && p.price_level !== null,
+  }
+  const completenessFilled = Object.values(completenessFields).filter(Boolean).length
+  const completenessTotal  = Object.keys(completenessFields).length
+  const completeness = {
+    percent: Math.round((completenessFilled / completenessTotal) * 100),
+    filled:  completenessFilled,
+    total:   completenessTotal,
+    missing: Object.entries(completenessFields).filter(([, ok]) => !ok).map(([k]) => k),
+  }
+
   // Scoring pondéré — description et activité récente dominent.
   // Redistribution pour intégrer descriptionOk, photos15, avisNegatifs.
   // Somme = 88 (inchangée pour continuité du score).
@@ -480,7 +510,7 @@ export async function POST(req: NextRequest) {
     photos:        3,   // existence ≥5 (réduit)
     photos15:      4,   // seuil recommandé ≥15
     avis20:        8,
-    avisNegatifs:  5,   // pas d'avis négatifs récents sans réponse visible
+    avisNegatifs:  5,   // pas d'avis ≤2★ récents visibles sur la fiche
     note4:         3,   // réduit (signal indirect)
     recentReview:  22,
   }
@@ -543,6 +573,7 @@ export async function POST(req: NextRequest) {
     photos:   p.photos?.length ?? 0,
     problems,
     criteria,
+    completeness,
     businessStatus:  p.business_status ?? 'OPERATIONAL',
     isClosed,
     openNow,
@@ -551,6 +582,7 @@ export async function POST(req: NextRequest) {
     priceLevel:      p.price_level ?? null,
     googleMapsUrl:   p.url ?? null,
     phoneIntl:       p.international_phone_number ?? null,
+    website:         p.website ?? null,
     placeId:         place.place_id ?? null,
     lostCalls,
     lostRevenue,

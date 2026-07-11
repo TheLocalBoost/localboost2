@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     const topCompetitor = (audit?.competitors?.[0] ?? null) as { name: string; rating: number; reviewCount: number } | null
     const lostRevenue   = (audit?.lostRevenue ?? 0)    as number
     const placeId       = (audit?.placeId ?? null)     as string | null
+    const completeness  = (audit?.completeness ?? { percent: 0, filled: 0, total: 0 }) as ReportData['completeness']
     const reviewUrl     = placeId ? `https://search.google.com/local/writereview?placeid=${placeId}` : null
     const qrUrl         = reviewUrl
       ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(reviewUrl)}&color=1a1a1a&bgcolor=ffffff`
@@ -53,21 +54,6 @@ export async function POST(req: NextRequest) {
     const reviewsCtx = realReviews3.length > 0
       ? realReviews3.map(r => `- ${r.author} (${r.rating}★) : "${r.text.slice(0, 120)}"`).join('\n')
       : ''
-
-    function buildCalendar(n: number): Array<{ date: string; postNum: number }> {
-      const now = new Date()
-      const daysUntilMon = ((8 - now.getDay()) % 7) || 7
-      const start = new Date(now)
-      start.setDate(start.getDate() + daysUntilMon)
-      return Array.from({ length: n }, (_, i) => {
-        const d = new Date(start)
-        d.setDate(d.getDate() + i * 7)
-        return {
-          date: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-          postNum: i + 1,
-        }
-      })
-    }
 
     // ── 2. Génération Claude ─────────────────────────────────────────────────
     const prompt1 = `Tu es un expert Google Business Profile. Génère le pack complet pour "${realName}", ${category} à ${realCity}.
@@ -90,7 +76,6 @@ RÈGLES ABSOLUES :
 Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 {
   "description": "...",
-  "posts": ["post1","post2","post3","post4","post5","post6","post7","post8","post9","post10","post11","post12"],
   "reviewResponses": ["texte de réponse 1", "texte de réponse 2"],
   "responseTemplates": {
     "5etoiles": ["t1","t2","t3","t4","t5","t6","t7","t8"],
@@ -106,7 +91,6 @@ Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 
 Contraintes détaillées :
 - description : 150-200 mots, mentionne "${realName}" et "${realCity}", ton direct et professionnel, spécifique au secteur ${category}
-- posts : 12 posts distincts (55-75 mots chacun). Couvrir : conseil pratique, printemps, été, automne, hiver, fête des mères, rentrée, Noël, galette des rois, coulisses métier, urgence saisonnière, bilan${realPhone ? `. Post 12 : inclure le numéro ${realPhone}` : ''}. Jamais de témoignage fictif.
 - reviewResponses : TABLEAU DE CHAÎNES uniquement. Chaque entrée = texte complet d'une réponse à un avis fourni ci-dessus. Si aucun avis : []
 - responseTemplates : 30 modèles (chaînes uniquement), classés, ton chaleureux, mentionnant "${realCity}", adaptés au secteur ${category}
 - guideSteps : 6 étapes concrètes pour publier sur Google Business, sans jargon technique
@@ -140,6 +124,7 @@ Contraintes :
 
     // ── 4. Construction ReportData ───────────────────────────────────────────
     const reportData: ReportData = {
+      tier:        'surMesure',
       name:        realName,
       city:        realCity,
       category,
@@ -154,8 +139,8 @@ Contraintes :
       placeId,
       reviewUrl,
       qrUrl,
+      completeness,
       description:       pack1.description       ?? '',
-      posts:             (pack1.posts            ?? []) as string[],
       reviewResponses:   (pack1.reviewResponses  ?? []) as unknown[],
       responseTemplates: (pack1.responseTemplates ?? {}) as Record<string, unknown[]>,
       guideSteps:        (pack1.guideSteps       ?? []) as string[],
@@ -163,7 +148,6 @@ Contraintes :
       faq:        (pack2.faq        ?? []) as Array<{ q: string; a: string }>,
       services:   (pack2.services   ?? []) as Array<{ name: string; description: string }>,
       photoIdeas: (pack2.photoIdeas ?? []) as string[],
-      calendar:   buildCalendar(12),
     }
 
     // ── 5. Génération PDF ────────────────────────────────────────────────────
@@ -187,7 +171,7 @@ Contraintes :
     <p style="font-size:13px;font-weight:700;color:#374151;margin:0 0 8px;">Ce que contient le PDF :</p>
     <ul style="font-size:13px;color:#6b7280;margin:0;padding-left:18px;line-height:2;">
       <li>Description Google professionnelle (150-200 mots)</li>
-      <li>12 publications prêtes à copier-coller + calendrier 3 mois</li>
+      <li>Score de complétude de fiche</li>
       <li>20 idées de photos adaptées à votre métier</li>
       <li>30 modèles de réponses aux avis classés par situation</li>
       <li>FAQ métier — 20 questions/réponses pour Google</li>

@@ -5,8 +5,6 @@ import ScreenLayout from './ScreenLayout'
 interface Props {
   result: AnalysisResult
   generatedDescription: string | null
-  generatedPosts: string[]
-  generatedReview: string | null
   generating: boolean
   onNext: () => void
   onSkip: () => void
@@ -38,16 +36,12 @@ function countIssues(result: AnalysisResult) {
 export default function ScreenTravail({
   result,
   generatedDescription,
-  generatedPosts,
-  generatedReview,
   generating,
   onNext,
   onSkip,
 }: Props) {
   const descSpinning  = generating && !generatedDescription
-  const postsSpinning = generating && generatedPosts.length === 0
   const descReady     = !generating || !!generatedDescription
-  const postsReady    = !generating || generatedPosts.length > 0
 
   const { total: N, notInReport: manualCount, horaires: needsHoraires } = countIssues(result)
   const reportCount = Math.max(0, N - manualCount)
@@ -58,6 +52,8 @@ export default function ScreenTravail({
 
   const unansweredCount = result.recentReviews?.length ?? 0
 
+  const completenessPct = result.completeness?.percent ?? 0
+
   const reportChecklist = [
     {
       id:       'fiche',
@@ -67,25 +63,26 @@ export default function ScreenTravail({
       spinning: descSpinning,
     },
     {
-      id:       'posts',
-      label:    'Montrer que vous êtes actif',
-      detail:   '12 publications + calendrier de diffusion sur 3 mois (1 par semaine)',
-      ready:    postsReady,
-      spinning: postsSpinning,
+      id:       'completude',
+      label:    'Rendre votre fiche complète',
+      detail:   `Fiche complète à ${completenessPct}% — cliquée jusqu'à 7x plus souvent une fois complète (source : Google)`,
+      ready:    true,
+      spinning: false,
     },
     {
       id:       'photos',
       label:    'Savoir quelles photos publier',
-      detail:   '20 idées de photos adaptées à votre métier, prêtes à shooter et à poster',
+      detail:   '20 idées de photos adaptées à votre métier — +42% de demandes d\'itinéraire avec des photos (source : Google)',
       ready:    true,
       spinning: false,
     },
     {
       id:       'confiance',
       label:    'Donner confiance avant le premier appel',
-      detail:   unansweredCount > 0
-        ? `${unansweredCount} réponse${unansweredCount > 1 ? 's' : ''} personnalisée${unansweredCount > 1 ? 's' : ''} + 30 modèles classés par situation + QR code d'avis + script SMS`
-        : '30 modèles de réponses classés par situation + QR code d\'avis + script SMS',
+      detail:   (unansweredCount > 0
+        ? `${unansweredCount} réponse${unansweredCount > 1 ? 's' : ''} personnalisée${unansweredCount > 1 ? 's' : ''} + 30 modèles + QR code d'avis + script SMS`
+        : '30 modèles de réponses + QR code d\'avis + script SMS')
+        + ' — 1 visiteur sur 3 renonce à appeler face à un avis sans réponse (BrightLocal)',
       ready:    true,
       spinning: false,
     },
@@ -98,12 +95,13 @@ export default function ScreenTravail({
     },
   ]
 
-  const titleLine2 =
-    N === 0
-      ? '5 groupes de solutions déjà prêts pour vous.'
-      : reportCount === N
-      ? `${N === 1 ? 'La solution est prête' : `Les ${N} solutions sont prêtes`}.`
-      : `${reportCount} ${reportCount > 1 ? 'solutions incluses' : 'solution incluse'} dans le rapport — ${manualCount} action${manualCount > 1 ? 's' : ''} à faire vous-même.`
+  // Volontairement sans nombre ici : le nombre de points à améliorer (N, ci-dessus)
+  // et les 5 groupes de solutions ci-dessous sont deux comptages distincts qui ne
+  // se correspondent pas terme à terme — les afficher côte à côte créait une
+  // fausse impression de contradiction ("1 point" vs "5 solutions cochées").
+  const titleLine2 = N === 0
+    ? '5 groupes de solutions déjà prêts pour vous.'
+    : 'Tout est déjà prêt dans votre rapport.'
 
   return (
     <ScreenLayout step={3} totalSteps={5} onSkip={onSkip}>

@@ -6,11 +6,35 @@ import { track } from '@/lib/track'
 interface Props {
   result: AnalysisResult
   totalElements: number
-  pricingUrl: string
+  contactUrl: string
+  email: string
 }
 
-export default function ScreenLivrables({ result, totalElements, pricingUrl }: Props) {
+export default function ScreenLivrables({ result, totalElements, contactUrl, email }: Props) {
   const unanswered = result.recentReviews?.length ?? 0
+
+  // Point d'entrée unique du pipeline de vente — écrit la demande en base
+  // immédiatement au clic (keepalive: survit à la navigation vers /contact).
+  // Fire-and-forget volontaire : la demande est déjà en base côté serveur dès
+  // que la requête part, la navigation ne doit jamais attendre la réponse.
+  function notifyReportRequested() {
+    try {
+      fetch('/api/report-requested', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          nom:   result.name,
+          ville: result.city,
+          secteur: result.category,
+          email: email || null,
+          score: result.score,
+          completenessPercent: result.completeness?.percent ?? null,
+          placeId: result.placeId ?? null,
+        }),
+      }).catch(() => {})
+    } catch { /* ne bloque jamais le clic du prospect */ }
+  }
 
   const groups = [
     {
@@ -22,11 +46,10 @@ export default function ScreenLivrables({ result, totalElements, pricingUrl }: P
       ],
     },
     {
-      title: 'Montrer que votre entreprise est active',
+      title: 'Rendre votre fiche visible et complète',
       items: [
-        '12 publications prêtes à diffuser (3 mois — 1 par semaine)',
-        'Calendrier de publication avec dates réelles',
-        '20 idées de photos adaptées à votre métier',
+        '20 idées de photos adaptées à votre métier — +42% de demandes d\'itinéraire avec des photos (source : Google)',
+        `Fiche complète à ${result.completeness?.percent ?? 0}% — cliquée jusqu'à 7x plus souvent une fois complète (source : Google)`,
       ],
     },
     {
@@ -59,7 +82,7 @@ export default function ScreenLivrables({ result, totalElements, pricingUrl }: P
       </h2>
 
       <p className="text-sm text-gray-400 mb-6">
-        7 heures en manuel. <span className="font-semibold text-gray-600">0 de votre côté.</span>
+        3 heures en manuel. <span className="font-semibold text-gray-600">0 de votre côté.</span>
       </p>
 
       <div className="space-y-5 mb-5">
@@ -91,11 +114,14 @@ export default function ScreenLivrables({ result, totalElements, pricingUrl }: P
       </div>
 
       <a
-        href={pricingUrl}
-        onClick={() => track('cta_click_subscribe', { name: result.name, city: result.city })}
+        href={contactUrl}
+        onClick={() => {
+          track('cta_click_contact', { name: result.name, city: result.city })
+          notifyReportRequested()
+        }}
         className="block w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition text-center"
       >
-        Récupérer mon rapport — 39€
+        Contactez-nous pour recevoir votre rapport →
       </a>
     </ScreenLayout>
   )

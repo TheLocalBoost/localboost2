@@ -25,6 +25,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
+  // En pause — plus de page pricing publique à prix fixe à relancer (vente
+  // négociée au cas par cas désormais). Retirer ce garde-fou pour réactiver.
+  return NextResponse.json({ sent: 0, paused: true })
+
   const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const cutoff20m = new Date(Date.now() - DELAY_MS).toISOString()
 

@@ -6,6 +6,8 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ReportData {
+  // 'express' = pack conversion rapide (prix bas) ; 'surMesure' = pack complet (69-99€)
+  tier: 'express' | 'surMesure'
   name: string
   city: string
   category: string
@@ -20,8 +22,17 @@ export interface ReportData {
   placeId?: string | null
   reviewUrl?: string | null
   qrUrl?: string | null
+  // Score de complétude de fiche — argument commercial principal (voir Section1).
+  // "7x" = clics, pas apparition/classement — seule formulation vérifiable (source Google).
+  completeness: { percent: number; filled: number; total: number }
+  // Diagnostic de positionnement par mot-clé (tier sur-mesure) — absent si non
+  // vérifié ou si aucun écart significatif n'a été trouvé (jamais de valeur inventée)
+  positioning?: {
+    generic: { keyword: string; position: number | null; scanned: number }
+    services: Array<{ keyword: string; position: number | null; scanned: number }>
+    teaser: string | null
+  } | null
   description: string
-  posts: string[]
   reviewResponses: unknown[]
   responseTemplates: Record<string, unknown[]>
   guideSteps: string[]
@@ -29,7 +40,6 @@ export interface ReportData {
   faq: Array<{ q: string; a: string }>
   services: Array<{ name: string; description: string }>
   photoIdeas: string[]
-  calendar: Array<{ date: string; postNum: number }>
 }
 
 // Défensif contre [object Object] : extrait toujours une chaîne
@@ -411,16 +421,13 @@ function SectionHeader({ num, title, explain }: { num: string; title: string; ex
 // ── Sections ─────────────────────────────────────────────────────────────────
 
 function CoverSection({ data }: { data: ReportData }) {
+  const isExpress = data.tier === 'express'
   const TOC = [
     'Votre situation aujourd\'hui',
     'Ce que nous avons préparé pour vous',
-    'Votre calendrier de publication',
-    'Questions fréquentes pour votre fiche',
-    'Vos services sur Google',
+    ...(isExpress ? [] : ['Questions fréquentes pour votre fiche', 'Vos services sur Google']),
     'Idées de photos',
-    'Comment mettre tout ça en ligne',
-    'Votre plan d\'action',
-    'Collecter plus d\'avis',
+    ...(isExpress ? [] : ['Comment mettre tout ça en ligne', 'Votre plan d\'action', 'Collecter plus d\'avis']),
   ]
   return (
     <View>
@@ -447,11 +454,11 @@ function CoverSection({ data }: { data: ReportData }) {
   )
 }
 
-function Section1({ data }: { data: ReportData }) {
+function Section1({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="01"
+        num={num}
         title="Votre situation aujourd'hui"
         explain={`Voici ce qu'un client potentiel voit quand il tape "${data.category} à ${data.city}" sur Google. Ces données sont issues de votre fiche réelle.`}
       />
@@ -482,6 +489,15 @@ function Section1({ data }: { data: ReportData }) {
         )}
       </View>
 
+      <View style={s.situBox}>
+        <Text style={s.situTitle}>
+          Votre fiche est complète à {data.completeness.percent}% ({data.completeness.filled} informations sur {data.completeness.total} renseignées)
+        </Text>
+        <Text style={s.bulletText}>
+          Plus une fiche est complète, plus elle est vue et cliquée par vos clients — jusqu'à 7 fois plus qu'une fiche incomplète (source : données Google).
+        </Text>
+      </View>
+
       {data.problems.length > 0 && (
         <View>
           <Text style={[s.body, s.bold]}>Ce qui limite votre visibilité :</Text>
@@ -493,15 +509,22 @@ function Section1({ data }: { data: ReportData }) {
           ))}
         </View>
       )}
+
+      {data.positioning?.teaser && (
+        <View style={s.situBox}>
+          <Text style={s.situTitle}>Votre position sur Google Maps, par mot-clé</Text>
+          <Text style={s.bulletText}>{data.positioning.teaser}</Text>
+        </View>
+      )}
     </View>
   )
 }
 
-function Section2a({ data }: { data: ReportData }) {
+function Section2a({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="02"
+        num={num}
         title="Ce que nous avons préparé pour vous"
         explain="Vous n'avez rien à rédiger. Chaque élément ci-dessous est prêt à copier-coller ou à imprimer."
       />
@@ -519,25 +542,6 @@ function Section2a({ data }: { data: ReportData }) {
   )
 }
 
-function Section2b({ data }: { data: ReportData }) {
-  return (
-    <View>
-      <Text style={s.subTitle}>Vos 12 publications — une par semaine pendant 3 mois</Text>
-      <Text style={s.subHint}>
-        {'Quoi : des messages à publier régulièrement pour montrer que votre activité est active.\n' +
-         'Où : Google Business → Ajouter une mise à jour.\n' +
-         'Comment : publiez-en une par semaine dans l\'ordre. Le calendrier est en section 03.'}
-      </Text>
-      {data.posts.map((post, i) => (
-        <View key={i} style={s.pubBox} wrap={false}>
-          <Text style={s.pubLabel}>Publication {i + 1} / 12</Text>
-          <Text style={s.pubText}>{post}</Text>
-        </View>
-      ))}
-    </View>
-  )
-}
-
 function Section2c({ data }: { data: ReportData }) {
   const responses = data.reviewResponses.map(txt).filter(Boolean)
   if (responses.length === 0) return null
@@ -545,7 +549,7 @@ function Section2c({ data }: { data: ReportData }) {
     <View>
       <Text style={s.subTitle}>Réponses à vos avis récents</Text>
       <Text style={s.subHint}>
-        {'Quoi : des réponses prêtes pour les avis que vous avez déjà reçus sans réponse.\n' +
+        {'Quoi : des réponses prêtes pour vos avis récents (si vous n\'y avez pas encore répondu).\n' +
          'Où : sur votre fiche Google, sous chaque avis, bouton "Répondre".\n' +
          'Comment : copiez-collez le texte, ajustez le prénom si besoin.'}
       </Text>
@@ -607,33 +611,11 @@ function Section2d({ data }: { data: ReportData }) {
   )
 }
 
-function Section3({ data }: { data: ReportData }) {
+function Section4({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="03"
-        title="Votre calendrier de publication"
-        explain="Publiez une publication par semaine selon ce calendrier. Un post par semaine suffit pour signaler à Google que votre fiche est active."
-      />
-      <View style={s.calHeaderRow}>
-        <Text style={[s.calDate, s.bold, { color: G700 }]}>Date</Text>
-        <Text style={[s.calPub, { color: G }]}>Publication à publier</Text>
-      </View>
-      {data.calendar.map(({ date, postNum }) => (
-        <View key={postNum} style={s.calRow}>
-          <Text style={s.calDate}>{date}</Text>
-          <Text style={s.calPub}>Publication n°{postNum}</Text>
-        </View>
-      ))}
-    </View>
-  )
-}
-
-function Section4({ data }: { data: ReportData }) {
-  return (
-    <View>
-      <SectionHeader
-        num="04"
+        num={num}
         title="Questions fréquentes pour votre fiche"
         explain={'Ajoutez ces questions et réponses dans la section "Questions & Réponses" de votre fiche Google. Elles rassurent les clients avant même qu\'ils vous contactent.'}
       />
@@ -648,11 +630,11 @@ function Section4({ data }: { data: ReportData }) {
   )
 }
 
-function Section5({ data }: { data: ReportData }) {
+function Section5({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="05"
+        num={num}
         title="Vos services sur Google"
         explain={'Ajoutez ces services dans Google Business → Infos → Services. Ils apparaissent sur votre fiche et aident les clients à comprendre ce que vous proposez.'}
       />
@@ -666,11 +648,11 @@ function Section5({ data }: { data: ReportData }) {
   )
 }
 
-function Section6({ data }: { data: ReportData }) {
+function Section6({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="06"
+        num={num}
         title="Idées de photos à publier"
         explain="Prenez ces photos avec votre téléphone, ça suffit. Elles donnent confiance aux visiteurs et améliorent votre position sur Google."
       />
@@ -684,11 +666,11 @@ function Section6({ data }: { data: ReportData }) {
   )
 }
 
-function Section7({ data }: { data: ReportData }) {
+function Section7({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="07"
+        num={num}
         title="Comment mettre tout ça en ligne"
         explain="Suivez ces étapes dans l'ordre. Comptez 10 à 15 minutes en tout. Vous n'avez besoin que de votre téléphone ou d'un ordinateur."
       />
@@ -704,12 +686,12 @@ function Section7({ data }: { data: ReportData }) {
   )
 }
 
-function Section8({ data }: { data: ReportData }) {
+function Section8({ data, num }: { data: ReportData; num: string }) {
   const lines = data.actionPlan.split('\n').filter(Boolean)
   return (
     <View>
       <SectionHeader
-        num="08"
+        num={num}
         title="Votre plan d'action"
         explain="3 priorités dans l'ordre. Commencez par la première dès cette semaine. Pas de jargon — uniquement des actions concrètes avec une estimation de temps."
       />
@@ -722,11 +704,11 @@ function Section8({ data }: { data: ReportData }) {
   )
 }
 
-function Section9({ data }: { data: ReportData }) {
+function Section9({ data, num }: { data: ReportData; num: string }) {
   return (
     <View>
       <SectionHeader
-        num="09"
+        num={num}
         title="Collecter plus d'avis"
         explain="Plus vous avez d'avis récents et de réponses, mieux vous êtes classé sur Google. Voici les outils prêts à utiliser."
       />
@@ -774,14 +756,14 @@ function LastSection({ data }: { data: ReportData }) {
         <View style={s.lastDot} />
         <Text style={s.lastText}>
           <Text style={s.lastLabel}>Cette semaine : </Text>
-          publiez votre nouvelle description et votre première publication Google.
+          publiez votre nouvelle description sur votre fiche Google.
         </Text>
       </View>
       <View style={s.lastItem}>
         <View style={s.lastDot} />
         <Text style={s.lastText}>
           <Text style={s.lastLabel}>Ce mois-ci : </Text>
-          répondez aux avis en attente (section 02c) et publiez 3 publications.
+          répondez aux avis en attente et ajoutez vos nouvelles photos.
         </Text>
       </View>
       <View style={s.lastItem}>
@@ -811,22 +793,31 @@ function ReportDocument({ data }: { data: ReportData }) {
         <CoverSection data={data} />
       </Page>
 
-      {/* Toutes les sections — header fixe sur chaque page */}
+      {/* Toutes les sections — header fixe sur chaque page.
+          Numérotation calculée dynamiquement : le tier "express" n'inclut pas
+          FAQ/services/guide/plan d'action/collecte d'avis, donc les numéros
+          restent contigus plutôt que de sauter (ex: 01, 02, 04 avec un trou). */}
       <Page size="A4" style={s.page}>
         <PageHeader name={data.name} city={data.city} />
-
-        <Section1  data={data} />
-        <Section2a data={data} />
-        <Section2b data={data} />
-        <Section2c data={data} />
-        <Section2d data={data} />
-        <Section3  data={data} />
-        <Section4  data={data} />
-        <Section5  data={data} />
-        <Section6  data={data} />
-        <Section7  data={data} />
-        <Section8  data={data} />
-        <Section9  data={data} />
+        {(() => {
+          const isExpress = data.tier === 'express'
+          let n = 0
+          const num = () => String(++n).padStart(2, '0')
+          return (
+            <>
+              <Section1  data={data} num={num()} />
+              <Section2a data={data} num={num()} />
+              <Section2c data={data} />
+              {!isExpress && <Section2d data={data} />}
+              {!isExpress && <Section4 data={data} num={num()} />}
+              {!isExpress && <Section5 data={data} num={num()} />}
+              <Section6  data={data} num={num()} />
+              {!isExpress && <Section7 data={data} num={num()} />}
+              {!isExpress && <Section8 data={data} num={num()} />}
+              {!isExpress && <Section9 data={data} num={num()} />}
+            </>
+          )
+        })()}
         <LastSection data={data} />
       </Page>
     </Document>

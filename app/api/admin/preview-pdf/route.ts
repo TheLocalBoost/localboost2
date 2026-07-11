@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { generateReportPDF, ReportData } from '@/lib/pdf/generateReport'
+import {
+  checkKeywordPosition, extractServicesFromWebsite, pickCandidateKeywords,
+  generateComparativeTeaser,
+} from '@/lib/keywordPositioning'
 
 export const maxDuration = 60
 
@@ -13,10 +17,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { nom, ville } = await req.json()
+  const { nom, ville, tier: tierIn } = await req.json()
   if (!nom || !ville) {
     return NextResponse.json({ error: 'nom et ville requis' }, { status: 400 })
   }
+  const tier: 'express' | 'surMesure' = tierIn === 'express' ? 'express' : 'surMesure'
+  const isExpress = tier === 'express'
 
   // ── 1. Audit Google ────────────────────────────────────────────────────────
   const auditRes = await fetch(`${APP_URL}/api/analyse-public`, {
@@ -40,10 +46,41 @@ export async function POST(req: NextRequest) {
   const topCompetitor = (audit?.competitors?.[0] ?? null) as { name: string; rating: number; reviewCount: number } | null
   const lostRevenue   = (audit?.lostRevenue ?? 0) as number
   const placeId       = (audit?.placeId ?? null) as string | null
+  const completeness  = (audit?.completeness ?? { percent: 0, filled: 0, total: 0 }) as ReportData['completeness']
   const reviewUrl     = placeId ? `https://search.google.com/local/writereview?placeid=${placeId}` : null
   const qrUrl         = reviewUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(reviewUrl)}&color=1a1a1a&bgcolor=ffffff`
     : null
+
+  // ── 1b. Diagnostic de positionnement (tier sur-mesure uniquement — consomme
+  // des requêtes Places API supplémentaires, pas activé sur les aperçus standards) ──
+  let positioning: ReportData['positioning'] = null
+  if (!isExpress && placeId) {
+    try {
+      const website = (audit?.website ?? null) as string | null
+      let services: string[] = []
+      if (website) {
+        const extracted = await extractServicesFromWebsite(website)
+        services = pickCandidateKeywords(extracted, category, 2)
+      }
+      const generic = await checkKeywordPosition(placeId, `${category} ${realCity}`, { maxPages: 1 })
+      const serviceResults = []
+      for (const svc of services) {
+        serviceResults.push(await checkKeywordPosition(placeId, `${svc} ${realCity}`, { maxPages: 1 }))
+      }
+      const teaser = !generic.error
+        ? generateComparativeTeaser(generic, serviceResults.filter(r => !r.error))
+        : null
+      positioning = {
+        generic:  { keyword: generic.keyword, position: generic.position, scanned: generic.scanned },
+        services: serviceResults.map(r => ({ keyword: r.keyword, position: r.position, scanned: r.scanned })),
+        teaser,
+      }
+    } catch (e) {
+      console.error('[preview-pdf] positioning failed', e)
+      // best effort — un échec ici ne doit jamais bloquer la génération du PDF
+    }
+  }
 
   const competitorCtx = topCompetitor
     ? `Concurrent principal visible avant ${realName} : ${topCompetitor.name} (${topCompetitor.rating}★ · ${topCompetitor.reviewCount} avis)`
@@ -53,21 +90,6 @@ export async function POST(req: NextRequest) {
     ? realReviews3.map(r => `- ${r.author} (${r.rating}★) : "${r.text.slice(0, 120)}"`).join('\n')
     : ''
 
-  function buildCalendar(n: number): Array<{ date: string; postNum: number }> {
-    const now = new Date()
-    const daysUntilMon = ((8 - now.getDay()) % 7) || 7
-    const start = new Date(now)
-    start.setDate(start.getDate() + daysUntilMon)
-    return Array.from({ length: n }, (_, i) => {
-      const d = new Date(start)
-      d.setDate(d.getDate() + i * 7)
-      return {
-        date: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-        postNum: i + 1,
-      }
-    })
-  }
-
   // ── 2. Génération Claude (prompts corrigés) ────────────────────────────────
 
   // Bug 1 fix : reviewResponses = tableau de CHAÎNES, jamais d'objets
@@ -75,29 +97,53 @@ export async function POST(req: NextRequest) {
   // Bug 3 fix : témoignages fictifs interdits
   // Bug 4 fix : pas de "score X/100" — supprimé du template PDF
   // Bug 5 fix : aucun chiffre inventé — toutes les données viennent de l'audit
+  // Publications retirées (Part 1) : plus de champ "posts" ni de calendrier généré.
+  // Tier "express" : on ne génère même plus les modèles/guide/plan/FAQ/services —
+  // pas seulement exclus du rendu, économise aussi les tokens Claude.
 
-  const prompt1 = `Tu es un expert Google Business Profile. Génère le pack complet pour "${realName}", ${category} à ${realCity}.
-
-SECTEUR : ${category}. Tout le contenu doit correspondre UNIQUEMENT au secteur ${category}.
-
-DONNÉES RÉELLES (ne pas inventer d'autres chiffres) :
+  const dataCtx = `DONNÉES RÉELLES (ne pas inventer d'autres chiffres) :
 - Note Google : ${realRating > 0 ? `${realRating}/5` : 'non renseignée'}
 - Nombre d'avis : ${realReviews}
 - Photos : ${realPhotos}
 ${competitorCtx ? `- ${competitorCtx}` : ''}
 ${realProblems.length > 0 ? `\nProblèmes identifiés :\n${realProblems.map(p => `- ${p}`).join('\n')}` : ''}
-${reviewsCtx ? `\nAvis clients récents :\n${reviewsCtx}` : ''}
+${reviewsCtx ? `\nAvis clients récents :\n${reviewsCtx}` : ''}`
 
-RÈGLES ABSOLUES :
+  const absoluteRules = `RÈGLES ABSOLUES :
 - Ne jamais créer de témoignage fictif (citation attribuée à un prénom inventé).
 - Ne jamais écrire "Comme m'a dit [Prénom]" ou toute citation attribuée à un client imaginaire.
 - Ne jamais afficher un chiffre qui ne provient pas des données ci-dessus.
-- Tout le contenu doit correspondre au secteur ${category} uniquement.
+- Tout le contenu doit correspondre au secteur ${category} uniquement.`
+
+  const prompt1 = isExpress
+    ? `Tu es un expert Google Business Profile. Génère le pack pour "${realName}", ${category} à ${realCity}.
+
+SECTEUR : ${category}. Tout le contenu doit correspondre UNIQUEMENT au secteur ${category}.
+
+${dataCtx}
+
+${absoluteRules}
 
 Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 {
   "description": "...",
-  "posts": ["post1","post2","post3","post4","post5","post6","post7","post8","post9","post10","post11","post12"],
+  "reviewResponses": ["texte de réponse 1", "texte de réponse 2"]
+}
+
+Contraintes détaillées :
+- description : 150-200 mots, mentionne "${realName}" et "${realCity}", ton direct et professionnel, spécifique au secteur ${category}
+- reviewResponses : TABLEAU DE CHAÎNES DE TEXTE UNIQUEMENT (pas d'objets JSON). Chaque entrée est le texte complet d'une réponse à un avis fourni ci-dessus, en s'adressant par prénom. Si aucun avis fourni : []`
+    : `Tu es un expert Google Business Profile. Génère le pack complet pour "${realName}", ${category} à ${realCity}.
+
+SECTEUR : ${category}. Tout le contenu doit correspondre UNIQUEMENT au secteur ${category}.
+
+${dataCtx}
+
+${absoluteRules}
+
+Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
+{
+  "description": "...",
   "reviewResponses": ["texte de réponse 1", "texte de réponse 2"],
   "responseTemplates": {
     "5etoiles": ["t1","t2","t3","t4","t5","t6","t7","t8"],
@@ -113,13 +159,24 @@ Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 
 Contraintes détaillées :
 - description : 150-200 mots, mentionne "${realName}" et "${realCity}", ton direct et professionnel, spécifique au secteur ${category}
-- posts : 12 posts distincts (55-75 mots chacun). Thèmes : conseil pratique, printemps, été, automne, hiver, fête des mères, rentrée, Noël, galette des rois, coulisses métier, urgence saisonnière, bilan${realPhone ? `. Post 12 : inclure le numéro ${realPhone}` : ''}. Jamais de témoignage fictif.
 - reviewResponses : TABLEAU DE CHAÎNES DE TEXTE UNIQUEMENT (pas d'objets JSON). Chaque entrée est le texte complet d'une réponse à un avis fourni ci-dessus, en s'adressant par prénom. Si aucun avis fourni : []
 - responseTemplates : 30 modèles (CHAÎNES DE TEXTE uniquement, pas d'objets), classés, ton chaleureux, mentionnant "${realCity}", adaptés au secteur ${category}
 - guideSteps : 6 étapes concrètes pour publier sur Google Business, sans jargon technique
 - actionPlan : exactement 3 lignes numérotées, chaque ligne = 1 action concrète avec estimation de temps réaliste`
 
-  const prompt2 = `Tu es un expert Google Business Profile. Génère des contenus complémentaires pour "${realName}" (${category}) à ${realCity}.
+  const photoCount = isExpress ? 6 : 20
+
+  const prompt2 = isExpress
+    ? `Tu es un expert Google Business Profile. Génère des idées de photos pour "${realName}" (${category}) à ${realCity}.
+
+SECTEUR : ${category}.
+
+Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
+{ "photoIdeas": ["idee1", "idee2"] }
+
+Contraintes :
+- photoIdeas : ${photoCount} idées de photos ciblées en priorité sur les manques identifiés de la fiche (${realProblems.slice(0, 2).join('; ') || 'photos et confiance visuelle'}), à prendre avec un téléphone, adaptées au métier ${category}. Pas de mise en scène avec des clients fictifs.`
+    : `Tu es un expert Google Business Profile. Génère des contenus complémentaires pour "${realName}" (${category}) à ${realCity}.
 
 SECTEUR : ${category}. Tout le contenu doit correspondre UNIQUEMENT au secteur ${category}. Ne jamais générer de contenu pour un autre secteur médical ou professionnel.
 
@@ -133,17 +190,17 @@ Réponds UNIQUEMENT avec du JSON valide (sans balises markdown) :
 Contraintes :
 - faq : 20 questions/réponses que les clients posent à un ${category} à ${realCity}. Concrètes (tarifs, délais, zones d'intervention, urgences, devis). Réponses 1-2 phrases directes. Pas de témoignage fictif.
 - services : 5 services phares d'un ${category}. Noms courts et précis, descriptions 2 lignes concrètes. Adaptés au secteur ${category}.
-- photoIdeas : 20 idées de photos à prendre avec un téléphone, adaptées au métier ${category} (salle, matériel, avant/après, équipe, coulisses). Pas de mise en scène avec des clients fictifs.`
+- photoIdeas : ${photoCount} idées de photos à prendre avec un téléphone, adaptées au métier ${category} (salle, matériel, avant/après, équipe, coulisses). Pas de mise en scène avec des clients fictifs.`
 
   const [msg1, msg2] = await Promise.all([
     anthropic.messages.create({
       model:     'claude-haiku-4-5-20251001',
-      max_tokens: 6000,
+      max_tokens: isExpress ? 1000 : 4000,
       messages:  [{ role: 'user', content: prompt1 }],
     }),
     anthropic.messages.create({
       model:     'claude-haiku-4-5-20251001',
-      max_tokens: 3000,
+      max_tokens: isExpress ? 800 : 3000,
       messages:  [{ role: 'user', content: prompt2 }],
     }),
   ])
@@ -157,6 +214,7 @@ Contraintes :
 
   // ── 4. Construction ReportData ─────────────────────────────────────────────
   const reportData: ReportData = {
+    tier,
     name:        realName,
     city:        realCity,
     category,
@@ -169,10 +227,11 @@ Contraintes :
     topCompetitor,
     lostRevenue,
     placeId,
-    reviewUrl,
-    qrUrl,
+    reviewUrl:  isExpress ? null : reviewUrl,
+    qrUrl:      isExpress ? null : qrUrl,
+    completeness,
+    positioning,
     description:       pack1.description       ?? '',
-    posts:             (pack1.posts            ?? []) as string[],
     reviewResponses:   (pack1.reviewResponses  ?? []) as unknown[],
     responseTemplates: (pack1.responseTemplates ?? {}) as Record<string, unknown[]>,
     guideSteps:        (pack1.guideSteps       ?? []) as string[],
@@ -182,7 +241,6 @@ Contraintes :
     faq:        (pack2.faq        ?? []) as Array<{ q: string; a: string }>,
     services:   (pack2.services   ?? []) as Array<{ name: string; description: string }>,
     photoIdeas: (pack2.photoIdeas ?? []) as string[],
-    calendar:   buildCalendar(12),
   }
 
   // ── 5. Génération PDF ──────────────────────────────────────────────────────

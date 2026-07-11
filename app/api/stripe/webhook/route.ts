@@ -431,6 +431,43 @@ ${(pack.guideSteps as string[]).map((step: string, i: number) => `
 </div>`,
       }).catch(err => console.error('Welcome email error:', err))
 
+      // ── Lien de paiement généré à la demande (vente négociée au cas par cas) ──
+      // session.payment_link n'est renseigné QUE pour les sessions issues d'un
+      // Payment Link (jamais pour les sessions "oneshot"/abonnement ci-dessus,
+      // créées directement via sessions.create) — branches mutuellement exclusives.
+      if (session.payment_link) {
+        const paymentLinkId = typeof session.payment_link === 'string'
+          ? session.payment_link
+          : session.payment_link.id
+
+        const { data: link } = await supabaseAdmin
+          .from('payment_links')
+          .update({ status: 'paid', paid_at: new Date().toISOString() })
+          .eq('stripe_payment_link_id', paymentLinkId)
+          .select('email, nom, ville, tier, amount_cents')
+          .single()
+
+        if (link) {
+          sendTransactional({
+            to:      'mandartbrian68@gmail.com',
+            subject: `💰 Paiement reçu — ${link.nom} (${(link.amount_cents / 100).toFixed(2)}€)`,
+            html: `<div style="font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;">
+<h2 style="font-size:18px;margin:0 0 12px;">Paiement reçu via lien de paiement</h2>
+<table style="font-size:14px;border-collapse:collapse;">
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Établissement</td><td style="padding:4px 0;font-weight:700;">${link.nom}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Ville</td><td style="padding:4px 0;font-weight:700;">${link.ville || '—'}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;font-weight:700;">${link.email}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Tier</td><td style="padding:4px 0;font-weight:700;">${link.tier}</td></tr>
+<tr><td style="padding:4px 8px 4px 0;color:#6b7280;">Montant</td><td style="padding:4px 0;font-weight:700;">${(link.amount_cents / 100).toFixed(2)}€</td></tr>
+</table>
+<p style="margin:16px 0 0;color:#6b7280;font-size:13px;">Le rapport n'est pas généré automatiquement pour ces ventes négociées — utilisez /api/admin/test-delivery ou /api/admin/preview-pdf pour le préparer et l'envoyer.</p>
+</div>`,
+          }).catch(err => console.error('[webhook] payment_link notification failed', err))
+        } else {
+          console.error('[webhook] paid payment_link not found in DB, id=', paymentLinkId)
+        }
+      }
+
       break
     }
 

@@ -8,7 +8,6 @@ interface Props {
 
 const MANUAL_ITEMS = [
   { task: 'Rédiger la description Google', time: '45 min' },
-  { task: '12 publications (3 mois)', time: '4 h' },
   { task: 'Répondre aux avis + 30 modèles', time: '1 h 30' },
   { task: 'Mise en ligne sur Google', time: '45 min' },
 ]
@@ -29,7 +28,7 @@ export default function ScreenTemps({ onNext, onSkip }: Props) {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
             En manuel
           </p>
-          <p className="text-2xl font-bold text-gray-900 mb-4">≈ 7 h</p>
+          <p className="text-2xl font-bold text-gray-900 mb-4">≈ 3 h</p>
           <ul className="space-y-2.5">
             {MANUAL_ITEMS.map((item, i) => (
               <li key={i} className="text-xs leading-snug">
@@ -52,7 +51,7 @@ export default function ScreenTemps({ onNext, onSkip }: Props) {
       </div>
 
       <p className="text-sm text-gray-500 leading-relaxed mb-8">
-        Vous pourriez le faire vous-même — mais entre la description, les 12 publications et les 30 modèles de réponses, ce sont plusieurs heures que vous récupérez déjà faites.
+        Vous pourriez le faire vous-même — mais entre la description et les 30 modèles de réponses, ce sont plusieurs heures que vous récupérez déjà faites.
       </p>
 
       <button

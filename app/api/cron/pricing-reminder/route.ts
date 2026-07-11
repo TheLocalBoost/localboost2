@@ -28,6 +28,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
+  // En pause — référence l'ancienne page /pricing à prix fixe (29€/mois) et
+  // la table waitlist/outreach_click, obsolète depuis le passage à la vente
+  // négociée au cas par cas. Retirer ce garde-fou pour réactiver (et corriger
+  // le prix affiché avant toute réactivation).
+  return NextResponse.json({ sent: 0, paused: true })
+
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
 

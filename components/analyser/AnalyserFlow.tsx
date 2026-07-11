@@ -23,6 +23,7 @@ export interface AnalysisResult {
   photos: number
   problems: ProblemItem[]
   criteria: Record<string, boolean>
+  completeness: { percent: number; filled: number; total: number; missing: string[] }
   businessStatus: string
   isClosed: boolean
   openNow: boolean | null
@@ -31,6 +32,7 @@ export interface AnalysisResult {
   priceLevel: number | null
   googleMapsUrl: string | null
   phoneIntl: string | null
+  placeId?: string | null
   lostCalls: number
   lostRevenue: number
   competitors: Competitor[]
@@ -60,17 +62,15 @@ export default function AnalyserFlow() {
   const [error, setError]   = useState<string | null>(null)
 
   const [generatedDescription, setGeneratedDescription] = useState<string | null>(null)
-  const [generatedPosts, setGeneratedPosts]             = useState<string[]>([])
-  const [generatedReview, setGeneratedReview]           = useState<string | null>(null)
   const [generating, setGenerating]                     = useState(false)
 
-  const pricingUrl = result
-    ? `/pricing?nom=${encodeURIComponent(result.name)}&city=${encodeURIComponent(result.city)}&calls=${result.lostCalls}${email ? `&email=${encodeURIComponent(email)}` : ''}`
-    : '/pricing'
+  const contactUrl = result
+    ? `/contact?name=${encodeURIComponent(result.name)}${email ? `&email=${encodeURIComponent(email)}` : ''}&message=${encodeURIComponent(`Je souhaite recevoir mon rapport pour ${result.name} à ${result.city}.`)}`
+    : '/contact'
 
   const onSkip = () => {
-    track('skipped_to_pricing', {})
-    window.location.href = pricingUrl
+    track('skipped_to_contact', {})
+    window.location.href = contactUrl
   }
 
   async function handleStart(paramNom: string, paramVille: string, paramEmail: string) {
@@ -81,8 +81,6 @@ export default function AnalyserFlow() {
     setResult(null)
     setError(null)
     setGeneratedDescription(null)
-    setGeneratedPosts([])
-    setGeneratedReview(null)
 
     track('analyzer_search', { name: paramNom, city: paramVille })
 
@@ -135,9 +133,7 @@ export default function AnalyserFlow() {
       })
         .then(r => r.json())
         .then(d => {
-          if (d.description)    setGeneratedDescription(d.description)
-          if (d.posts?.length)  setGeneratedPosts(d.posts)
-          if (d.reviewResponse) setGeneratedReview(d.reviewResponse)
+          if (d.description) setGeneratedDescription(d.description)
         })
         .catch(() => {})
         .finally(() => setGenerating(false))
@@ -147,8 +143,10 @@ export default function AnalyserFlow() {
     }
   }
 
+  // 1 description + 1 services + 20 FAQ + 20 idées photos + avis répondus + 30 modèles
+  // + 1 QR/script + 1 guide mise en ligne + 1 plan d'action (publications retirées du pack)
   const totalElements =
-    1 + 1 + 20 + 12 + 1 + 20 + (result?.recentReviews?.length || 0) + 30 + 1 + 1 + 1
+    1 + 1 + 20 + 20 + (result?.recentReviews?.length || 0) + 30 + 1 + 1 + 1
 
   return (
     <div className="relative">
@@ -187,8 +185,6 @@ export default function AnalyserFlow() {
             key="screen-4"
             result={result}
             generatedDescription={generatedDescription}
-            generatedPosts={generatedPosts}
-            generatedReview={generatedReview}
             generating={generating}
             onNext={() => { track('saw_livrables', {}); setScreen(5) }}
             onSkip={onSkip}
@@ -199,7 +195,8 @@ export default function AnalyserFlow() {
             key="screen-5"
             result={result}
             totalElements={totalElements}
-            pricingUrl={pricingUrl}
+            contactUrl={contactUrl}
+            email={email}
           />
         )}
       </AnimatePresence>

@@ -16,7 +16,7 @@ function getFindings(result: AnalysisResult): string[] {
   if ((result.recentReviews?.length ?? 0) > 0) {
     const n = result.recentReviews.length
     findings.push(
-      `${n} avis client${n > 1 ? 's sont restés' : ' est resté'} sans réponse — visible par chaque visiteur qui consulte votre fiche`
+      `${n} avis client${n > 1 ? 's' : ''} récent${n > 1 ? 's' : ''} visible${n > 1 ? 's' : ''} par chaque visiteur qui consulte votre fiche`
     )
   }
 
@@ -31,10 +31,10 @@ function getFindings(result: AnalysisResult): string[] {
     )
   }
 
-  // 2b. Negative reviews without owner reply
+  // 2b. Negative reviews visible on the listing (Places API doesn't expose owner-reply status)
   if (findings.length < 3 && result.criteria?.avisNegatifs === false) {
     findings.push(
-      "Des avis 1 ou 2 étoiles apparaissent sur votre fiche sans réponse du propriétaire — premier signal négatif vu par chaque visiteur"
+      "Des avis 1 ou 2 étoiles apparaissent sur votre fiche — premier signal négatif vu par chaque visiteur"
     )
   }
 
@@ -75,8 +75,9 @@ function getFindings(result: AnalysisResult): string[] {
     }
   }
 
-  // 7. Low rating
-  if (findings.length < 3 && result.rating !== undefined && result.rating < 4.3) {
+  // 7. Low rating — reviews > 0 obligatoire : sans avis, rating vaut 0 par défaut
+  // (aucune note n'existe sur Google), l'affirmer serait un mensonge factuel.
+  if (findings.length < 3 && (result.reviews ?? 0) > 0 && result.rating !== undefined && result.rating < 4.3) {
     findings.push(
       `Note de ${result.rating.toFixed(1)}/5 — quelques réponses aux avis récents peuvent la faire progresser`
     )

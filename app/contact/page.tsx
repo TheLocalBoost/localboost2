@@ -1,9 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function ContactPage() {
-  const [form, setForm]     = useState({ name: '', email: '', message: '' })
+function ContactForm() {
+  const searchParams = useSearchParams()
+  const [form, setForm] = useState({
+    name:    searchParams.get('name') ?? '',
+    email:   searchParams.get('email') ?? '',
+    message: searchParams.get('message') ?? '',
+  })
   const [loading, setLoading] = useState(false)
   const [sent, setSent]     = useState(false)
   const [error, setError]   = useState('')
@@ -122,5 +128,13 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense>
+      <ContactForm />
+    </Suspense>
   )
 }

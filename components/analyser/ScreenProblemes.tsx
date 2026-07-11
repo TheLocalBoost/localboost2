@@ -28,12 +28,12 @@ function getProblemes(result: AnalysisResult): string[] {
 
   if (unanswered > 0) {
     items.push(
-      `${unanswered} avis ${unanswered > 1 ? 'sont restés sans réponse' : 'est resté sans réponse'} — visible par chaque visiteur. 1 visiteur sur 3 repart sans appeler face à un avis sans réponse (BrightLocal 2023).`
+      `${unanswered} avis récent${unanswered > 1 ? 's' : ''} ${unanswered > 1 ? 'apparaissent' : 'apparaît'} sur votre fiche, visible${unanswered > 1 ? 's' : ''} par chaque visiteur. S'il${unanswered > 1 ? 's sont restés' : ' est resté'} sans réponse, c'est un signal que 1 visiteur sur 3 remarque avant d'appeler (BrightLocal 2023).`
     )
   }
 
   if (c.avisNegatifs === false && items.length < 5) {
-    items.push("Des avis 1 ou 2 étoiles apparaissent sans réponse du propriétaire — premier signal négatif vu par chaque visiteur.")
+    items.push("Des avis 1 ou 2 étoiles apparaissent sur votre fiche — premier signal négatif vu par chaque visiteur.")
   }
 
   if (!c.description && items.length < 5) {
@@ -50,7 +50,9 @@ function getProblemes(result: AnalysisResult): string[] {
     items.push("Aucune activité récente sur la fiche. Google la considère inactive et la relègue après les concurrents actifs.")
   }
 
-  if (rating < 4.0 && items.length < 5) {
+  // reviews > 0 obligatoire : sans avis, rating vaut 0 par défaut (aucune note
+  // n'existe sur Google) — affirmer "Note de 0.0/5" serait un mensonge factuel.
+  if (reviews > 0 && rating < 4.0 && items.length < 5) {
     items.push(`Note de ${rating.toFixed(1)}/5 — en dessous de 4,0, une grande partie des visiteurs choisissent directement un concurrent mieux noté.`)
   }
 
@@ -183,9 +185,18 @@ export default function ScreenProblemes({ result, onNext, onSkip }: Props) {
                 Bilan détaillé
               </p>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-6 leading-snug">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 leading-snug">
                 Ce qui peut vous coûter des clients
               </h2>
+
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 mb-6">
+                <p className="text-sm font-bold text-blue-900">
+                  Votre fiche Google est complète à {result.completeness?.percent ?? 0}% ({result.completeness?.filled ?? 0} informations sur {result.completeness?.total ?? 0} renseignées).
+                </p>
+                <p className="text-xs text-blue-700 mt-1 leading-relaxed">
+                  Plus une fiche est complète, plus elle est vue et cliquée par vos clients — jusqu&apos;à 7 fois plus qu&apos;une fiche incomplète (source : données Google).
+                </p>
+              </div>
 
               {problemes.length > 0 ? (
                 <ul className="space-y-3 mb-6">

@@ -19,14 +19,6 @@
     {
       "path": "/api/cron/send-outreach",
       "schedule": "0 9 * * 1-5"
-    },
-    {
-      "path": "/api/cron/pricing-reminder",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/pricing-followup",
-      "schedule": "*/30 * * * *"
     }
   ]
 }
