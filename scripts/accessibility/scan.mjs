@@ -178,7 +178,7 @@ async function run() {
   }
 
   console.log(`\n📊 Score global : ${agg.score ?? "N/A"} — ${agg.totalViolations} violations sur ${pages.filter(p => !p.error).length}/${pages.length} pages`)
-  console.log(`📄 Déclaration d'accessibilité : ${agg.hasAccessibilityStatement ? "trouvée" : "ABSENTE (risque amende 25 000€ — RGAA décret 2019-768 art.8)"}`)
+  console.log(`📄 Déclaration d'accessibilité : ${agg.hasAccessibilityStatement ? "trouvée" : "ABSENTE (risque amende 25 000€ — European Accessibility Act, ordonnance du 6 septembre 2023)"}`)
 
   const id = await saveToSupabase(record)
   if (id) console.log(`💾 Enregistré — accessibility_scans.id = ${id}`)

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS accessibility_scans (
   contact_email                 TEXT,
   score                         INTEGER,   -- moyenne pondérée par nombre de nœuds sur toutes les pages scannées
   has_accessibility_statement   BOOLEAN,
-  declaration_risk_flag         BOOLEAN,   -- true = pas de déclaration trouvée = risque amende 25 000€ (RGAA, décret 2019-768 art.8)
+  declaration_risk_flag         BOOLEAN,   -- true = pas de déclaration trouvée = risque amende 25 000€ (European Accessibility Act, ordonnance du 6 septembre 2023)
   total_violations              INTEGER,
   total_nodes                   INTEGER,
   pages                         JSONB,     -- détail par page : [{url, score, hasAccessibilityStatement, totalViolations, violations}]

@@ -10,8 +10,19 @@
 // l'application (le Client Secret n'a pas été nécessaire pour cet appel),
 // endpoint https://api.insee.fr/api-sirene/3.11/siret.
 //
+// Ciblage légal : "10+ salariés" seul ne suffit pas à garantir un vrai
+// périmètre EAA (qui dépend du type de service B2C rendu, pas juste de
+// l'effectif) — voir enrich-and-scan.mjs pour la vérification de présence
+// d'un vrai tunnel d'achat. Les codes NAF "vente à distance" (47.91A/B)
+// garantissent au moins une activité de vente en ligne par construction.
+//
 // Usage :
-//   node scripts/accessibility/find-targets-sirene.mjs --naf=47.71Z --departement=75 [--effectifMin=11] [--pages=5]
+//   node scripts/accessibility/find-targets-sirene.mjs --naf=47.91A,47.91B --departement=75 [--effectifMin=11] [--pages=5] [--limit=30]
+//
+// Élargissement automatique : si moins de 20 résultats sont trouvés sur le
+// département demandé (après filtre effectif), élargit automatiquement à
+// [75, 92, 93, 94] et fusionne (dédoublonné par SIREN) — désactivable avec
+// --no-widen.
 //
 // Codes tranche d'effectif INSEE (trancheEffectifsUniteLegale) :
 //   00=0 01=1-2 02=3-5 03=6-9 11=10-19 12=20-49 21=50-99 22=100-199
@@ -19,10 +30,8 @@
 // --effectifMin=11 (défaut) = 10 salariés ou plus.
 //
 // Sortie : sirene_targets_{naf}_{departement}_{date}.csv (SIREN, dénomination,
-// commune, code postal, tranche effectif) — SANS site web ni email : l'API
-// Sirene ne les fournit pas. Étape suivante à construire : réutiliser la logique
-// de découverte de site (scrape_sirene.mjs::scrapeEmailFromSite) à partir de la
-// dénomination sociale pour chaque ligne de ce fichier.
+// commune, code postal, tranche effectif, NAF) — SANS site web ni email :
+// l'API Sirene ne les fournit pas. Voir enrich-and-scan.mjs pour la suite.
 
 import "dotenv/config"
 import { writeFileSync } from "fs"
@@ -35,17 +44,23 @@ const TODAY = new Date().toISOString().slice(0, 10)
 const INSEE_CLIENT_ID = process.env.INSEE_SIRENE_CLIENT_ID
 const BASE_URL = "https://api.insee.fr/api-sirene/3.11/siret"
 
+const WIDEN_DEPARTEMENTS = ["75", "92", "93", "94"]
+const WIDEN_THRESHOLD = 20
+
 // Tranches correspondant à "10 salariés ou plus" (>= code 11)
 const TRANCHES_10_PLUS = ["11", "12", "21", "22", "31", "32", "41", "42", "51", "52", "53"]
 
 function parseArgs() {
   const args = process.argv.slice(2)
   const get = (prefix) => args.find(a => a.startsWith(prefix))?.slice(prefix.length)
+  const naf = get("--naf=")
   return {
-    naf:          get("--naf="),
+    naf:          naf ? naf.split(",").map(s => s.trim()).filter(Boolean) : [],
     departement:  get("--departement="),
     effectifMin:  get("--effectifMin=") ?? "11",
     pages:        parseInt(get("--pages=") ?? "5", 10),
+    limit:        parseInt(get("--limit=") ?? "30", 10),
+    noWiden:      args.includes("--no-widen"),
   }
 }
 
@@ -55,13 +70,18 @@ function buildEffectifClause(effectifMin) {
   return `(${tranches.map(t => `trancheEffectifsUniteLegale:${t}`).join(" OR ")})`
 }
 
-async function querySirene({ naf, departement, effectifMin, page, pageSize = 20 }) {
+function buildNafClause(nafCodes) {
+  if (!nafCodes.length) return null
+  return `(${nafCodes.map(n => `activitePrincipaleUniteLegale:${n}`).join(" OR ")})`
+}
+
+async function querySirene({ nafClause, departement, effectifMin, page, pageSize = 20 }) {
   if (!INSEE_CLIENT_ID) {
     throw new Error("INSEE_SIRENE_CLIENT_ID manquant dans .env — voir https://portail-api.insee.fr pour créer une application")
   }
 
   const clauses = []
-  if (naf) clauses.push(`activitePrincipaleUniteLegale:${naf}`)
+  if (nafClause) clauses.push(nafClause)
   if (departement) clauses.push(`codePostalEtablissement:${departement}*`)
   clauses.push(buildEffectifClause(effectifMin))
   // Deux filtres de statut distincts et nécessaires : l'unité légale (la société)
@@ -103,24 +123,26 @@ function extractRows(data) {
       Commune:      adr.libelleCommuneEtablissement ?? "",
       TrancheEffectif: ul.trancheEffectifsUniteLegale ?? "",
       NAF:          ul.activitePrincipaleUniteLegale ?? "",
+      CategorieEntreprise: ul.categorieEntreprise ?? "",
     }
   }).filter(r => r.Denomination && r.Siren)
 }
 
-async function run() {
-  const { naf, departement, effectifMin, pages } = parseArgs()
-  if (!naf && !departement) {
-    console.error("Usage: node find-targets-sirene.mjs --naf=47.71Z --departement=75 [--effectifMin=11] [--pages=5]")
-    process.exit(1)
-  }
+function dedupeBySiren(rows) {
+  const seen = new Set()
+  return rows.filter(r => {
+    if (seen.has(r.Siren)) return false
+    seen.add(r.Siren)
+    return true
+  })
+}
 
-  console.log(`\n🔍 Recherche Sirene — NAF=${naf ?? "tous"} · dépt=${departement ?? "tous"} · effectif ≥ tranche ${effectifMin}\n`)
-
+async function fetchAll({ nafClause, departement, effectifMin, pages }) {
   const rows = []
   for (let page = 0; page < pages; page++) {
-    console.log(`  📄 Page ${page + 1}/${pages}`)
+    console.log(`  📄 Page ${page + 1}/${pages} (dépt ${departement ?? "tous"})`)
     try {
-      const data = await querySirene({ naf, departement, effectifMin, page })
+      const data = await querySirene({ nafClause, departement, effectifMin, page })
       const pageRows = extractRows(data)
       console.log(`     → ${pageRows.length} établissements`)
       rows.push(...pageRows)
@@ -130,20 +152,59 @@ async function run() {
       break
     }
   }
+  return rows
+}
 
-  console.log(`\n📊 ${rows.length} établissements trouvés (≥ ${effectifMin === "11" ? "10 salariés" : "tranche " + effectifMin})\n`)
+async function run() {
+  const startedAt = Date.now()
+  const { naf, departement, effectifMin, pages, limit, noWiden } = parseArgs()
+  if (!naf.length && !departement) {
+    console.error("Usage: node find-targets-sirene.mjs --naf=47.91A,47.91B --departement=75 [--effectifMin=11] [--pages=5] [--limit=30]")
+    process.exit(1)
+  }
+
+  const nafClause = buildNafClause(naf)
+  console.log(`\n🔍 Recherche Sirene — NAF=${naf.join(",") || "tous"} · dépt=${departement ?? "tous"} · effectif ≥ tranche ${effectifMin} · limite=${limit}\n`)
+
+  let rows = dedupeBySiren(await fetchAll({ nafClause, departement, effectifMin, pages }))
+  let departementsUsed = [departement].filter(Boolean)
+
+  // Élargissement automatique si trop peu de résultats UNIQUES sur le département
+  // demandé — le seuil doit être vérifié APRÈS dédoublonnage, sinon des pages
+  // pleines de doublons masquent un pool réellement restreint (bug rencontré en
+  // test réel : 100 lignes brutes sur 5 pages, seulement 18 SIREN uniques).
+  if (!noWiden && rows.length < WIDEN_THRESHOLD && departement) {
+    const others = WIDEN_DEPARTEMENTS.filter(d => d !== departement)
+    if (others.length) {
+      console.log(`\n⚠️  Seulement ${rows.length} résultat(s) unique(s) sur ${departement} (< ${WIDEN_THRESHOLD}) — élargissement à ${others.join(", ")}\n`)
+      for (const d of others) {
+        const more = await fetchAll({ nafClause, departement: d, effectifMin, pages })
+        rows = dedupeBySiren([...rows, ...more])
+        departementsUsed.push(d)
+        if (rows.length >= WIDEN_THRESHOLD) break
+      }
+    }
+  }
+
+  const totalFound = rows.length
+  rows = rows.slice(0, limit)
+
+  const elapsedS = ((Date.now() - startedAt) / 1000).toFixed(1)
+  console.log(`\n📊 ${totalFound} établissement(s) unique(s) trouvé(s) (≥ tranche ${effectifMin}) sur [${departementsUsed.join(", ")}]`)
+  console.log(`   → ${rows.length} conservé(s) après limite --limit=${limit}`)
+  console.log(`   ⏱  ${elapsedS}s\n`)
 
   if (!rows.length) { console.log("Aucun résultat."); process.exit(0) }
 
-  const outFile = join(__dirname, `sirene_targets_${naf ?? "all"}_${departement ?? "all"}_${TODAY}.csv`)
+  const outFile = join(__dirname, `sirene_targets_${naf.join("-") || "all"}_${departementsUsed.join("-")}_${TODAY}.csv`)
   const csv = [
-    '"Siren","Denomination","CodePostal","Commune","TrancheEffectif","NAF"',
-    ...rows.map(r => [r.Siren, r.Denomination, r.CodePostal, r.Commune, r.TrancheEffectif, r.NAF]
+    '"Siren","Denomination","CodePostal","Commune","TrancheEffectif","NAF","CategorieEntreprise"',
+    ...rows.map(r => [r.Siren, r.Denomination, r.CodePostal, r.Commune, r.TrancheEffectif, r.NAF, r.CategorieEntreprise]
       .map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
   ].join("\n")
   writeFileSync(outFile, "﻿" + csv, "utf-8")
   console.log(`💾 ${outFile}`)
-  console.log(`\nÉtape suivante : trouver le site web + email de chaque dénomination (réutiliser scrape_sirene.mjs), puis scanner via scan.mjs.`)
+  console.log(`\nÉtape suivante : node enrich-and-scan.mjs ${outFile} (détection site marchand, pas de scan par défaut)`)
 }
 
 run().catch(e => { console.error("❌", e.message); process.exit(1) })

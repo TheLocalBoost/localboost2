@@ -118,10 +118,11 @@ function CoverSection({ data }: { data: AccessibilityReportData }) {
       {data.declarationRiskFlag && (
         <View style={s.coverRiskBox}>
           <Text style={s.coverRiskText}>
-            Aucune déclaration d'accessibilité détectée sur les pages scannées. Son
-            absence pure et simple est sanctionnée par une amende pouvant aller
-            jusqu'à 25 000€ (Décret n°2019-768, art. 8 — contrôle Arcom),
-            indépendamment du niveau de conformité réel du site.
+            Aucune déclaration d'accessibilité détectée sur les pages scannées.
+            Son absence est sanctionnée par une amende de 25 000€ ; un service
+            non conforme peut être sanctionné jusqu'à 50 000€, renouvelable
+            tous les 6 mois en cas de manquement persistant (European
+            Accessibility Act, contrôles DGCCRF/Arcom).
           </Text>
         </View>
       )}
@@ -237,20 +238,28 @@ function LegalSection({ data }: { data: AccessibilityReportData }) {
       <View style={s.sectionBar} />
       <View style={s.legalBox}>
         <Text style={s.legalText}>
-          Absence de déclaration d'accessibilité : amende pouvant aller jusqu'à
-          25 000€ (Décret n°2019-768 du 24 juillet 2019, art. 8), contrôlée par
-          l'Arcom sur signalement ou de sa propre initiative. Ce régime vise
-          historiquement le secteur public et les grandes entreprises
-          (CA &gt; 250M€ en France) ; le European Accessibility Act (juin 2025)
-          étend certaines obligations à des services numériques privés
-          indépendamment de la taille, sous conditions sectorielles.
+          Base légale : European Accessibility Act (directive 2019/882),
+          transposée en droit français par l'ordonnance du 6 septembre 2023
+          (loi DDADUE n°2023-171, art. 16), applicable depuis le 28 juin 2025.
+          Sont concernées les entreprises de 10 salariés ou 2M€ de chiffre
+          d'affaires ou plus, fournissant un service numérique grand public
+          couvert (e-commerce, banque en ligne, réservation, télécoms, livres
+          numériques). Sanctions : 25 000€ pour absence de déclaration
+          d'accessibilité (ou déclaration affirmant un niveau non atteint),
+          jusqu'à 50 000€ par service non conforme, renouvelable tous les 6
+          mois en cas de manquement persistant. Contrôles assurés par la
+          DGCCRF (e-commerce et services aux consommateurs) et l'Arcom
+          (secteur public et audiovisuel).
         </Text>
       </View>
       <Text style={s.violationDesc}>
-        Ce rapport est un outil de diagnostic technique, pas un avis juridique.
-        L'applicabilité exacte des obligations RGAA/EAA à votre structure dépend
-        de votre secteur, chiffre d'affaires et statut — à faire confirmer par
-        un professionnel du droit si besoin.
+        Le référentiel RGAA / WCAG 2.1 niveau AA (norme européenne EN 301 549)
+        reste la méthode technique de référence pour démontrer la conformité
+        EAA — c'est sur cette base que porte l'audit automatisé ci-dessus.
+        Ce rapport est un outil de diagnostic technique, pas un avis
+        juridique. L'applicabilité exacte des obligations à votre structure
+        dépend de votre secteur, chiffre d'affaires et statut — à faire
+        confirmer par un professionnel du droit si besoin.
       </Text>
     </View>
   )
