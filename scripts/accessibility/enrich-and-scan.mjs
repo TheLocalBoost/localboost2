@@ -2,10 +2,19 @@
 // sans site web) et scan.mjs (scan accessibilité, a besoin d'un domaine).
 //
 // Pour chaque établissement d'un fichier sirene_targets_*.csv : cherche son site
-// web via DuckDuckGo (même logique que scrape_sirene.mjs), puis vérifie la
-// présence d'un vrai tunnel d'achat (panier/commander/checkout ou plateforme
-// e-commerce connue) — un effectif ≥10 salariés ne suffit pas à garantir un
-// périmètre EAA réel (qui dépend du service B2C rendu, pas de l'effectif seul).
+// web via l'API Google Places (textsearch + details, même pattern que
+// lib/keywordPositioning.ts et app/api/analyse-public/route.ts), puis vérifie
+// la présence d'un vrai tunnel d'achat (panier/commander/checkout ou
+// plateforme e-commerce connue) — un effectif ≥10 salariés ne suffit pas à
+// garantir un périmètre EAA réel (qui dépend du service B2C rendu, pas de
+// l'effectif seul).
+//
+// Remplace l'ancienne découverte via DuckDuckGo/Bing scrapé (Playwright) :
+// testée en direct le 2026-07-13, en local ET depuis OVH, elle échouait
+// systématiquement (0/30 sites trouvés sur des sociétés pourtant connues —
+// DuckDuckGo renvoie un statut 202 anti-bot, Bing un captcha). Google Places
+// API est un appel HTTP direct avec clé, pas de navigateur ni de risque de
+// blocage anti-scraping de moteur de recherche.
 //
 // Par défaut, ce script s'arrête après la détection (mode "dry run") : il ne
 // scanne PAS l'accessibilité, il ne fait que discovery + classification, pour
@@ -16,22 +25,6 @@
 //
 // Usage :
 //   node scripts/accessibility/enrich-and-scan.mjs <sirene_targets_*.csv> [--limit=20] [--scan]
-//
-// ⚠️ LIMITE CONNUE (testée en direct le 2026-07-13, en local ET depuis OVH) :
-// DuckDuckGo Lite renvoie un statut 202 (page de garde anti-bot) et Bing une
-// page de résultats vide (0 lien externe) aux requêtes Playwright automatisées
-// — sur des recherches pourtant triviales (ex: "LA REDOUTE PARIS"). Résultat
-// actuel : 0/30 sites trouvés sur un batch réel de sociétés bien identifiables.
-// Cette logique de découverte est identique à celle de scrape_sirene.mjs
-// (pipeline outreach existant) — il est probable que ce script soit
-// AUSSI affecté par le même blocage, à vérifier séparément. La détection
-// e-commerce elle-même (fonction detectEcommerce) n'est pas en cause : elle
-// n'a simplement rien à tester tant qu'aucun site n'est trouvé en amont.
-// Pistes non testées : proxy résidentiel, API de recherche payante
-// (SerpAPI/Serper, déjà utilisées ailleurs dans scripts/outreach), ou
-// résolution directe du site via l'annuaire officiel (Google Places API,
-// déjà utilisée dans ce projet et nettement plus fiable que le scraping
-// de moteur de recherche).
 
 import "dotenv/config"
 import { chromium } from "playwright"
@@ -44,7 +37,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const TODAY = new Date().toISOString().slice(0, 10)
 
-const SKIP_DOMAINS = /pagesjaunes\.fr|facebook\.com|instagram\.com|wikipedia\.|linkedin\.com|youtube\.com|google\.|bing\.|duckduckgo\.|societe\.com|kompass\.|infogreffe\.|pappers\.|legifrance\.|service-public\.|gouv\.fr/
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 // Indices textuels d'un vrai tunnel d'achat (pas juste un site vitrine)
 const ECOMMERCE_TEXT_HINTS = /\b(panier|cart|commander|passer commande|checkout|ajouter au panier|mon compte|réserver|réservation|booking)\b/i
@@ -61,17 +54,23 @@ function parseCSV(file) {
   })
 }
 
-async function findWebsite(page, denomination, commune) {
-  const q = encodeURIComponent(`${denomination} ${commune} site officiel`)
+// Découverte de site via Google Places (textsearch → place_id → details avec
+// fields=website). Le textsearch seul ne renvoie pas toujours le site web de
+// façon fiable, d'où l'appel details séparé — même pattern déjà vérifié dans
+// app/api/analyse-public/route.ts.
+async function findWebsite(denomination, commune) {
+  if (!GOOGLE_API_KEY) throw new Error("GOOGLE_PLACES_API_KEY manquant dans .env")
   try {
-    await page.goto(`https://lite.duckduckgo.com/lite/?q=${q}&kl=fr-fr`, { waitUntil: "domcontentloaded", timeout: 15000 })
-    await sleep(1000)
-    const links = await page.evaluate((skipRe) => {
-      return Array.from(document.querySelectorAll('a[href^="http"]'))
-        .map(a => a.href)
-        .filter(href => !new RegExp(skipRe).test(href) && !href.includes("duckduckgo"))
-    }, SKIP_DOMAINS.source)
-    return links[0] ? new URL(links[0]).origin : null
+    const q = encodeURIComponent(`${denomination} ${commune}`)
+    const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${q}&language=fr&region=fr&key=${GOOGLE_API_KEY}`
+    const searchRes = await fetch(searchUrl).then(r => r.json())
+    const place = (searchRes.results ?? [])[0]
+    if (!place?.place_id) return null
+
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=website&language=fr&key=${GOOGLE_API_KEY}`
+    const detailsRes = await fetch(detailsUrl).then(r => r.json())
+    const website = detailsRes.result?.website
+    return website ? new URL(website).origin : null
   } catch { return null }
 }
 
@@ -127,11 +126,11 @@ async function run() {
   try {
     for (const row of rows) {
       console.log(`🏢 ${row.Denomination} (${row.Commune})`)
-      const website = await findWebsite(page, row.Denomination, row.Commune)
+      const website = await findWebsite(row.Denomination, row.Commune)
       if (!website) {
         console.log("   — pas de site trouvé, ignoré")
         results.push({ ...row, Site: "", StatutMarchand: "site_introuvable" })
-        await sleep(1500)
+        await sleep(300)
         continue
       }
       console.log(`   🌐 ${website}`)
