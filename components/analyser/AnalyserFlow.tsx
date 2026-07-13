@@ -68,8 +68,34 @@ export default function AnalyserFlow() {
     ? `/contact?name=${encodeURIComponent(result.name)}${email ? `&email=${encodeURIComponent(email)}` : ''}&message=${encodeURIComponent(`Je souhaite recevoir mon rapport pour ${result.name} à ${result.city}.`)}`
     : '/contact'
 
+  // Point d'entrée unique du pipeline de vente — appelé par TOUS les chemins
+  // qui mènent à /contact (CTA final ET lien "Recevoir mon rapport" affiché
+  // dès l'étape 1). Écrit en base avant la navigation (keepalive : survit à
+  // la navigation), pour ne jamais perdre un lead qui saute directement à la
+  // fin sans passer par ScreenLivrables.
+  function notifyReportRequested() {
+    if (!result) return
+    try {
+      fetch('/api/report-requested', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          nom:   result.name,
+          ville: result.city,
+          secteur: result.category,
+          email: email || null,
+          score: result.score,
+          completenessPercent: result.completeness?.percent ?? null,
+          placeId: result.placeId ?? null,
+        }),
+      }).catch(() => {})
+    } catch { /* ne bloque jamais la navigation du prospect */ }
+  }
+
   const onSkip = () => {
     track('skipped_to_contact', {})
+    notifyReportRequested()
     window.location.href = contactUrl
   }
 
@@ -196,7 +222,7 @@ export default function AnalyserFlow() {
             result={result}
             totalElements={totalElements}
             contactUrl={contactUrl}
-            email={email}
+            onReportRequested={notifyReportRequested}
           />
         )}
       </AnimatePresence>

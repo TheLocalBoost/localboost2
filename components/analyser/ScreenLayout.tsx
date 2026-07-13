@@ -42,7 +42,7 @@ export default function ScreenLayout({
                   onClick={onSkip}
                   className="text-xs text-gray-400 hover:text-gray-600 transition underline underline-offset-2"
                 >
-                  Voir le rapport et le prix →
+                  Recevoir mon rapport →
                 </button>
               )}
             </div>

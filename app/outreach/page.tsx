@@ -9,7 +9,7 @@ export const revalidate = 60
 
 // Depuis switch texte pur + URL courte (03/07 20h)
 const SINCE        = '2026-07-03T20:00:00.000Z'
-const FUNNEL_SINCE = '2026-07-11T21:19:42.000Z'
+const FUNNEL_SINCE = '2026-07-13T18:25:56.000Z'
 
 const SUBJECTS: Record<string, string> = {
   '0': 'un habitant de {ville} cherche un {s} demain',

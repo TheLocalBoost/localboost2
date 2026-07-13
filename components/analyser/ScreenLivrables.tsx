@@ -7,34 +7,11 @@ interface Props {
   result: AnalysisResult
   totalElements: number
   contactUrl: string
-  email: string
+  onReportRequested: () => void
 }
 
-export default function ScreenLivrables({ result, totalElements, contactUrl, email }: Props) {
+export default function ScreenLivrables({ result, totalElements, contactUrl, onReportRequested }: Props) {
   const unanswered = result.recentReviews?.length ?? 0
-
-  // Point d'entrée unique du pipeline de vente — écrit la demande en base
-  // immédiatement au clic (keepalive: survit à la navigation vers /contact).
-  // Fire-and-forget volontaire : la demande est déjà en base côté serveur dès
-  // que la requête part, la navigation ne doit jamais attendre la réponse.
-  function notifyReportRequested() {
-    try {
-      fetch('/api/report-requested', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        keepalive: true,
-        body: JSON.stringify({
-          nom:   result.name,
-          ville: result.city,
-          secteur: result.category,
-          email: email || null,
-          score: result.score,
-          completenessPercent: result.completeness?.percent ?? null,
-          placeId: result.placeId ?? null,
-        }),
-      }).catch(() => {})
-    } catch { /* ne bloque jamais le clic du prospect */ }
-  }
 
   const groups = [
     {
@@ -117,7 +94,7 @@ export default function ScreenLivrables({ result, totalElements, contactUrl, ema
         href={contactUrl}
         onClick={() => {
           track('cta_click_contact', { name: result.name, city: result.city })
-          notifyReportRequested()
+          onReportRequested()
         }}
         className="block w-full rounded-xl bg-gray-900 px-5 py-4 text-sm font-bold text-white hover:bg-gray-800 transition text-center"
       >
