@@ -54,4 +54,7 @@ scripts/outreach/leads_*.csv
 scripts/outreach/sent.csv
 scripts/outreach/serper_state.json
 
+# accessibility scanner — données de sortie, pas du code
+scripts/accessibility/sirene_targets_*.csv
+
 .vercel
